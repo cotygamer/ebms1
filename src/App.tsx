@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import ErrorBoundary from './components/ErrorBoundary';
+import { NotificationProvider } from './components/NotificationSystem';
 import LandingPage from './pages/LandingPage';
 import AboutPage from './pages/AboutPage';
 import Login from './pages/Login';
@@ -20,7 +22,8 @@ function AppRoutes() {
   const { user } = useAuth();
 
   return (
-    <Routes>
+    <ErrorBoundary>
+      <Routes>
       <Route path="/" element={<LandingPage />} />
       <Route path="/about" element={<AboutPage />} />
       <Route path="/login" element={!user ? <Login /> : <Navigate to={`/${user.role}-dashboard`} />} />
@@ -72,21 +75,26 @@ function AppRoutes() {
         path="/security-portal" 
         element={user && (user.role === 'security-personnel' || user.role === 'barangay-official' || user.role === 'super-admin') ? <SecurityPortal /> : <Navigate to="/login" />} 
       />
-    </Routes>
+      </Routes>
+    </ErrorBoundary>
   );
 }
 
 function App() {
   return (
-    <AuthProvider>
-      <DataProvider>
-        <Router>
-          <div className="App">
-            <AppRoutes />
-          </div>
-        </Router>
-      </DataProvider>
-    </AuthProvider>
+    <ErrorBoundary>
+      <NotificationProvider>
+        <AuthProvider>
+          <DataProvider>
+            <Router>
+              <div className="App">
+                <AppRoutes />
+              </div>
+            </Router>
+          </DataProvider>
+        </AuthProvider>
+      </NotificationProvider>
+    </ErrorBoundary>
   );
 }
 
