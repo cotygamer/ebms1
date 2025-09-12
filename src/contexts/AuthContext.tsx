@@ -4,7 +4,7 @@ export interface User {
   id: string;
   email: string;
   name: string;
-  role: 'super-admin' | 'barangay-official' | 'resident' | 'medical-portal' | 'accounting-portal' | 'disaster-portal';
+  role: 'super-admin' | 'barangay-official' | 'resident' | 'medical-portal' | 'accounting-portal' | 'disaster-portal' | 'business-owner' | 'security-personnel';
   verificationStatus?: 'non-verified' | 'semi-verified' | 'verified';
   qrCode?: string;
   familyTree?: any[];
@@ -57,6 +57,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         email: 'disaster@barangay.gov',
         name: 'Pedro Martinez',
         role: 'disaster-portal'
+      },
+      {
+        id: '7',
+        email: 'business@email.com',
+        name: 'Carlos Business Owner',
+        role: 'business-owner'
+      },
+      {
+        id: '8',
+        email: 'security@barangay.gov',
+        name: 'Roberto Security',
+        role: 'security-personnel'
       },
       {
         id: '2',

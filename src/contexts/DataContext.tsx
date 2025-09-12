@@ -68,7 +68,7 @@ interface User {
   id: string;
   name: string;
   email: string;
-  role: 'super-admin' | 'barangay-official' | 'resident' | 'medical-portal' | 'accounting-portal' | 'disaster-portal';
+  role: 'super-admin' | 'barangay-official' | 'resident' | 'medical-portal' | 'accounting-portal' | 'disaster-portal' | 'business-owner' | 'security-personnel';
   status: 'active' | 'inactive' | 'suspended';
   dateCreated: string;
   lastLogin: string;
@@ -189,6 +189,26 @@ export function DataProvider({ children }: { children: ReactNode }) {
       dateCreated: '2024-01-05',
       lastLogin: '2024-03-15 08:15 AM',
       permissions: ['disaster-management', 'emergency-alerts', 'evacuation']
+    },
+    {
+      id: '6',
+      name: 'Carlos Business Owner',
+      email: 'business@email.com',
+      role: 'business-owner',
+      status: 'active',
+      dateCreated: '2024-01-06',
+      lastLogin: '2024-03-15 08:00 AM',
+      permissions: ['business-permits', 'document-upload', 'payment-processing']
+    },
+    {
+      id: '7',
+      name: 'Roberto Security',
+      email: 'security@barangay.gov',
+      role: 'security-personnel',
+      status: 'active',
+      dateCreated: '2024-01-07',
+      lastLogin: '2024-03-15 07:45 AM',
+      permissions: ['incident-reports', 'blotter-entries', 'security-monitoring']
     }
   ]);
 

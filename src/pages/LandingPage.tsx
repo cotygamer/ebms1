@@ -28,7 +28,18 @@ import {
   TrendingUp,
   Target,
   Eye,
-  ChevronRight
+  ChevronRight,
+  Search,
+  Download,
+  ExternalLink,
+  Info,
+  Scale,
+  BookOpen,
+  Gavel,
+  Building,
+  Calculator,
+  Activity,
+  Briefcase
 } from 'lucide-react';
 
 export default function LandingPage() {
@@ -157,12 +168,25 @@ export default function LandingPage() {
   }, [systemSettings]);
 
   const [showContactForm, setShowContactForm] = useState(false);
+  const [showFOIForm, setShowFOIForm] = useState(false);
+  const [showTrackingWidget, setShowTrackingWidget] = useState(false);
+  const [trackingNumber, setTrackingNumber] = useState('');
   const [contactForm, setContactForm] = useState({
     firstName: '',
     lastName: '',
     email: '',
     subject: '',
     message: ''
+  });
+
+  const [foiRequest, setFoiRequest] = useState({
+    requestorName: '',
+    email: '',
+    address: '',
+    contactNumber: '',
+    informationRequested: '',
+    purpose: '',
+    preferredFormat: 'digital'
   });
 
   const handleContactSubmit = (e: React.FormEvent) => {
@@ -173,30 +197,71 @@ export default function LandingPage() {
     setShowContactForm(false);
   };
 
+  const handleFOISubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    // In a real app, this would submit the FOI request
+    alert('Your Freedom of Information request has been submitted. You will receive a tracking number via email.');
+    setFoiRequest({
+      requestorName: '',
+      email: '',
+      address: '',
+      contactNumber: '',
+      informationRequested: '',
+      purpose: '',
+      preferredFormat: 'digital'
+    });
+    setShowFOIForm(false);
+  };
+
+  const handleTrackApplication = () => {
+    if (trackingNumber) {
+      // Mock tracking result
+      alert(`Tracking ${trackingNumber}: Your application is currently being processed. Expected completion: 3-5 business days.`);
+    }
+  };
+
   const services = [
     {
       icon: FileText,
       title: 'Document Services',
       description: 'Barangay Clearance, Certificates, Business Permits',
-      features: ['Online Application', 'Fast Processing', 'Digital Copies']
+      features: ['Online Application', 'Fast Processing', 'Digital Copies'],
+      link: '/register'
     },
     {
       icon: Users,
       title: 'Resident Registration',
       description: 'Digital ID System with QR Code Verification',
-      features: ['Digital ID', 'QR Code', 'Family Tree']
+      features: ['Digital ID', 'QR Code', 'Family Tree'],
+      link: '/register'
+    },
+    {
+      icon: Building,
+      title: 'Business Services',
+      description: 'Business Permits and Commercial Registration',
+      features: ['Online Application', 'Document Upload', 'Payment Processing'],
+      link: '/business-portal'
     },
     {
       icon: Shield,
-      title: 'Security & Safety',
-      description: 'Community Safety and Emergency Response',
-      features: ['24/7 Monitoring', 'Emergency Alerts', 'Safety Programs']
+      title: 'Security Services',
+      description: 'Incident Reporting and Community Safety',
+      features: ['24/7 Reporting', 'Emergency Response', 'Safety Programs'],
+      link: '/security-portal'
     },
     {
       icon: Heart,
       title: 'Health Services',
       description: 'Community Health Programs and Medical Services',
-      features: ['Health Center', 'Medical Records', 'Vaccination Programs']
+      features: ['Health Center', 'Medical Records', 'Vaccination Programs'],
+      link: '/register'
+    },
+    {
+      icon: Calculator,
+      title: 'Financial Services',
+      description: 'Payment Processing and Financial Management',
+      features: ['Online Payments', 'Fee Calculator', 'Receipt Generation'],
+      link: '/register'
     }
   ];
 
@@ -244,7 +309,8 @@ export default function LandingPage() {
             
             <div className="hidden md:flex items-center space-x-8">
               <a href="#services" className="text-gray-600 hover:text-blue-600 transition-colors">Services</a>
-              <Link to="/about" className="text-gray-600 hover:text-blue-600 transition-colors">About</Link>
+              <Link to="/about" className="text-gray-600 hover:text-blue-600 transition-colors">About</a>
+              <a href="#transparency" className="text-gray-600 hover:text-blue-600 transition-colors">Transparency</a>
               <a href="#contact" className="text-gray-600 hover:text-blue-600 transition-colors">Contact</a>
               <Link
                 to="/login"
@@ -341,6 +407,40 @@ export default function LandingPage() {
         </div>
       </section>
 
+      {/* Application Tracking Widget */}
+      <section className="py-12 bg-white border-b">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="bg-gradient-to-r from-blue-600 to-blue-700 rounded-2xl p-8 text-white">
+            <div className="text-center mb-6">
+              <Search className="h-12 w-12 text-blue-200 mx-auto mb-4" />
+              <h2 className="text-2xl font-bold mb-2">Track Your Application</h2>
+              <p className="text-blue-200">Enter your tracking number to check the status of your application</p>
+            </div>
+            
+            <div className="max-w-md mx-auto">
+              <div className="flex space-x-3">
+                <input
+                  type="text"
+                  value={trackingNumber}
+                  onChange={(e) => setTrackingNumber(e.target.value)}
+                  placeholder="Enter tracking number (e.g., DOC-2024-001)"
+                  className="flex-1 px-4 py-3 rounded-lg text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-300"
+                />
+                <button
+                  onClick={handleTrackApplication}
+                  className="bg-white text-blue-600 px-6 py-3 rounded-lg hover:bg-blue-50 transition-colors font-medium"
+                >
+                  Track
+                </button>
+              </div>
+              <p className="text-blue-200 text-sm mt-2 text-center">
+                Don't have a tracking number? <Link to="/register" className="text-white underline">Apply for services here</Link>
+              </p>
+            </div>
+          </div>
+        </div>
+      </section>
+
       {/* Alerts/Warnings Section */}
       {alerts.length > 0 && (
         <section className="py-12 bg-red-50">
@@ -370,6 +470,82 @@ export default function LandingPage() {
           </div>
         </section>
       )}
+
+      {/* Government Transparency Section */}
+      <section id="transparency" className="py-16 bg-gray-50">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center mb-12">
+            <h2 className="text-3xl font-bold text-gray-900 mb-4 flex items-center justify-center">
+              <Scale className="h-8 w-8 text-blue-600 mr-3" />
+              Transparency & Accountability
+            </h2>
+            <p className="text-xl text-gray-600">
+              Committed to open governance and public transparency
+            </p>
+          </div>
+          
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+            {/* Transparency Seal */}
+            <div className="bg-white rounded-2xl shadow-lg p-6 text-center hover:shadow-xl transition-shadow">
+              <div className="bg-blue-100 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
+                <Award className="h-8 w-8 text-blue-600" />
+              </div>
+              <h3 className="text-lg font-semibold text-gray-900 mb-3">Transparency Seal</h3>
+              <p className="text-gray-600 text-sm mb-4">
+                Certified transparent and accountable local government unit
+              </p>
+              <button className="text-blue-600 hover:text-blue-800 text-sm font-medium flex items-center mx-auto">
+                View Certificate <ExternalLink className="h-4 w-4 ml-1" />
+              </button>
+            </div>
+
+            {/* Citizen's Charter */}
+            <div className="bg-white rounded-2xl shadow-lg p-6 text-center hover:shadow-xl transition-shadow">
+              <div className="bg-green-100 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
+                <BookOpen className="h-8 w-8 text-green-600" />
+              </div>
+              <h3 className="text-lg font-semibold text-gray-900 mb-3">Citizen's Charter</h3>
+              <p className="text-gray-600 text-sm mb-4">
+                Our commitment to quality public service delivery
+              </p>
+              <button className="text-green-600 hover:text-green-800 text-sm font-medium flex items-center mx-auto">
+                Download PDF <Download className="h-4 w-4 ml-1" />
+              </button>
+            </div>
+
+            {/* Freedom of Information */}
+            <div className="bg-white rounded-2xl shadow-lg p-6 text-center hover:shadow-xl transition-shadow">
+              <div className="bg-purple-100 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
+                <Info className="h-8 w-8 text-purple-600" />
+              </div>
+              <h3 className="text-lg font-semibold text-gray-900 mb-3">Freedom of Information</h3>
+              <p className="text-gray-600 text-sm mb-4">
+                Request access to public information and government data
+              </p>
+              <button 
+                onClick={() => setShowFOIForm(true)}
+                className="text-purple-600 hover:text-purple-800 text-sm font-medium flex items-center mx-auto"
+              >
+                Submit Request <ArrowRight className="h-4 w-4 ml-1" />
+              </button>
+            </div>
+
+            {/* Legal Framework */}
+            <div className="bg-white rounded-2xl shadow-lg p-6 text-center hover:shadow-xl transition-shadow">
+              <div className="bg-orange-100 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
+                <Gavel className="h-8 w-8 text-orange-600" />
+              </div>
+              <h3 className="text-lg font-semibold text-gray-900 mb-3">Legal Framework</h3>
+              <p className="text-gray-600 text-sm mb-4">
+                Laws, ordinances, and regulations governing our barangay
+              </p>
+              <button className="text-orange-600 hover:text-orange-800 text-sm font-medium flex items-center mx-auto">
+                View Documents <ExternalLink className="h-4 w-4 ml-1" />
+              </button>
+            </div>
+          </div>
+        </div>
+      </section>
 
       {/* Announcements Section */}
       <section className="py-16 bg-blue-50">
@@ -511,59 +687,42 @@ export default function LandingPage() {
       </section>
 
       {/* Quick Services Section */}
-      <section className="py-16 bg-gray-50">
+      <section id="services" className="py-20 bg-gray-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-12">
-            <h2 className="text-3xl font-bold text-gray-900 mb-4">Quick Services</h2>
-            <p className="text-xl text-gray-600">
-              Access our most popular services quickly and easily
+          <div className="text-center mb-16">
+            <h2 className="text-3xl font-bold text-gray-900 mb-4">Our Services</h2>
+            <p className="text-xl text-gray-600 max-w-3xl mx-auto">
+              Comprehensive digital services designed to make your barangay transactions faster, 
+              easier, and more convenient than ever before.
             </p>
           </div>
           
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-            <Link
-              to="/register"
-              className="bg-white p-6 rounded-2xl shadow-sm hover:shadow-lg transition-shadow text-center group"
-            >
-              <div className="bg-blue-100 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4 group-hover:bg-blue-200 transition-colors">
-                <FileText className="h-8 w-8 text-blue-600" />
-              </div>
-              <h3 className="text-lg font-semibold text-gray-900 mb-2">Document Request</h3>
-              <p className="text-gray-600 text-sm">Apply for barangay clearance, certificates, and permits online</p>
-            </Link>
-            
-            <Link
-              to="/register"
-              className="bg-white p-6 rounded-2xl shadow-sm hover:shadow-lg transition-shadow text-center group"
-            >
-              <div className="bg-green-100 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4 group-hover:bg-green-200 transition-colors">
-                <Users className="h-8 w-8 text-green-600" />
-              </div>
-              <h3 className="text-lg font-semibold text-gray-900 mb-2">Resident Registration</h3>
-              <p className="text-gray-600 text-sm">Register as a resident and get your digital ID with QR code</p>
-            </Link>
-            
-            <Link
-              to="/register"
-              className="bg-white p-6 rounded-2xl shadow-sm hover:shadow-lg transition-shadow text-center group"
-            >
-              <div className="bg-purple-100 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4 group-hover:bg-purple-200 transition-colors">
-                <Calendar className="h-8 w-8 text-purple-600" />
-              </div>
-              <h3 className="text-lg font-semibold text-gray-900 mb-2">Schedule Appointment</h3>
-              <p className="text-gray-600 text-sm">Book appointments for consultations and services</p>
-            </Link>
-            
-            <Link
-              to="/register"
-              className="bg-white p-6 rounded-2xl shadow-sm hover:shadow-lg transition-shadow text-center group"
-            >
-              <div className="bg-red-100 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4 group-hover:bg-red-200 transition-colors">
-                <Heart className="h-8 w-8 text-red-600" />
-              </div>
-              <h3 className="text-lg font-semibold text-gray-900 mb-2">Health Services</h3>
-              <p className="text-gray-600 text-sm">Access health programs and medical assistance</p>
-            </Link>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+            {services.map((service, index) => (
+              <Link
+                key={index}
+                to={service.link}
+                className="bg-white rounded-2xl shadow-lg p-8 hover:shadow-xl transition-shadow group"
+              >
+                <div className="bg-blue-100 w-16 h-16 rounded-full flex items-center justify-center mb-6 group-hover:bg-blue-200 transition-colors">
+                  <service.icon className="h-8 w-8 text-blue-600" />
+                </div>
+                <h3 className="text-xl font-semibold text-gray-900 mb-3">{service.title}</h3>
+                <p className="text-gray-600 mb-4">{service.description}</p>
+                <ul className="space-y-2">
+                  {service.features.map((feature, idx) => (
+                    <li key={idx} className="flex items-center text-sm text-gray-600">
+                      <CheckCircle className="h-4 w-4 text-green-500 mr-2" />
+                      {feature}
+                    </li>
+                  ))}
+                </ul>
+                <div className="mt-4 flex items-center text-blue-600 group-hover:text-blue-800">
+                  <span className="text-sm font-medium">Access Service</span>
+                  <ArrowRight className="h-4 w-4 ml-1 group-hover:translate-x-1 transition-transform" />
+                </div>
+              </Link>
+            ))}
           </div>
         </div>
       </section>
@@ -585,41 +744,8 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* Services Section */}
-      <section id="services" className="py-20 bg-gray-50">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-16">
-            <h2 className="text-3xl font-bold text-gray-900 mb-4">Our Services</h2>
-            <p className="text-xl text-gray-600 max-w-3xl mx-auto">
-              Comprehensive digital services designed to make your barangay transactions faster, 
-              easier, and more convenient than ever before.
-            </p>
-          </div>
-          
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
-            {services.map((service, index) => (
-              <div key={index} className="bg-white rounded-2xl shadow-lg p-8 hover:shadow-xl transition-shadow">
-                <div className="bg-blue-100 w-16 h-16 rounded-full flex items-center justify-center mb-6">
-                  <service.icon className="h-8 w-8 text-blue-600" />
-                </div>
-                <h3 className="text-xl font-semibold text-gray-900 mb-3">{service.title}</h3>
-                <p className="text-gray-600 mb-4">{service.description}</p>
-                <ul className="space-y-2">
-                  {service.features.map((feature, idx) => (
-                    <li key={idx} className="flex items-center text-sm text-gray-600">
-                      <CheckCircle className="h-4 w-4 text-green-500 mr-2" />
-                      {feature}
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
       {/* Testimonials Section */}
-      <section className="py-20 bg-white">
+      <section className="py-20 bg-gray-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-16">
             <h2 className="text-3xl font-bold text-gray-900 mb-4">What Our Residents Say</h2>
@@ -630,7 +756,7 @@ export default function LandingPage() {
           
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
             {testimonials.map((testimonial, index) => (
-              <div key={index} className="bg-gray-50 rounded-2xl p-8">
+              <div key={index} className="bg-white rounded-2xl shadow-lg p-8">
                 <div className="flex items-center space-x-1 mb-4">
                   {[1, 2, 3, 4, 5].map((star) => (
                     <Star key={star} className="h-5 w-5 text-yellow-400 fill-current" />
@@ -819,6 +945,7 @@ export default function LandingPage() {
               <ul className="space-y-2">
                 <li><a href="#services" className="text-gray-400 hover:text-white transition-colors">Services</a></li>
                 <li><Link to="/about" className="text-gray-400 hover:text-white transition-colors">About Us</Link></li>
+                <li><a href="#transparency" className="text-gray-400 hover:text-white transition-colors">Transparency</a></li>
                 <li><a href="#contact" className="text-gray-400 hover:text-white transition-colors">Contact</a></li>
                 <li><Link to="/register" className="text-gray-400 hover:text-white transition-colors">Register</Link></li>
               </ul>
@@ -831,6 +958,8 @@ export default function LandingPage() {
                 <li><span className="text-gray-400">Business Permits</span></li>
                 <li><span className="text-gray-400">Certificates</span></li>
                 <li><span className="text-gray-400">Digital ID</span></li>
+                <li><span className="text-gray-400">Security Services</span></li>
+                <li><span className="text-gray-400">Health Services</span></li>
               </ul>
             </div>
           </div>
@@ -843,6 +972,131 @@ export default function LandingPage() {
           </div>
         </div>
       </footer>
+
+      {/* FOI Request Modal */}
+      {showFOIForm && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+          <div className="bg-white rounded-2xl max-w-2xl w-full p-8 max-h-[90vh] overflow-y-auto">
+            <div className="flex items-center justify-between mb-6">
+              <h3 className="text-2xl font-bold text-gray-900">Freedom of Information Request</h3>
+              <button
+                onClick={() => setShowFOIForm(false)}
+                className="text-gray-400 hover:text-gray-600"
+              >
+                ✕
+              </button>
+            </div>
+            
+            <form onSubmit={handleFOISubmit} className="space-y-6">
+              <div className="bg-purple-50 p-4 rounded-lg">
+                <h4 className="font-semibold text-purple-800 mb-2">About FOI Requests</h4>
+                <p className="text-purple-700 text-sm">
+                  The Freedom of Information Act ensures your right to access government information. 
+                  We are committed to transparency and will process your request within 15 working days.
+                </p>
+              </div>
+              
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Full Name</label>
+                  <input
+                    type="text"
+                    value={foiRequest.requestorName}
+                    onChange={(e) => setFoiRequest({ ...foiRequest, requestorName: e.target.value })}
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
+                    required
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Email Address</label>
+                  <input
+                    type="email"
+                    value={foiRequest.email}
+                    onChange={(e) => setFoiRequest({ ...foiRequest, email: e.target.value })}
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
+                    required
+                  />
+                </div>
+              </div>
+              
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Address</label>
+                <input
+                  type="text"
+                  value={foiRequest.address}
+                  onChange={(e) => setFoiRequest({ ...foiRequest, address: e.target.value })}
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
+                  required
+                />
+              </div>
+              
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Contact Number</label>
+                <input
+                  type="tel"
+                  value={foiRequest.contactNumber}
+                  onChange={(e) => setFoiRequest({ ...foiRequest, contactNumber: e.target.value })}
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
+                  required
+                />
+              </div>
+              
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Information Requested</label>
+                <textarea
+                  value={foiRequest.informationRequested}
+                  onChange={(e) => setFoiRequest({ ...foiRequest, informationRequested: e.target.value })}
+                  rows={4}
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
+                  placeholder="Please describe the specific information you are requesting..."
+                  required
+                />
+              </div>
+              
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Purpose of Request</label>
+                <textarea
+                  value={foiRequest.purpose}
+                  onChange={(e) => setFoiRequest({ ...foiRequest, purpose: e.target.value })}
+                  rows={3}
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
+                  placeholder="Please explain why you need this information..."
+                  required
+                />
+              </div>
+              
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Preferred Format</label>
+                <select
+                  value={foiRequest.preferredFormat}
+                  onChange={(e) => setFoiRequest({ ...foiRequest, preferredFormat: e.target.value })}
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
+                >
+                  <option value="digital">Digital Copy (Email)</option>
+                  <option value="physical">Physical Copy (Pickup)</option>
+                  <option value="both">Both Digital and Physical</option>
+                </select>
+              </div>
+              
+              <div className="flex space-x-3">
+                <button
+                  type="button"
+                  onClick={() => setShowFOIForm(false)}
+                  className="flex-1 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="flex-1 bg-purple-600 text-white py-2 rounded-lg hover:bg-purple-700 transition-colors"
+                >
+                  Submit Request
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
 
       {/* Contact Form Modal */}
       {showContactForm && (
