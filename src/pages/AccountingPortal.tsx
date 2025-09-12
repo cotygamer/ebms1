@@ -1,12 +1,14 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Calculator, DollarSign, FileText, TrendingUp, ArrowLeft, PieChart, Bell, Plus, LogOut, Receipt, CreditCard, Banknote, Target, BarChart3, Wallet } from 'lucide-react';
+import { Calculator, DollarSign, FileText, TrendingUp, ArrowLeft, PieChart, Bell, Plus, LogOut, Receipt, CreditCard, Banknote, Target, BarChart3, Wallet, Activity, Users, Clock, AlertTriangle, CheckCircle, Eye, Edit, Trash2, X, Save, Filter, Search, Download } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 
 export default function AccountingPortal() {
   const [activeTab, setActiveTab] = useState('overview');
   const { user, logout } = useAuth();
   const navigate = useNavigate();
+  const [showTransactionForm, setShowTransactionForm] = useState(false);
+  const [showAnnouncementForm, setShowAnnouncementForm] = useState(false);
 
   const handleLogout = () => {
     logout();
@@ -24,36 +26,40 @@ export default function AccountingPortal() {
   ];
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <header className="bg-white shadow-sm border-b">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between py-4">
+    <div className="min-h-screen bg-gradient-to-br from-green-50 to-emerald-50">
+      {/* Header */}
+      <div className="bg-gradient-to-r from-green-600 to-green-700 text-white shadow-lg">
+        <div className="max-w-7xl mx-auto">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between p-6 space-y-4 sm:space-y-0">
             <div className="flex items-center space-x-4">
               {user?.role === 'barangay-official' && (
                 <Link
                   to="/barangay-official-dashboard"
-                  className="text-gray-500 hover:text-gray-700 flex items-center"
+                  className="text-green-200 hover:text-white flex items-center"
                 >
                   <ArrowLeft className="h-6 w-6" />
                   <span className="ml-2 hidden sm:inline">Back</span>
                 </Link>
               )}
-              <div className="flex items-center space-x-3">
-                <Calculator className="h-8 w-8 text-green-600" />
-                <div>
-                  <h1 className="text-xl sm:text-2xl font-semibold text-gray-900">Accounting Portal</h1>
-                  <p className="text-sm text-gray-600">Financial Management System</p>
-                </div>
+              <div>
+                <h1 className="text-2xl sm:text-3xl font-bold flex items-center">
+                  <Calculator className="mr-3 h-8 w-8" />
+                  Accounting Portal
+                </h1>
+                <p className="text-green-100 mt-2 text-sm sm:text-base">Financial Management System</p>
               </div>
             </div>
-            <div className="flex items-center space-x-4">
-              <span className="hidden sm:block text-gray-600">Welcome, {user?.name}</span>
-              <div className="w-8 h-8 bg-green-600 rounded-full flex items-center justify-center text-white font-semibold">
-                {user?.name?.charAt(0)}
+            <div className="flex items-center space-x-2 sm:space-x-4">
+              <div className="text-right hidden sm:block">
+                <p className="text-green-100 text-sm">Welcome, {user?.name}</p>
+                <p className="text-xs text-green-200 capitalize">{user?.role?.replace('-', ' ')}</p>
+              </div>
+              <div className="w-10 h-10 bg-green-500 rounded-full flex items-center justify-center">
+                <Calculator className="h-5 w-5 text-white" />
               </div>
               <button
                 onClick={handleLogout}
-                className="flex items-center px-3 py-2 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-colors"
+                className="flex items-center px-3 py-2 text-green-200 hover:text-white hover:bg-green-700 rounded-lg transition-colors"
                 title="Logout"
               >
                 <LogOut className="h-5 w-5" />
@@ -61,50 +67,122 @@ export default function AccountingPortal() {
             </div>
           </div>
         </div>
-      </header>
+      </div>
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="flex flex-col lg:flex-row gap-8">
-          {/* Sidebar */}
-          <div className="lg:w-64">
-            <nav className="space-y-2">
-              {tabs.map((tab) => {
-                const Icon = tab.icon;
-                return (
-                  <button
-                    key={tab.id}
-                    onClick={() => setActiveTab(tab.id)}
-                    className={`w-full flex items-center px-4 py-3 text-left rounded-lg transition-colors ${
-                      activeTab === tab.id
-                        ? 'bg-green-100 text-green-700 border-l-4 border-green-600'
-                        : 'text-gray-600 hover:bg-gray-100'
-                    }`}
-                  >
-                    <Icon className="h-5 w-5 mr-3" />
-                    <span className="font-medium">{tab.label}</span>
-                  </button>
-                );
-              })}
-            </nav>
-          </div>
-
-          {/* Main Content */}
-          <div className="flex-1">
-            {activeTab === 'overview' && <AccountingOverview />}
-            {activeTab === 'transactions' && <TransactionManagement />}
-            {activeTab === 'revenue' && <RevenueManagement />}
-            {activeTab === 'expenses' && <ExpenseManagement />}
-            {activeTab === 'budget' && <BudgetPlanning />}
-            {activeTab === 'reports' && <FinancialReports />}
-            {activeTab === 'announcements' && <FinancialAnnouncements />}
-          </div>
+      {/* Navigation Tabs */}
+      <div className="bg-white border-b shadow-sm">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <nav className="flex space-x-8 overflow-x-auto">
+            {tabs.map((tab) => (
+              <button
+                key={tab.id}
+                onClick={() => setActiveTab(tab.id)}
+                className={`flex items-center px-3 py-4 text-sm font-medium border-b-2 whitespace-nowrap ${
+                  activeTab === tab.id
+                    ? 'border-green-500 text-green-600'
+                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                }`}
+              >
+                <tab.icon className="h-4 w-4 mr-2" />
+                {tab.label}
+              </button>
+            ))}
+          </nav>
         </div>
       </div>
+
+      {/* Main Content */}
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        {activeTab === 'overview' && <AccountingOverview setShowTransactionForm={setShowTransactionForm} />}
+        {activeTab === 'transactions' && <TransactionManagement setShowTransactionForm={setShowTransactionForm} />}
+        {activeTab === 'revenue' && <RevenueManagement />}
+        {activeTab === 'expenses' && <ExpenseManagement />}
+        {activeTab === 'budget' && <BudgetPlanning />}
+        {activeTab === 'reports' && <FinancialReports />}
+        {activeTab === 'announcements' && <FinancialAnnouncements setShowAnnouncementForm={setShowAnnouncementForm} />}
+      </div>
+
+      {/* Transaction Form Modal */}
+      {showTransactionForm && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-lg p-6 w-full max-w-md max-h-[90vh] overflow-y-auto">
+            <div className="flex items-center justify-between mb-6">
+              <h3 className="text-lg font-semibold">Add New Transaction</h3>
+              <button
+                onClick={() => setShowTransactionForm(false)}
+                className="text-gray-400 hover:text-gray-600"
+              >
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+            
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Type</label>
+                <select className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500">
+                  <option value="">Select type</option>
+                  <option value="revenue">Revenue</option>
+                  <option value="expense">Expense</option>
+                </select>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Description</label>
+                <input
+                  type="text"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500"
+                  placeholder="Enter description"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Amount (₱)</label>
+                <input
+                  type="number"
+                  step="0.01"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500"
+                  placeholder="0.00"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Category</label>
+                <select className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500">
+                  <option value="">Select category</option>
+                  <option value="document-fees">Document Fees</option>
+                  <option value="permits">Permits</option>
+                  <option value="operations">Operations</option>
+                  <option value="utilities">Utilities</option>
+                </select>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Payment Method</label>
+                <select className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500">
+                  <option value="">Select method</option>
+                  <option value="cash">Cash</option>
+                  <option value="gcash">GCash</option>
+                  <option value="maya">Maya</option>
+                  <option value="bank-transfer">Bank Transfer</option>
+                </select>
+              </div>
+            </div>
+            
+            <div className="flex justify-end space-x-3 mt-6">
+              <button
+                onClick={() => setShowTransactionForm(false)}
+                className="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50"
+              >
+                Cancel
+              </button>
+              <button className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700">
+                Add Transaction
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
 
-function AccountingOverview() {
+function AccountingOverview({ setShowTransactionForm }: { setShowTransactionForm: (show: boolean) => void }) {
   const [selectedPeriod, setSelectedPeriod] = useState('monthly');
 
   const financialData = {
@@ -125,70 +203,120 @@ function AccountingOverview() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <h2 className="text-2xl font-bold text-gray-900">Financial Overview</h2>
-        <select
-          value={selectedPeriod}
-          onChange={(e) => setSelectedPeriod(e.target.value)}
-          className="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
-        >
-          <option value="weekly">This Week</option>
-          <option value="monthly">This Month</option>
-          <option value="quarterly">This Quarter</option>
-          <option value="yearly">This Year</option>
-        </select>
+        <div className="flex items-center space-x-4">
+          <select
+            value={selectedPeriod}
+            onChange={(e) => setSelectedPeriod(e.target.value)}
+            className="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
+          >
+            <option value="weekly">This Week</option>
+            <option value="monthly">This Month</option>
+            <option value="quarterly">This Quarter</option>
+            <option value="yearly">This Year</option>
+          </select>
+          <button
+            onClick={() => setShowTransactionForm(true)}
+            className="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 flex items-center"
+          >
+            <Plus className="h-4 w-4 mr-2" />
+            Add Transaction
+          </button>
+        </div>
       </div>
 
       {/* Financial Summary Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        <div className="bg-white p-6 rounded-lg shadow-sm border">
+        <div className="bg-white p-6 rounded-lg shadow-sm border border-l-4 border-l-green-500">
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm font-medium text-gray-600">Total Revenue</p>
               <p className="text-2xl font-bold text-green-600">
                 ₱{financialData.totalRevenue.toLocaleString()}
               </p>
+              <p className="text-sm text-green-600 mt-1">+12% from last month</p>
             </div>
             <DollarSign className="h-8 w-8 text-green-600" />
           </div>
-          <p className="text-sm text-gray-500 mt-2">+12% from last month</p>
         </div>
 
-        <div className="bg-white p-6 rounded-lg shadow-sm border">
+        <div className="bg-white p-6 rounded-lg shadow-sm border border-l-4 border-l-red-500">
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm font-medium text-gray-600">Total Expenses</p>
               <p className="text-2xl font-bold text-red-600">
                 ₱{financialData.totalExpenses.toLocaleString()}
               </p>
+              <p className="text-sm text-red-600 mt-1">-5% from last month</p>
             </div>
             <Calculator className="h-8 w-8 text-red-600" />
           </div>
-          <p className="text-sm text-gray-500 mt-2">-5% from last month</p>
         </div>
 
-        <div className="bg-white p-6 rounded-lg shadow-sm border">
+        <div className="bg-white p-6 rounded-lg shadow-sm border border-l-4 border-l-blue-500">
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm font-medium text-gray-600">Net Income</p>
               <p className="text-2xl font-bold text-blue-600">
                 ₱{financialData.netIncome.toLocaleString()}
               </p>
+              <p className="text-sm text-blue-600 mt-1">+8% from last month</p>
             </div>
             <TrendingUp className="h-8 w-8 text-blue-600" />
           </div>
-          <p className="text-sm text-gray-500 mt-2">+8% from last month</p>
         </div>
 
-        <div className="bg-white p-6 rounded-lg shadow-sm border">
+        <div className="bg-white p-6 rounded-lg shadow-sm border border-l-4 border-l-orange-500">
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm font-medium text-gray-600">Pending Payments</p>
               <p className="text-2xl font-bold text-orange-600">
                 ₱{financialData.pendingPayments.toLocaleString()}
               </p>
+              <p className="text-sm text-orange-600 mt-1">3 pending invoices</p>
             </div>
-            <FileText className="h-8 w-8 text-orange-600" />
+            <Clock className="h-8 w-8 text-orange-600" />
           </div>
-          <p className="text-sm text-gray-500 mt-2">3 pending invoices</p>
+        </div>
+      </div>
+
+      {/* Quick Actions */}
+      <div className="bg-white rounded-lg shadow-sm p-6">
+        <h3 className="text-lg font-semibold text-gray-900 mb-4">Quick Actions</h3>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+          <button
+            onClick={() => setShowTransactionForm(true)}
+            className="flex items-center p-4 bg-green-50 rounded-lg hover:bg-green-100 transition-colors"
+          >
+            <Receipt className="h-8 w-8 text-green-600 mr-3" />
+            <div className="text-left">
+              <h4 className="font-semibold text-gray-900">Add Transaction</h4>
+              <p className="text-sm text-gray-600">Record new transaction</p>
+            </div>
+          </button>
+          
+          <button className="flex items-center p-4 bg-blue-50 rounded-lg hover:bg-blue-100 transition-colors">
+            <FileText className="h-8 w-8 text-blue-600 mr-3" />
+            <div className="text-left">
+              <h4 className="font-semibold text-gray-900">Generate Report</h4>
+              <p className="text-sm text-gray-600">Financial reports</p>
+            </div>
+          </button>
+          
+          <button className="flex items-center p-4 bg-purple-50 rounded-lg hover:bg-purple-100 transition-colors">
+            <Target className="h-8 w-8 text-purple-600 mr-3" />
+            <div className="text-left">
+              <h4 className="font-semibold text-gray-900">Budget Planning</h4>
+              <p className="text-sm text-gray-600">Manage budgets</p>
+            </div>
+          </button>
+          
+          <button className="flex items-center p-4 bg-yellow-50 rounded-lg hover:bg-yellow-100 transition-colors">
+            <Bell className="h-8 w-8 text-yellow-600 mr-3" />
+            <div className="text-left">
+              <h4 className="font-semibold text-gray-900">Announcements</h4>
+              <p className="text-sm text-gray-600">Financial updates</p>
+            </div>
+          </button>
         </div>
       </div>
 
@@ -196,17 +324,21 @@ function AccountingOverview() {
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <div className="bg-white p-6 rounded-lg shadow-sm border">
           <h3 className="text-lg font-semibold text-gray-900 mb-4">Revenue vs Expenses</h3>
-          <div className="h-64 flex items-center justify-center text-gray-500">
-            <PieChart className="h-16 w-16" />
-            <span className="ml-2">Chart visualization would go here</span>
+          <div className="h-64 flex items-center justify-center text-gray-500 bg-gray-50 rounded-lg">
+            <div className="text-center">
+              <PieChart className="h-16 w-16 mx-auto mb-2" />
+              <span>Chart visualization would go here</span>
+            </div>
           </div>
         </div>
 
         <div className="bg-white p-6 rounded-lg shadow-sm border">
           <h3 className="text-lg font-semibold text-gray-900 mb-4">Monthly Trends</h3>
-          <div className="h-64 flex items-center justify-center text-gray-500">
-            <TrendingUp className="h-16 w-16" />
-            <span className="ml-2">Trend chart would go here</span>
+          <div className="h-64 flex items-center justify-center text-gray-500 bg-gray-50 rounded-lg">
+            <div className="text-center">
+              <TrendingUp className="h-16 w-16 mx-auto mb-2" />
+              <span>Trend chart would go here</span>
+            </div>
           </div>
         </div>
       </div>
@@ -231,14 +363,14 @@ function AccountingOverview() {
                 </div>
                 <div>
                   <p className="font-medium text-gray-900">{transaction.description}</p>
-                  <p className="text-sm text-gray-500">{transaction.date}</p>
+                  <p className="text-sm text-gray-500">{transaction.date} • {transaction.category}</p>
                 </div>
               </div>
               <div className="text-right">
                 <p className={`font-semibold ${
                   transaction.amount > 0 ? 'text-green-600' : 'text-red-600'
                 }`}>
-                  ₱{Math.abs(transaction.amount).toLocaleString()}
+                  {transaction.amount > 0 ? '+' : ''}₱{Math.abs(transaction.amount).toLocaleString()}
                 </p>
                 <p className="text-sm text-gray-500">{transaction.type}</p>
               </div>
@@ -250,7 +382,7 @@ function AccountingOverview() {
   );
 }
 
-function TransactionManagement() {
+function TransactionManagement({ setShowTransactionForm }: { setShowTransactionForm: (show: boolean) => void }) {
   const [transactions] = useState([
     { id: 1, date: '2024-03-15', description: 'Barangay Clearance - Juan Dela Cruz', type: 'Revenue', amount: 50, category: 'Document Fees', method: 'GCash' },
     { id: 2, date: '2024-03-15', description: 'Office Supplies Purchase', type: 'Expense', amount: -2500, category: 'Operations', method: 'Cash' },
@@ -263,13 +395,17 @@ function TransactionManagement() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <h2 className="text-2xl font-bold text-gray-900">Transaction Management</h2>
-        <button className="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700">
+        <button 
+          onClick={() => setShowTransactionForm(true)}
+          className="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 flex items-center"
+        >
+          <Plus className="h-4 w-4 mr-2" />
           Add Transaction
         </button>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-        <div className="bg-white p-6 rounded-lg shadow-sm border">
+        <div className="bg-white p-6 rounded-lg shadow-sm border border-l-4 border-l-green-500">
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm font-medium text-gray-600">Today's Revenue</p>
@@ -279,7 +415,7 @@ function TransactionManagement() {
           </div>
         </div>
 
-        <div className="bg-white p-6 rounded-lg shadow-sm border">
+        <div className="bg-white p-6 rounded-lg shadow-sm border border-l-4 border-l-red-500">
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm font-medium text-gray-600">Today's Expenses</p>
@@ -289,7 +425,7 @@ function TransactionManagement() {
           </div>
         </div>
 
-        <div className="bg-white p-6 rounded-lg shadow-sm border">
+        <div className="bg-white p-6 rounded-lg shadow-sm border border-l-4 border-l-blue-500">
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm font-medium text-gray-600">Transactions</p>
@@ -299,7 +435,7 @@ function TransactionManagement() {
           </div>
         </div>
 
-        <div className="bg-white p-6 rounded-lg shadow-sm border">
+        <div className="bg-white p-6 rounded-lg shadow-sm border border-l-4 border-l-purple-500">
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm font-medium text-gray-600">Net Flow</p>
@@ -310,7 +446,30 @@ function TransactionManagement() {
         </div>
       </div>
 
-      <div className="bg-white rounded-lg shadow-sm border overflow-hidden">
+      <div className="bg-white rounded-lg shadow-sm border">
+        <div className="p-6 border-b">
+          <div className="flex flex-col sm:flex-row gap-4">
+            <div className="flex-1">
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
+                <input
+                  type="text"
+                  placeholder="Search transactions..."
+                  className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                />
+              </div>
+            </div>
+            <button className="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 flex items-center">
+              <Filter className="h-4 w-4 mr-2" />
+              Filter
+            </button>
+            <button className="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 flex items-center">
+              <Download className="h-4 w-4 mr-2" />
+              Export
+            </button>
+          </div>
+        </div>
+        
         <div className="overflow-x-auto">
           <table className="min-w-full divide-y divide-gray-200">
             <thead className="bg-gray-50">
@@ -325,19 +484,26 @@ function TransactionManagement() {
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
               {transactions.map((transaction) => (
-                <tr key={transaction.id}>
+                <tr key={transaction.id} className="hover:bg-gray-50">
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{transaction.date}</td>
                   <td className="px-6 py-4 text-sm text-gray-900">{transaction.description}</td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{transaction.category}</td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{transaction.method}</td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
                     <span className={transaction.amount > 0 ? 'text-green-600' : 'text-red-600'}>
-                      ₱{Math.abs(transaction.amount).toLocaleString()}
+                      {transaction.amount > 0 ? '+' : ''}₱{Math.abs(transaction.amount).toLocaleString()}
                     </span>
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                    <button className="text-blue-600 hover:text-blue-900 mr-3">Edit</button>
-                    <button className="text-red-600 hover:text-red-900">Delete</button>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm font-medium space-x-2">
+                    <button className="text-blue-600 hover:text-blue-900">
+                      <Eye className="h-4 w-4" />
+                    </button>
+                    <button className="text-green-600 hover:text-green-900">
+                      <Edit className="h-4 w-4" />
+                    </button>
+                    <button className="text-red-600 hover:text-red-900">
+                      <Trash2 className="h-4 w-4" />
+                    </button>
                   </td>
                 </tr>
               ))}
@@ -351,19 +517,55 @@ function TransactionManagement() {
 
 function RevenueManagement() {
   const [revenueData] = useState([
-    { id: 1, source: 'Barangay Clearance', amount: 45000, month: 'March 2024', status: 'Collected' },
-    { id: 2, source: 'Business Permits', amount: 125000, month: 'March 2024', status: 'Collected' },
-    { id: 3, source: 'Cedula', amount: 15000, month: 'March 2024', status: 'Pending' },
-    { id: 4, source: 'Community Tax', amount: 35000, month: 'March 2024', status: 'Collected' },
+    { id: 1, source: 'Barangay Clearance', amount: 45000, month: 'March 2024', status: 'Collected', transactions: 900 },
+    { id: 2, source: 'Business Permits', amount: 125000, month: 'March 2024', status: 'Collected', transactions: 104 },
+    { id: 3, source: 'Cedula', amount: 15000, month: 'March 2024', status: 'Pending', transactions: 500 },
+    { id: 4, source: 'Community Tax', amount: 35000, month: 'March 2024', status: 'Collected', transactions: 350 },
   ]);
 
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <h2 className="text-2xl font-bold text-gray-900">Revenue Management</h2>
-        <button className="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700">
+        <button className="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 flex items-center">
+          <Plus className="h-4 w-4 mr-2" />
           Add Revenue Entry
         </button>
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div className="bg-white p-6 rounded-lg shadow-sm border border-l-4 border-l-green-500">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm font-medium text-gray-600">Total Revenue</p>
+              <p className="text-2xl font-bold text-green-600">₱220,000</p>
+              <p className="text-sm text-green-600 mt-1">+15% from last month</p>
+            </div>
+            <DollarSign className="h-8 w-8 text-green-600" />
+          </div>
+        </div>
+
+        <div className="bg-white p-6 rounded-lg shadow-sm border border-l-4 border-l-blue-500">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm font-medium text-gray-600">Transactions</p>
+              <p className="text-2xl font-bold text-blue-600">1,854</p>
+              <p className="text-sm text-blue-600 mt-1">+8% from last month</p>
+            </div>
+            <Receipt className="h-8 w-8 text-blue-600" />
+          </div>
+        </div>
+
+        <div className="bg-white p-6 rounded-lg shadow-sm border border-l-4 border-l-yellow-500">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm font-medium text-gray-600">Avg. per Transaction</p>
+              <p className="text-2xl font-bold text-yellow-600">₱119</p>
+              <p className="text-sm text-yellow-600 mt-1">+6% from last month</p>
+            </div>
+            <BarChart3 className="h-8 w-8 text-yellow-600" />
+          </div>
+        </div>
       </div>
 
       <div className="bg-white rounded-lg shadow-sm border overflow-hidden">
@@ -378,6 +580,9 @@ function RevenueManagement() {
                   Amount
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Transactions
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Period
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
@@ -390,12 +595,15 @@ function RevenueManagement() {
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
               {revenueData.map((item) => (
-                <tr key={item.id}>
+                <tr key={item.id} className="hover:bg-gray-50">
                   <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
                     {item.source}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                     ₱{item.amount.toLocaleString()}
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                    {item.transactions.toLocaleString()}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                     {item.month}
@@ -409,9 +617,16 @@ function RevenueManagement() {
                       {item.status}
                     </span>
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                    <button className="text-blue-600 hover:text-blue-900 mr-3">Edit</button>
-                    <button className="text-red-600 hover:text-red-900">Delete</button>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm font-medium space-x-2">
+                    <button className="text-blue-600 hover:text-blue-900">
+                      <Eye className="h-4 w-4" />
+                    </button>
+                    <button className="text-green-600 hover:text-green-900">
+                      <Edit className="h-4 w-4" />
+                    </button>
+                    <button className="text-red-600 hover:text-red-900">
+                      <Trash2 className="h-4 w-4" />
+                    </button>
                   </td>
                 </tr>
               ))}
@@ -425,19 +640,55 @@ function RevenueManagement() {
 
 function ExpenseManagement() {
   const [expenseData] = useState([
-    { id: 1, category: 'Office Supplies', amount: 25000, date: '2024-03-15', description: 'Paper, pens, folders' },
-    { id: 2, category: 'Utilities', amount: 18000, date: '2024-03-14', description: 'Electricity and water bills' },
-    { id: 3, category: 'Maintenance', amount: 35000, date: '2024-03-12', description: 'Building repairs' },
-    { id: 4, category: 'Transportation', amount: 12000, date: '2024-03-10', description: 'Official travel expenses' },
+    { id: 1, category: 'Office Supplies', amount: 25000, date: '2024-03-15', description: 'Paper, pens, folders', vendor: 'Office Depot' },
+    { id: 2, category: 'Utilities', amount: 18000, date: '2024-03-14', description: 'Electricity and water bills', vendor: 'MERALCO/Maynilad' },
+    { id: 3, category: 'Maintenance', amount: 35000, date: '2024-03-12', description: 'Building repairs', vendor: 'ABC Construction' },
+    { id: 4, category: 'Transportation', amount: 12000, date: '2024-03-10', description: 'Official travel expenses', vendor: 'Various' },
   ]);
 
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <h2 className="text-2xl font-bold text-gray-900">Expense Management</h2>
-        <button className="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700">
+        <button className="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 flex items-center">
+          <Plus className="h-4 w-4 mr-2" />
           Add Expense
         </button>
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div className="bg-white p-6 rounded-lg shadow-sm border border-l-4 border-l-red-500">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm font-medium text-gray-600">Total Expenses</p>
+              <p className="text-2xl font-bold text-red-600">₱90,000</p>
+              <p className="text-sm text-red-600 mt-1">-5% from last month</p>
+            </div>
+            <Calculator className="h-8 w-8 text-red-600" />
+          </div>
+        </div>
+
+        <div className="bg-white p-6 rounded-lg shadow-sm border border-l-4 border-l-blue-500">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm font-medium text-gray-600">Categories</p>
+              <p className="text-2xl font-bold text-blue-600">4</p>
+              <p className="text-sm text-blue-600 mt-1">Active categories</p>
+            </div>
+            <FileText className="h-8 w-8 text-blue-600" />
+          </div>
+        </div>
+
+        <div className="bg-white p-6 rounded-lg shadow-sm border border-l-4 border-l-yellow-500">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm font-medium text-gray-600">Avg. Expense</p>
+              <p className="text-2xl font-bold text-yellow-600">₱22,500</p>
+              <p className="text-sm text-yellow-600 mt-1">Per transaction</p>
+            </div>
+            <BarChart3 className="h-8 w-8 text-yellow-600" />
+          </div>
+        </div>
       </div>
 
       <div className="bg-white rounded-lg shadow-sm border overflow-hidden">
@@ -455,6 +706,9 @@ function ExpenseManagement() {
                   Date
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Vendor
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Description
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
@@ -464,7 +718,7 @@ function ExpenseManagement() {
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
               {expenseData.map((item) => (
-                <tr key={item.id}>
+                <tr key={item.id} className="hover:bg-gray-50">
                   <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
                     {item.category}
                   </td>
@@ -474,12 +728,22 @@ function ExpenseManagement() {
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                     {item.date}
                   </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                    {item.vendor}
+                  </td>
                   <td className="px-6 py-4 text-sm text-gray-500">
                     {item.description}
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                    <button className="text-blue-600 hover:text-blue-900 mr-3">Edit</button>
-                    <button className="text-red-600 hover:text-red-900">Delete</button>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm font-medium space-x-2">
+                    <button className="text-blue-600 hover:text-blue-900">
+                      <Eye className="h-4 w-4" />
+                    </button>
+                    <button className="text-green-600 hover:text-green-900">
+                      <Edit className="h-4 w-4" />
+                    </button>
+                    <button className="text-red-600 hover:text-red-900">
+                      <Trash2 className="h-4 w-4" />
+                    </button>
                   </td>
                 </tr>
               ))}
@@ -504,9 +768,45 @@ function BudgetPlanning() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <h2 className="text-2xl font-bold text-gray-900">Budget Planning</h2>
-        <button className="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700">
+        <button className="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 flex items-center">
+          <Plus className="h-4 w-4 mr-2" />
           Update Budget
         </button>
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div className="bg-white p-6 rounded-lg shadow-sm border border-l-4 border-l-blue-500">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm font-medium text-gray-600">Total Budget</p>
+              <p className="text-2xl font-bold text-blue-600">₱1,750,000</p>
+              <p className="text-sm text-blue-600 mt-1">Annual allocation</p>
+            </div>
+            <Target className="h-8 w-8 text-blue-600" />
+          </div>
+        </div>
+
+        <div className="bg-white p-6 rounded-lg shadow-sm border border-l-4 border-l-red-500">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm font-medium text-gray-600">Total Spent</p>
+              <p className="text-2xl font-bold text-red-600">₱483,000</p>
+              <p className="text-sm text-red-600 mt-1">27.6% utilized</p>
+            </div>
+            <Calculator className="h-8 w-8 text-red-600" />
+          </div>
+        </div>
+
+        <div className="bg-white p-6 rounded-lg shadow-sm border border-l-4 border-l-green-500">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm font-medium text-gray-600">Remaining</p>
+              <p className="text-2xl font-bold text-green-600">₱1,267,000</p>
+              <p className="text-sm text-green-600 mt-1">72.4% available</p>
+            </div>
+            <Wallet className="h-8 w-8 text-green-600" />
+          </div>
+        </div>
       </div>
 
       <div className="bg-white rounded-lg shadow-sm border overflow-hidden">
@@ -519,6 +819,7 @@ function BudgetPlanning() {
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Spent</th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Remaining</th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Usage %</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
               </tr>
             </thead>
@@ -526,7 +827,7 @@ function BudgetPlanning() {
               {budgetData.map((item, index) => {
                 const usagePercent = (item.spent / item.allocated) * 100;
                 return (
-                  <tr key={index}>
+                  <tr key={index} className="hover:bg-gray-50">
                     <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{item.category}</td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">₱{item.allocated.toLocaleString()}</td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">₱{item.spent.toLocaleString()}</td>
@@ -538,6 +839,15 @@ function BudgetPlanning() {
                         </div>
                         <span className="text-sm">{usagePercent.toFixed(1)}%</span>
                       </div>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
+                        usagePercent > 80 ? 'bg-red-100 text-red-800' :
+                        usagePercent > 60 ? 'bg-yellow-100 text-yellow-800' :
+                        'bg-green-100 text-green-800'
+                      }`}>
+                        {usagePercent > 80 ? 'High Usage' : usagePercent > 60 ? 'Moderate' : 'On Track'}
+                      </span>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
                       <button className="text-blue-600 hover:text-blue-900">Adjust</button>
@@ -555,27 +865,63 @@ function BudgetPlanning() {
 
 function FinancialReports() {
   const reports = [
-    { id: 1, name: 'Monthly Financial Statement', type: 'PDF', date: '2024-03-15', size: '2.4 MB' },
-    { id: 2, name: 'Revenue Analysis Report', type: 'Excel', date: '2024-03-14', size: '1.8 MB' },
-    { id: 3, name: 'Expense Breakdown', type: 'PDF', date: '2024-03-12', size: '1.2 MB' },
-    { id: 4, name: 'Budget vs Actual Report', type: 'Excel', date: '2024-03-10', size: '2.1 MB' },
+    { id: 1, name: 'Monthly Financial Statement', type: 'PDF', date: '2024-03-15', size: '2.4 MB', status: 'Generated' },
+    { id: 2, name: 'Revenue Analysis Report', type: 'Excel', date: '2024-03-14', size: '1.8 MB', status: 'Generated' },
+    { id: 3, name: 'Expense Breakdown', type: 'PDF', date: '2024-03-12', size: '1.2 MB', status: 'Generated' },
+    { id: 4, name: 'Budget vs Actual Report', type: 'Excel', date: '2024-03-10', size: '2.1 MB', status: 'Generating' },
   ];
 
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <h2 className="text-2xl font-bold text-gray-900">Financial Reports</h2>
-        <button className="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700">
+        <button className="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 flex items-center">
+          <Plus className="h-4 w-4 mr-2" />
           Generate Report
         </button>
       </div>
 
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div className="bg-white p-6 rounded-lg shadow-sm border border-l-4 border-l-blue-500">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm font-medium text-gray-600">Total Reports</p>
+              <p className="text-2xl font-bold text-blue-600">{reports.length}</p>
+              <p className="text-sm text-blue-600 mt-1">This month</p>
+            </div>
+            <FileText className="h-8 w-8 text-blue-600" />
+          </div>
+        </div>
+
+        <div className="bg-white p-6 rounded-lg shadow-sm border border-l-4 border-l-green-500">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm font-medium text-gray-600">Generated</p>
+              <p className="text-2xl font-bold text-green-600">{reports.filter(r => r.status === 'Generated').length}</p>
+              <p className="text-sm text-green-600 mt-1">Ready for download</p>
+            </div>
+            <CheckCircle className="h-8 w-8 text-green-600" />
+          </div>
+        </div>
+
+        <div className="bg-white p-6 rounded-lg shadow-sm border border-l-4 border-l-yellow-500">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm font-medium text-gray-600">Processing</p>
+              <p className="text-2xl font-bold text-yellow-600">{reports.filter(r => r.status === 'Generating').length}</p>
+              <p className="text-sm text-yellow-600 mt-1">In progress</p>
+            </div>
+            <Clock className="h-8 w-8 text-yellow-600" />
+          </div>
+        </div>
+      </div>
+
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {reports.map((report) => (
-          <div key={report.id} className="bg-white p-6 rounded-lg shadow-sm border">
+          <div key={report.id} className="bg-white p-6 rounded-lg shadow-sm border hover:shadow-md transition-shadow">
             <div className="flex items-start justify-between mb-4">
               <FileText className="h-8 w-8 text-blue-600" />
-              <span className={`px-2 py-1 text-xs font-semibold rounded ${
+              <span className={`px-2 py-1 text-xs font-semibold rounded-full ${
                 report.type === 'PDF' ? 'bg-red-100 text-red-800' : 'bg-green-100 text-green-800'
               }`}>
                 {report.type}
@@ -585,11 +931,23 @@ function FinancialReports() {
             <p className="text-sm text-gray-500 mb-4">
               Generated on {report.date} • {report.size}
             </p>
+            <div className="flex items-center justify-between mb-4">
+              <span className={`px-2 py-1 text-xs font-semibold rounded-full ${
+                report.status === 'Generated' ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'
+              }`}>
+                {report.status}
+              </span>
+            </div>
             <div className="flex space-x-2">
-              <button className="flex-1 bg-blue-600 text-white px-3 py-2 rounded text-sm hover:bg-blue-700">
+              <button 
+                disabled={report.status !== 'Generated'}
+                className="flex-1 bg-blue-600 text-white px-3 py-2 rounded text-sm hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
+              >
+                <Download className="h-4 w-4 mr-1" />
                 Download
               </button>
-              <button className="flex-1 border border-gray-300 text-gray-700 px-3 py-2 rounded text-sm hover:bg-gray-50">
+              <button className="flex-1 border border-gray-300 text-gray-700 px-3 py-2 rounded text-sm hover:bg-gray-50 flex items-center justify-center">
+                <Eye className="h-4 w-4 mr-1" />
                 Preview
               </button>
             </div>
@@ -600,7 +958,8 @@ function FinancialReports() {
   );
 }
 
-function FinancialAnnouncements() {
+function FinancialAnnouncements({ setShowAnnouncementForm }: { setShowAnnouncementForm: (show: boolean) => void }) {
+  const { user } = useAuth();
   const [announcements, setAnnouncements] = useState([
     {
       id: 1,
@@ -622,7 +981,6 @@ function FinancialAnnouncements() {
     }
   ]);
 
-  const [showAddAnnouncement, setShowAddAnnouncement] = useState(false);
   const [newAnnouncement, setNewAnnouncement] = useState({
     title: '',
     content: '',
@@ -640,26 +998,61 @@ function FinancialAnnouncements() {
       };
       setAnnouncements([announcement, ...announcements]);
       setNewAnnouncement({ title: '', content: '', type: 'payment' });
-      setShowAddAnnouncement(false);
+      setShowAnnouncementForm(false);
     }
   };
 
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <h2 className="text-xl font-semibold text-gray-900">Financial Announcements</h2>
+        <h2 className="text-2xl font-bold text-gray-900">Financial Announcements</h2>
         <button
-          onClick={() => setShowAddAnnouncement(true)}
+          onClick={() => setShowAnnouncementForm(true)}
           className="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 flex items-center"
         >
           <Plus className="h-4 w-4 mr-2" />
           Create Announcement
         </button>
       </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div className="bg-white p-6 rounded-lg shadow-sm border border-l-4 border-l-blue-500">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm font-medium text-gray-600">Total Announcements</p>
+              <p className="text-2xl font-bold text-blue-600">{announcements.length}</p>
+              <p className="text-sm text-blue-600 mt-1">All time</p>
+            </div>
+            <Bell className="h-8 w-8 text-blue-600" />
+          </div>
+        </div>
+
+        <div className="bg-white p-6 rounded-lg shadow-sm border border-l-4 border-l-green-500">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm font-medium text-gray-600">Published</p>
+              <p className="text-2xl font-bold text-green-600">{announcements.filter(a => a.status === 'published').length}</p>
+              <p className="text-sm text-green-600 mt-1">Live announcements</p>
+            </div>
+            <CheckCircle className="h-8 w-8 text-green-600" />
+          </div>
+        </div>
+
+        <div className="bg-white p-6 rounded-lg shadow-sm border border-l-4 border-l-yellow-500">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm font-medium text-gray-600">Drafts</p>
+              <p className="text-2xl font-bold text-yellow-600">{announcements.filter(a => a.status === 'draft').length}</p>
+              <p className="text-sm text-yellow-600 mt-1">Pending review</p>
+            </div>
+            <Edit className="h-8 w-8 text-yellow-600" />
+          </div>
+        </div>
+      </div>
       
       <div className="space-y-4">
         {announcements.map((announcement) => (
-          <div key={announcement.id} className="bg-white border rounded-lg p-6">
+          <div key={announcement.id} className="bg-white border rounded-lg p-6 hover:shadow-md transition-shadow">
             <div className="flex items-start justify-between mb-4">
               <div className="flex-1">
                 <div className="flex items-center gap-2 mb-2">
@@ -681,9 +1074,13 @@ function FinancialAnnouncements() {
                 <p className="text-gray-600 mb-2">{announcement.content}</p>
                 <p className="text-sm text-gray-500">By {announcement.author} • {announcement.date}</p>
               </div>
-              <div className="flex space-x-2">
-                <button className="text-blue-600 hover:text-blue-800 text-sm">Edit</button>
-                <button className="text-red-600 hover:text-red-800 text-sm">Delete</button>
+              <div className="flex space-x-2 ml-4">
+                <button className="text-blue-600 hover:text-blue-800 p-2 hover:bg-blue-50 rounded-lg transition-colors">
+                  <Edit className="h-4 w-4" />
+                </button>
+                <button className="text-red-600 hover:text-red-800 p-2 hover:bg-red-50 rounded-lg transition-colors">
+                  <Trash2 className="h-4 w-4" />
+                </button>
               </div>
             </div>
           </div>
@@ -691,16 +1088,16 @@ function FinancialAnnouncements() {
       </div>
 
       {/* Add Announcement Modal */}
-      {showAddAnnouncement && (
+      {setShowAnnouncementForm && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
           <div className="bg-white rounded-lg max-w-md w-full p-6">
             <div className="flex items-center justify-between mb-6">
               <h3 className="text-lg font-semibold text-gray-900">Create Financial Announcement</h3>
               <button
-                onClick={() => setShowAddAnnouncement(false)}
+                onClick={() => setShowAnnouncementForm(false)}
                 className="text-gray-400 hover:text-gray-600"
               >
-                ✕
+                <X className="h-5 w-5" />
               </button>
             </div>
             
@@ -744,7 +1141,7 @@ function FinancialAnnouncements() {
             
             <div className="flex space-x-3 mt-6">
               <button
-                onClick={() => setShowAddAnnouncement(false)}
+                onClick={() => setShowAnnouncementForm(false)}
                 className="flex-1 px-4 py-2 text-gray-700 border border-gray-300 rounded-lg hover:bg-gray-50"
               >
                 Cancel
