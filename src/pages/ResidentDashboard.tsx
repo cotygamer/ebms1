@@ -150,13 +150,38 @@ export default function ResidentDashboard() {
   };
 
   const handleProfileUpdate = () => {
-    // Update user profile and change status to details-updated if currently unverified
-    const newStatus = user?.verificationStatus === 'non-verified' ? 'details-updated' : user?.verificationStatus;
+    // Business Rule: Any profile changes revert status to semi-verified (except if non-verified)
+    let newStatus = user?.verificationStatus;
+    
+    if (user?.verificationStatus === 'non-verified') {
+      newStatus = 'details-updated';
+    } else if (user?.verificationStatus === 'verified') {
+      // Revert to semi-verified when fully verified user makes changes
+      newStatus = 'semi-verified';
+    }
+    
+    // Create audit trail entry
+    const auditEntry = {
+      timestamp: new Date().toISOString(),
+      action: 'Profile Updated',
+      previousStatus: user?.verificationStatus,
+      newStatus: newStatus,
+      approvedBy: 'Self (Resident)'
+    };
+    
+    const updatedAuditTrail = [...(user?.auditTrail || []), auditEntry];
+    
     updateUser({ 
-      ...profileData, 
-      verificationStatus: newStatus 
+      ...profileData,
+      verificationStatus: newStatus,
+      auditTrail: updatedAuditTrail
     });
     setShowProfileEdit(false);
+    
+    // Show notification about status change
+    if (user?.verificationStatus === 'verified' && newStatus === 'semi-verified') {
+      alert('Your verification status has been changed to semi-verified due to profile updates. Barangay officials will need to re-verify your information.');
+    }
   };
 
   const renderDashboard = () => {
@@ -527,6 +552,28 @@ function ProfileEditModal({
   onClose: () => void;
   onLocationPick: () => void;
 }) {
+  const [governmentIds, setGovernmentIds] = useState({
+    sss: { number: '', file: null as File | null },
+    philhealth: { number: '', file: null as File | null },
+    pagibig: { number: '', file: null as File | null },
+    umid: { number: '', file: null as File | null },
+    driversLicense: { number: '', file: null as File | null },
+    passport: { number: '', file: null as File | null }
+  });
+
+  const handleFileUpload = (idType: string, file: File) => {
+    setGovernmentIds(prev => ({
+      ...prev,
+      [idType]: { ...prev[idType as keyof typeof prev], file }
+    }));
+  };
+
+  const handleIdNumberChange = (idType: string, number: string) => {
+    setGovernmentIds(prev => ({
+      ...prev,
+      [idType]: { ...prev[idType as keyof typeof prev], number }
+    }));
+  };
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
       <div className="bg-white rounded-lg max-w-2xl w-full max-h-[90vh] overflow-y-auto">
@@ -539,119 +586,491 @@ function ProfileEditModal({
           </div>
         </div>
         
-        <div className="p-4 sm:p-6 space-y-4">
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Full Name</label>
-              <input
-                type="text"
-                value={profileData.name}
-                onChange={(e) => setProfileData(prev => ({ ...prev, name: e.target.value }))}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
-              />
+        <div className="p-4 sm:p-6 space-y-6">
+          {/* Personal Information Section */}
+          <div className="bg-blue-50 p-4 rounded-lg">
+            <h4 className="text-lg font-semibold text-blue-900 mb-4">Personal Information</h4>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">First Name *</label>
+                <input
+                  type="text"
+                  value={profileData.firstName || ''}
+                  onChange={(e) => setProfileData(prev => ({ ...prev, firstName: e.target.value }))}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
+                  placeholder="Enter first name"
+                />
+              </div>
+              
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Middle Name</label>
+                <input
+                  type="text"
+                  value={profileData.middleName || ''}
+                  onChange={(e) => setProfileData(prev => ({ ...prev, middleName: e.target.value }))}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
+                  placeholder="Enter middle name"
+                />
+              </div>
+              
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Last Name *</label>
+                <input
+                  type="text"
+                  value={profileData.lastName || ''}
+                  onChange={(e) => setProfileData(prev => ({ ...prev, lastName: e.target.value }))}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
+                  placeholder="Enter last name"
+                />
+              </div>
+              
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Suffix</label>
+                <select
+                  value={profileData.suffix || ''}
+                  onChange={(e) => setProfileData(prev => ({ ...prev, suffix: e.target.value }))}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
+                >
+                  <option value="">Select suffix</option>
+                  <option value="Jr.">Jr.</option>
+                  <option value="Sr.">Sr.</option>
+                  <option value="II">II</option>
+                  <option value="III">III</option>
+                  <option value="IV">IV</option>
+                </select>
+              </div>
+              
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Email *</label>
+                <input
+                  type="email"
+                  value={profileData.email}
+                  onChange={(e) => setProfileData(prev => ({ ...prev, email: e.target.value }))}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
+                />
+              </div>
+              
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Phone Number *</label>
+                <input
+                  type="tel"
+                  value={profileData.phone}
+                  onChange={(e) => setProfileData(prev => ({ ...prev, phone: e.target.value }))}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
+                  placeholder="+63 912 345 6789"
+                />
+              </div>
+              
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Birth Date *</label>
+                <input
+                  type="date"
+                  value={profileData.birthDate}
+                  onChange={(e) => setProfileData(prev => ({ ...prev, birthDate: e.target.value }))}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
+                />
+              </div>
+              
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Gender *</label>
+                <select
+                  value={profileData.gender}
+                  onChange={(e) => setProfileData(prev => ({ ...prev, gender: e.target.value }))}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
+                >
+                  <option value="">Select gender</option>
+                  <option value="male">Male</option>
+                  <option value="female">Female</option>
+                </select>
+              </div>
+              
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Civil Status *</label>
+                <select
+                  value={profileData.civilStatus}
+                  onChange={(e) => setProfileData(prev => ({ ...prev, civilStatus: e.target.value }))}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
+                >
+                  <option value="">Select status</option>
+                  <option value="single">Single</option>
+                  <option value="married">Married</option>
+                  <option value="widowed">Widowed</option>
+                  <option value="separated">Separated</option>
+                  <option value="divorced">Divorced</option>
+                </select>
+              </div>
+              
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Nationality</label>
+                <input
+                  type="text"
+                  value={profileData.nationality || 'Filipino'}
+                  onChange={(e) => setProfileData(prev => ({ ...prev, nationality: e.target.value }))}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
+                  placeholder="Filipino"
+                />
+              </div>
+              
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Occupation</label>
+                <input
+                  type="text"
+                  value={profileData.occupation || ''}
+                  onChange={(e) => setProfileData(prev => ({ ...prev, occupation: e.target.value }))}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
+                  placeholder="Enter occupation"
+                />
+              </div>
+              
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Monthly Income</label>
+                <select
+                  value={profileData.monthlyIncome || ''}
+                  onChange={(e) => setProfileData(prev => ({ ...prev, monthlyIncome: e.target.value }))}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
+                >
+                  <option value="">Select income range</option>
+                  <option value="below-10000">Below ₱10,000</option>
+                  <option value="10000-25000">₱10,000 - ₱25,000</option>
+                  <option value="25000-50000">₱25,000 - ₱50,000</option>
+                  <option value="50000-100000">₱50,000 - ₱100,000</option>
+                  <option value="above-100000">Above ₱100,000</option>
+                </select>
+              </div>
             </div>
-            
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Email</label>
-              <input
-                type="email"
-                value={profileData.email}
-                onChange={(e) => setProfileData(prev => ({ ...prev, email: e.target.value }))}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
-              />
+          </div>
+          
+          {/* Address Information Section */}
+          <div className="bg-green-50 p-4 rounded-lg">
+            <h4 className="text-lg font-semibold text-green-900 mb-4">Address Information</h4>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div className="sm:col-span-2">
+                <label className="block text-sm font-medium text-gray-700 mb-2">House Number/Street *</label>
+                <input
+                  type="text"
+                  value={profileData.houseNumber || ''}
+                  onChange={(e) => setProfileData(prev => ({ ...prev, houseNumber: e.target.value }))}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
+                  placeholder="123 Main Street"
+                />
+              </div>
+              
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Purok/Sitio</label>
+                <input
+                  type="text"
+                  value={profileData.purok || ''}
+                  onChange={(e) => setProfileData(prev => ({ ...prev, purok: e.target.value }))}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
+                  placeholder="Purok 1"
+                />
+              </div>
+              
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Barangay</label>
+                <input
+                  type="text"
+                  value={profileData.barangay || 'San Miguel'}
+                  onChange={(e) => setProfileData(prev => ({ ...prev, barangay: e.target.value }))}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
+                />
+              </div>
+              
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">City/Municipality *</label>
+                <input
+                  type="text"
+                  value={profileData.city || ''}
+                  onChange={(e) => setProfileData(prev => ({ ...prev, city: e.target.value }))}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
+                  placeholder="Metro Manila"
+                />
+              </div>
+              
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Province *</label>
+                <input
+                  type="text"
+                  value={profileData.province || ''}
+                  onChange={(e) => setProfileData(prev => ({ ...prev, province: e.target.value }))}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
+                  placeholder="Metro Manila"
+                />
+              </div>
+              
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">ZIP Code</label>
+                <input
+                  type="text"
+                  value={profileData.zipCode || ''}
+                  onChange={(e) => setProfileData(prev => ({ ...prev, zipCode: e.target.value }))}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
+                  placeholder="1000"
+                />
+              </div>
             </div>
+          </div>
+          
+          {/* Government ID Verification Section */}
+          <div className="bg-yellow-50 p-4 rounded-lg">
+            <h4 className="text-lg font-semibold text-yellow-900 mb-4">Government ID Verification</h4>
+            <p className="text-sm text-yellow-700 mb-4">Upload at least one government-issued ID for verification</p>
             
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Phone Number</label>
-              <input
-                type="tel"
-                value={profileData.phone}
-                onChange={(e) => setProfileData(prev => ({ ...prev, phone: e.target.value }))}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
-                placeholder="+63 912 345 6789"
-              />
+            <div className="space-y-4">
+              {/* SSS */}
+              <div className="bg-white p-4 rounded-lg border">
+                <h5 className="font-medium text-gray-900 mb-3">Social Security System (SSS)</h5>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">SSS Number</label>
+                    <input
+                      type="text"
+                      value={governmentIds.sss.number}
+                      onChange={(e) => handleIdNumberChange('sss', e.target.value)}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
+                      placeholder="XX-XXXXXXX-X"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Upload SSS ID</label>
+                    <input
+                      type="file"
+                      accept="image/*,.pdf"
+                      onChange={(e) => e.target.files && handleFileUpload('sss', e.target.files[0])}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
+                    />
+                  </div>
+                </div>
+              </div>
+              
+              {/* PhilHealth */}
+              <div className="bg-white p-4 rounded-lg border">
+                <h5 className="font-medium text-gray-900 mb-3">Philippine Health Insurance Corporation (PhilHealth)</h5>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">PhilHealth Number</label>
+                    <input
+                      type="text"
+                      value={governmentIds.philhealth.number}
+                      onChange={(e) => handleIdNumberChange('philhealth', e.target.value)}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
+                      placeholder="XX-XXXXXXXXX-X"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Upload PhilHealth ID</label>
+                    <input
+                      type="file"
+                      accept="image/*,.pdf"
+                      onChange={(e) => e.target.files && handleFileUpload('philhealth', e.target.files[0])}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
+                    />
+                  </div>
+                </div>
+              </div>
+              
+              {/* Pag-IBIG */}
+              <div className="bg-white p-4 rounded-lg border">
+                <h5 className="font-medium text-gray-900 mb-3">Home Development Mutual Fund (Pag-IBIG)</h5>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Pag-IBIG Number</label>
+                    <input
+                      type="text"
+                      value={governmentIds.pagibig.number}
+                      onChange={(e) => handleIdNumberChange('pagibig', e.target.value)}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
+                      placeholder="XXXX-XXXX-XXXX"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Upload Pag-IBIG ID</label>
+                    <input
+                      type="file"
+                      accept="image/*,.pdf"
+                      onChange={(e) => e.target.files && handleFileUpload('pagibig', e.target.files[0])}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
+                    />
+                  </div>
+                </div>
+              </div>
+              
+              {/* UMID */}
+              <div className="bg-white p-4 rounded-lg border">
+                <h5 className="font-medium text-gray-900 mb-3">Unified Multi-Purpose ID (UMID)</h5>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">UMID Number</label>
+                    <input
+                      type="text"
+                      value={governmentIds.umid.number}
+                      onChange={(e) => handleIdNumberChange('umid', e.target.value)}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
+                      placeholder="XXXX-XXXXXXX-X"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Upload UMID</label>
+                    <input
+                      type="file"
+                      accept="image/*,.pdf"
+                      onChange={(e) => e.target.files && handleFileUpload('umid', e.target.files[0])}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
+                    />
+                  </div>
+                </div>
+              </div>
+              
+              {/* Driver's License */}
+              <div className="bg-white p-4 rounded-lg border">
+                <h5 className="font-medium text-gray-900 mb-3">Driver's License</h5>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">License Number</label>
+                    <input
+                      type="text"
+                      value={governmentIds.driversLicense.number}
+                      onChange={(e) => handleIdNumberChange('driversLicense', e.target.value)}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
+                      placeholder="XXX-XX-XXXXXX"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Upload Driver's License</label>
+                    <input
+                      type="file"
+                      accept="image/*,.pdf"
+                      onChange={(e) => e.target.files && handleFileUpload('driversLicense', e.target.files[0])}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
+                    />
+                  </div>
+                </div>
+              </div>
+              
+              {/* Passport */}
+              <div className="bg-white p-4 rounded-lg border">
+                <h5 className="font-medium text-gray-900 mb-3">Philippine Passport</h5>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Passport Number</label>
+                    <input
+                      type="text"
+                      value={governmentIds.passport.number}
+                      onChange={(e) => handleIdNumberChange('passport', e.target.value)}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
+                      placeholder="XXXXXXXXX"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Upload Passport</label>
+                    <input
+                      type="file"
+                      accept="image/*,.pdf"
+                      onChange={(e) => e.target.files && handleFileUpload('passport', e.target.files[0])}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
+                    />
+                  </div>
+                </div>
+              </div>
             </div>
-            
+          </div>
+          
+          {/* House Location Section */}
+          <div className="bg-purple-50 p-4 rounded-lg">
+            <h4 className="text-lg font-semibold text-purple-900 mb-4">House Location Mapping</h4>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Birth Date</label>
-              <input
-                type="date"
-                value={profileData.birthDate}
-                onChange={(e) => setProfileData(prev => ({ ...prev, birthDate: e.target.value }))}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
-              />
-            </div>
-            
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Gender</label>
-              <select
-                value={profileData.gender}
-                onChange={(e) => setProfileData(prev => ({ ...prev, gender: e.target.value }))}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
+              <label className="block text-sm font-medium text-gray-700 mb-2">House Location (Required for Semi-Verification) *</label>
+              <button
+                onClick={onLocationPick}
+                className="w-full flex items-center justify-center px-4 py-3 border-2 border-dashed border-purple-300 rounded-lg hover:border-purple-500 hover:bg-purple-100 transition-colors"
               >
-                <option value="">Select gender</option>
-                <option value="male">Male</option>
-                <option value="female">Female</option>
-              </select>
-            </div>
-            
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Civil Status</label>
-              <select
-                value={profileData.civilStatus}
-                onChange={(e) => setProfileData(prev => ({ ...prev, civilStatus: e.target.value }))}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
-              >
-                <option value="">Select status</option>
-                <option value="single">Single</option>
-                <option value="married">Married</option>
-                <option value="widowed">Widowed</option>
-                <option value="separated">Separated</option>
-                <option value="divorced">Divorced</option>
-              </select>
+                <MapPin className="h-5 w-5 text-purple-600 mr-2" />
+                <span className="text-purple-600 font-medium">
+                  {profileData.houseLocation?.address ? 'Update Location' : 'Pin Your House Location'}
+                </span>
+              </button>
+              {profileData.houseLocation?.address && (
+                <div className="mt-3 p-3 bg-green-50 border border-green-200 rounded-lg">
+                  <p className="text-sm text-green-800 font-medium">📍 Current Location:</p>
+                  <p className="text-sm text-green-700">{profileData.houseLocation.address}</p>
+                  <p className="text-xs text-green-600">
+                    Coordinates: {profileData.houseLocation.lat.toFixed(6)}, {profileData.houseLocation.lng.toFixed(6)}
+                  </p>
+                </div>
+              )}
             </div>
           </div>
           
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Complete Address</label>
-            <textarea
-              value={profileData.address}
-              onChange={(e) => setProfileData(prev => ({ ...prev, address: e.target.value }))}
-              rows={3}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
-              placeholder="Enter your complete address"
-            />
-          </div>
-          
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">House Location (Required for Semi-Verification)</label>
-            <button
-              onClick={onLocationPick}
-              className="w-full flex items-center justify-center px-4 py-3 border-2 border-dashed border-gray-300 rounded-lg hover:border-purple-500 hover:bg-purple-50 transition-colors"
-            >
-              <MapPin className="h-5 w-5 text-purple-600 mr-2" />
-              <span className="text-purple-600 font-medium">
-                {profileData.houseLocation.address ? 'Update Location' : 'Pin Your House Location'}
-              </span>
-            </button>
-            {profileData.houseLocation.address && (
-              <p className="text-sm text-gray-600 mt-2">{profileData.houseLocation.address}</p>
-            )}
-          </div>
-          
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Emergency Contact</label>
-            <input
-              type="text"
-              value={profileData.emergencyContact}
-              onChange={(e) => setProfileData(prev => ({ ...prev, emergencyContact: e.target.value }))}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
-              placeholder="Name and phone number"
-            />
+          {/* Emergency Contact Section */}
+          <div className="bg-red-50 p-4 rounded-lg">
+            <h4 className="text-lg font-semibold text-red-900 mb-4">Emergency Contact Information</h4>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Contact Name *</label>
+                <input
+                  type="text"
+                  value={profileData.emergencyContactName || ''}
+                  onChange={(e) => setProfileData(prev => ({ ...prev, emergencyContactName: e.target.value }))}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
+                  placeholder="Full name of emergency contact"
+                />
+              </div>
+              
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Contact Number *</label>
+                <input
+                  type="tel"
+                  value={profileData.emergencyContactPhone || ''}
+                  onChange={(e) => setProfileData(prev => ({ ...prev, emergencyContactPhone: e.target.value }))}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
+                  placeholder="+63 912 345 6789"
+                />
+              </div>
+              
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Relationship *</label>
+                <select
+                  value={profileData.emergencyContactRelation || ''}
+                  onChange={(e) => setProfileData(prev => ({ ...prev, emergencyContactRelation: e.target.value }))}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
+                >
+                  <option value="">Select relationship</option>
+                  <option value="spouse">Spouse</option>
+                  <option value="parent">Parent</option>
+                  <option value="sibling">Sibling</option>
+                  <option value="child">Child</option>
+                  <option value="relative">Relative</option>
+                  <option value="friend">Friend</option>
+                </select>
+              </div>
+              
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Contact Address</label>
+                <input
+                  type="text"
+                  value={profileData.emergencyContactAddress || ''}
+                  onChange={(e) => setProfileData(prev => ({ ...prev, emergencyContactAddress: e.target.value }))}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
+                  placeholder="Emergency contact address"
+                />
+              </div>
+            </div>
           </div>
         </div>
         
         <div className="p-4 sm:p-6 border-t border-gray-200">
+          <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3 mb-4">
+            <div className="flex items-start space-x-2">
+              <AlertTriangle className="h-5 w-5 text-yellow-600 mt-0.5" />
+              <div>
+                <p className="text-sm font-medium text-yellow-800">Important Notice</p>
+                <p className="text-xs text-yellow-700">
+                  Any changes to your profile will revert your verification status to semi-verified and require re-approval by barangay officials.
+                </p>
+              </div>
+            </div>
+          </div>
+          
           <div className="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-3">
             <button
               onClick={onClose}
@@ -663,7 +1082,7 @@ function ProfileEditModal({
               onClick={onSave}
               className="flex-1 px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700"
             >
-              Save Changes
+              Save Profile Changes
             </button>
           </div>
         </div>
@@ -681,11 +1100,26 @@ function LocationPickerModal({
   onClose: () => void;
 }) {
   const [selectedLocation, setSelectedLocation] = useState<{ lat: number; lng: number; address: string } | null>(null);
+  const [mapClicks, setMapClicks] = useState<{ lat: number; lng: number }[]>([]);
+  const [isSelecting, setIsSelecting] = useState(false);
 
-  const handleMapClick = (lat: number, lng: number) => {
-    // Simulate reverse geocoding
-    const address = `${lat.toFixed(6)}, ${lng.toFixed(6)}`;
+  const handleMapClick = (event: React.MouseEvent<HTMLDivElement>) => {
+    const rect = event.currentTarget.getBoundingClientRect();
+    const x = event.clientX - rect.left;
+    const y = event.clientY - rect.top;
+    
+    // Convert click coordinates to lat/lng (simplified calculation)
+    const lat = 14.5995 + (y - rect.height / 2) * 0.001;
+    const lng = 120.9842 + (x - rect.width / 2) * 0.001;
+    
+    // Simulate reverse geocoding with more realistic address
+    const streetNames = ['Main St', 'Oak Ave', 'Pine Rd', 'Maple Dr', 'Cedar Ln'];
+    const randomStreet = streetNames[Math.floor(Math.random() * streetNames.length)];
+    const houseNumber = Math.floor(Math.random() * 999) + 1;
+    const address = `${houseNumber} ${randomStreet}, Barangay San Miguel, Metro Manila`;
+    
     setSelectedLocation({ lat, lng, address });
+    setMapClicks([...mapClicks, { lat, lng }]);
   };
 
   return (
@@ -701,24 +1135,83 @@ function LocationPickerModal({
         </div>
         
         <div className="p-4 sm:p-6">
-          <div className="bg-gray-100 h-64 sm:h-96 rounded-lg flex items-center justify-center mb-4">
-            <div className="text-center">
-              <MapPin className="h-16 w-16 text-gray-400 mx-auto mb-4" />
-              <p className="text-gray-600 mb-2">Interactive Map</p>
-              <p className="text-sm text-gray-500">Click on your house location to pin it</p>
-              <button
-                onClick={() => handleMapClick(14.5995, 120.9842)}
-                className="mt-4 px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700"
-              >
-                Simulate Location Selection
-              </button>
+          <div className="space-y-4">
+            <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+              <h4 className="font-semibold text-blue-800 mb-2">📍 How to Pin Your Location</h4>
+              <ol className="text-sm text-blue-700 space-y-1">
+                <li>1. Click anywhere on the map below to pin your house location</li>
+                <li>2. The pin will appear where you clicked</li>
+                <li>3. Review the generated address</li>
+                <li>4. Click "Confirm Location" to save</li>
+              </ol>
+            </div>
+            
+            <div 
+              className="bg-gradient-to-br from-green-100 to-blue-100 h-64 sm:h-96 rounded-lg border-2 border-dashed border-gray-300 cursor-crosshair relative overflow-hidden"
+              onClick={handleMapClick}
+              style={{
+                backgroundImage: `
+                  radial-gradient(circle at 20% 30%, rgba(34, 197, 94, 0.1) 0%, transparent 50%),
+                  radial-gradient(circle at 80% 70%, rgba(59, 130, 246, 0.1) 0%, transparent 50%),
+                  linear-gradient(45deg, rgba(168, 85, 247, 0.05) 0%, rgba(236, 72, 153, 0.05) 100%)
+                `
+              }}
+            >
+              {/* Map Grid Pattern */}
+              <div className="absolute inset-0 opacity-20">
+                <div className="grid grid-cols-12 h-full">
+                  {Array.from({ length: 144 }, (_, i) => (
+                    <div key={i} className="border border-gray-300"></div>
+                  ))}
+                </div>
+              </div>
+              
+              {/* Street Labels */}
+              <div className="absolute top-4 left-4 bg-white bg-opacity-90 px-2 py-1 rounded text-xs font-medium text-gray-700">
+                Main Street
+              </div>
+              <div className="absolute bottom-4 right-4 bg-white bg-opacity-90 px-2 py-1 rounded text-xs font-medium text-gray-700">
+                Oak Avenue
+              </div>
+              
+              {/* Click Instructions */}
+              {!selectedLocation && (
+                <div className="absolute inset-0 flex items-center justify-center">
+                  <div className="text-center bg-white bg-opacity-95 p-6 rounded-lg shadow-lg">
+                    <MapPin className="h-12 w-12 text-purple-600 mx-auto mb-3" />
+                    <p className="text-gray-800 font-medium mb-2">Click anywhere on this map</p>
+                    <p className="text-sm text-gray-600">to pin your house location</p>
+                  </div>
+                </div>
+              )}
+              
+              {/* Location Pins */}
+              {mapClicks.map((click, index) => (
+                <div
+                  key={index}
+                  className="absolute transform -translate-x-1/2 -translate-y-full"
+                  style={{
+                    left: `${((click.lng - 120.9842) / 0.001 + 50) * (100 / 100)}%`,
+                    top: `${((click.lat - 14.5995) / -0.001 + 50) * (100 / 100)}%`
+                  }}
+                >
+                  <div className="bg-red-500 w-6 h-6 rounded-full border-2 border-white shadow-lg flex items-center justify-center">
+                    <div className="w-2 h-2 bg-white rounded-full"></div>
+                  </div>
+                  {index === mapClicks.length - 1 && (
+                    <div className="absolute top-8 left-1/2 transform -translate-x-1/2 bg-red-500 text-white px-2 py-1 rounded text-xs whitespace-nowrap">
+                      Your House
+                    </div>
+                  )}
+                </div>
+              ))}
             </div>
           </div>
           
           {selectedLocation && (
             <div className="bg-green-50 border border-green-200 rounded-lg p-4 mb-4">
               <h4 className="font-semibold text-green-800 mb-2">Selected Location</h4>
-              <p className="text-green-700">Coordinates: {selectedLocation.lat}, {selectedLocation.lng}</p>
+              <p className="text-green-700">Coordinates: {selectedLocation.lat.toFixed(6)}, {selectedLocation.lng.toFixed(6)}</p>
               <p className="text-green-700">Address: {selectedLocation.address}</p>
             </div>
           )}

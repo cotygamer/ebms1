@@ -4,6 +4,7 @@ import { CheckCircle, Clock, XCircle, Upload, MapPin, Camera, FileText, Shield, 
 
 export default function VerificationStatus() {
   const { user } = useAuth();
+  const [showAuditTrail, setShowAuditTrail] = useState(false);
   
   const getStatusIcon = (status: string) => {
     switch (status) {
@@ -11,6 +12,8 @@ export default function VerificationStatus() {
         return <CheckCircle className="h-8 w-8 text-green-500" />;
       case 'semi-verified':
         return <Clock className="h-8 w-8 text-yellow-500" />;
+      case 'details-updated':
+        return <Edit className="h-8 w-8 text-blue-500" />;
       case 'non-verified':
         return <XCircle className="h-8 w-8 text-red-500" />;
       default:
@@ -281,6 +284,43 @@ export default function VerificationStatus() {
           </div>
         </div>
       </div>
+      
+      {/* Audit Trail Section */}
+      {user?.auditTrail && user.auditTrail.length > 0 && (
+        <div className="bg-white border rounded-lg p-4 sm:p-6">
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="text-lg font-semibold text-gray-900">Verification History</h3>
+            <button
+              onClick={() => setShowAuditTrail(!showAuditTrail)}
+              className="text-blue-600 hover:text-blue-800 text-sm font-medium"
+            >
+              {showAuditTrail ? 'Hide' : 'Show'} History
+            </button>
+          </div>
+          
+          {showAuditTrail && (
+            <div className="space-y-3">
+              {user.auditTrail.map((entry, index) => (
+                <div key={index} className="bg-gray-50 p-3 rounded-lg">
+                  <div className="flex items-center justify-between mb-1">
+                    <span className="font-medium text-gray-900">{entry.action}</span>
+                    <span className="text-xs text-gray-500">
+                      {new Date(entry.timestamp).toLocaleDateString()} {new Date(entry.timestamp).toLocaleTimeString()}
+                    </span>
+                  </div>
+                  {entry.previousStatus && entry.newStatus && (
+                    <p className="text-sm text-gray-600">
+                      Status changed from <span className="font-medium capitalize">{entry.previousStatus.replace('-', ' ')}</span> to{' '}
+                      <span className="font-medium capitalize">{entry.newStatus.replace('-', ' ')}</span>
+                    </p>
+                  )}
+                  <p className="text-xs text-gray-500">By: {entry.approvedBy}</p>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
     </div>
   );
 }

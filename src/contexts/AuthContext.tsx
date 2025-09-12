@@ -8,15 +8,36 @@ export interface User {
   verificationStatus?: 'non-verified' | 'details-updated' | 'semi-verified' | 'verified';
   qrCode?: string;
   familyTree?: any[];
-  profileData?: {
-    phone?: string;
-    address?: string;
-    birthDate?: string;
-    gender?: string;
-    civilStatus?: string;
-    occupation?: string;
-    emergencyContact?: string;
-    houseLocation?: { lat: number; lng: number; address: string };
+  // Enhanced profile data structure
+  firstName?: string;
+  middleName?: string;
+  lastName?: string;
+  suffix?: string;
+  phone?: string;
+  birthDate?: string;
+  gender?: string;
+  civilStatus?: string;
+  nationality?: string;
+  occupation?: string;
+  monthlyIncome?: string;
+  houseNumber?: string;
+  purok?: string;
+  barangay?: string;
+  city?: string;
+  province?: string;
+  zipCode?: string;
+  emergencyContactName?: string;
+  emergencyContactPhone?: string;
+  emergencyContactRelation?: string;
+  emergencyContactAddress?: string;
+  houseLocation?: { lat: number; lng: number; address: string };
+  governmentIds?: {
+    sss?: { number: string; verified: boolean; uploadDate?: string };
+    philhealth?: { number: string; verified: boolean; uploadDate?: string };
+    pagibig?: { number: string; verified: boolean; uploadDate?: string };
+    umid?: { number: string; verified: boolean; uploadDate?: string };
+    driversLicense?: { number: string; verified: boolean; uploadDate?: string };
+    passport?: { number: string; verified: boolean; uploadDate?: string };
   };
   auditTrail?: {
     timestamp: string;
@@ -82,11 +103,53 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         role: 'resident',
         verificationStatus: 'verified',
         qrCode: 'QR123456789',
+        firstName: 'Juan',
+        lastName: 'Dela Cruz',
+        phone: '+63 912 345 6789',
+        birthDate: '1989-05-15',
+        gender: 'male',
+        civilStatus: 'married',
+        nationality: 'Filipino',
+        occupation: 'Teacher',
+        houseNumber: '123 Main Street',
+        barangay: 'San Miguel',
+        city: 'Metro Manila',
+        province: 'Metro Manila',
+        houseLocation: { lat: 14.5995, lng: 120.9842, address: '123 Main Street, San Miguel, Metro Manila' },
         familyTree: [
           { id: 1, name: 'Juan Dela Cruz', relation: 'self', age: 35, gender: 'male' },
           { id: 2, name: 'Maria Dela Cruz', relation: 'spouse', age: 32, gender: 'female' },
           { id: 3, name: 'Pedro Dela Cruz', relation: 'son', age: 10, gender: 'male' },
           { id: 4, name: 'Ana Dela Cruz', relation: 'daughter', age: 8, gender: 'female' }
+        ],
+        auditTrail: [
+          {
+            timestamp: '2024-01-15T10:00:00Z',
+            action: 'Account Created',
+            newStatus: 'non-verified',
+            approvedBy: 'System'
+          },
+          {
+            timestamp: '2024-01-16T14:30:00Z',
+            action: 'Profile Completed',
+            previousStatus: 'non-verified',
+            newStatus: 'details-updated',
+            approvedBy: 'Self (Resident)'
+          },
+          {
+            timestamp: '2024-01-17T09:15:00Z',
+            action: 'Documents Submitted',
+            previousStatus: 'details-updated',
+            newStatus: 'semi-verified',
+            approvedBy: 'Self (Resident)'
+          },
+          {
+            timestamp: '2024-01-20T11:45:00Z',
+            action: 'Physical Verification Completed',
+            previousStatus: 'semi-verified',
+            newStatus: 'verified',
+            approvedBy: 'Barangay Official - Maria Santos'
+          }
         ]
       }
     ];
