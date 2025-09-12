@@ -4,49 +4,7 @@ import { useAuth } from '../contexts/AuthContext';
 import VerificationStatus from '../components/VerificationStatus';
 import QRCodeGenerator from '../components/QRCodeGenerator';
 import FamilyTreeView from '../components/FamilyTreeView';
-import { 
-  User, 
-  Shield, 
-  QrCode, 
-  Users, 
-  FileText, 
-  Bell, 
-  Settings, 
-  LogOut, 
-  Activity,
-  Calendar,
-  MapPin,
-  Phone,
-  Mail,
-  Edit,
-  Save,
-  Camera,
-  Upload,
-  TrendingUp,
-  Building2,
-  X,
-  CheckCircle,
-  Clock,
-  AlertTriangle,
-  Download,
-  Eye,
-  Plus,
-  Heart,
-  Star,
-  Award,
-  Target,
-  CreditCard,
-  IdCard,
-  FileCheck,
-  UserCheck,
-  Lock,
-  Key,
-  Smartphone,
-  Globe,
-  Home,
-  Briefcase,
-  GraduationCap
-} from 'lucide-react';
+import { User, Shield, QrCode, Users, FileText, Bell, Settings, LogOut, Activity, Calendar, MapPin, Phone, Mail, Edit, Save, Camera, Upload, TrendingUp, Building2, X, CheckCircle, Clock, AlertTriangle, Download, Eye, Plus, Heart, Star, Award, Target, CreditCard, Car as IdCard, FileCheck, UserCheck, Lock, Key, Smartphone, Globe, Home, Briefcase, GraduationCap } from 'lucide-react';
 
 export default function ResidentDashboard() {
   const [activeTab, setActiveTab] = useState('overview');
