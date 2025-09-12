@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useData } from '../contexts/DataContext';
-import { Eye, UserCheck, UserX, QrCode, Users, Search } from 'lucide-react';
+import { Eye, UserCheck, UserX, QrCode, Users, Search, MapPin, IdCard, Phone, Mail, Calendar, Shield, History } from 'lucide-react';
 
 export default function ResidentManagement() {
   const { residents, verifyResident } = useData();
@@ -18,6 +18,8 @@ export default function ResidentManagement() {
         return 'bg-green-100 text-green-800';
       case 'semi-verified':
         return 'bg-yellow-100 text-yellow-800';
+      case 'details-updated':
+        return 'bg-blue-100 text-blue-800';
       case 'non-verified':
         return 'bg-red-100 text-red-800';
       default:
@@ -47,6 +49,54 @@ export default function ResidentManagement() {
         </div>
       </div>
 
+      {/* Enhanced Statistics */}
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+        <div className="bg-white rounded-lg shadow-sm p-6">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm font-medium text-gray-600">Total Residents</p>
+              <p className="text-3xl font-bold text-blue-600">{residents.length}</p>
+            </div>
+            <Users className="h-12 w-12 text-blue-600" />
+          </div>
+        </div>
+        
+        <div className="bg-white rounded-lg shadow-sm p-6">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm font-medium text-gray-600">Fully Verified</p>
+              <p className="text-3xl font-bold text-green-600">
+                {residents.filter(r => r.verificationStatus === 'verified').length}
+              </p>
+            </div>
+            <Shield className="h-12 w-12 text-green-600" />
+          </div>
+        </div>
+        
+        <div className="bg-white rounded-lg shadow-sm p-6">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm font-medium text-gray-600">Semi-verified</p>
+              <p className="text-3xl font-bold text-yellow-600">
+                {residents.filter(r => r.verificationStatus === 'semi-verified').length}
+              </p>
+            </div>
+            <UserCheck className="h-12 w-12 text-yellow-600" />
+          </div>
+        </div>
+        
+        <div className="bg-white rounded-lg shadow-sm p-6">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm font-medium text-gray-600">With QR Codes</p>
+              <p className="text-3xl font-bold text-purple-600">
+                {residents.filter(r => r.qrCode).length}
+              </p>
+            </div>
+            <QrCode className="h-12 w-12 text-purple-600" />
+          </div>
+        </div>
+      </div>
       <div className="bg-white rounded-lg shadow-sm overflow-hidden">
         <table className="min-w-full divide-y divide-gray-200">
           <thead className="bg-gray-50">
@@ -56,6 +106,9 @@ export default function ResidentManagement() {
               </th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                 Verification Status
+              </th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                Location
               </th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                 Date Registered
@@ -83,6 +136,9 @@ export default function ResidentManagement() {
                     <div className="ml-4">
                       <div className="text-sm font-medium text-gray-900">{resident.name}</div>
                       <div className="text-sm text-gray-500">{resident.email}</div>
+                      {resident.phone && (
+                        <div className="text-xs text-gray-400">{resident.phone}</div>
+                      )}
                     </div>
                   </div>
                 </td>
@@ -90,6 +146,19 @@ export default function ResidentManagement() {
                   <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getStatusColor(resident.verificationStatus)}`}>
                     {resident.verificationStatus.replace('-', ' ')}
                   </span>
+                </td>
+                <td className="px-6 py-4 whitespace-nowrap">
+                  {resident.houseLocation ? (
+                    <div className="flex items-center text-sm text-green-600">
+                      <MapPin className="h-4 w-4 mr-1" />
+                      <span>Pinned</span>
+                    </div>
+                  ) : (
+                    <div className="flex items-center text-sm text-red-600">
+                      <MapPin className="h-4 w-4 mr-1" />
+                      <span>Not pinned</span>
+                    </div>
+                  )}
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                   {resident.dateRegistered}
@@ -171,12 +240,12 @@ function ResidentDetailModal({ resident, onClose }: { resident: any; onClose: ()
                   <p className="text-sm text-gray-900">{resident.email}</p>
                 </div>
                 <div>
-                  <label className="text-sm font-medium text-gray-700">Address</label>
-                  <p className="text-sm text-gray-900">{resident.address}</p>
+                  <label className="text-sm font-medium text-gray-700">Phone</label>
+                  <p className="text-sm text-gray-900">{resident.phone || 'Not provided'}</p>
                 </div>
                 <div>
-                  <label className="text-sm font-medium text-gray-700">Phone</label>
-                  <p className="text-sm text-gray-900">{resident.phoneNumber}</p>
+                  <label className="text-sm font-medium text-gray-700">Address</label>
+                  <p className="text-sm text-gray-900">{resident.address}</p>
                 </div>
               </div>
             </div>
@@ -192,23 +261,90 @@ function ResidentDetailModal({ resident, onClose }: { resident: any; onClose: ()
                   <label className="text-sm font-medium text-gray-700">Date Registered</label>
                   <p className="text-sm text-gray-900">{resident.dateRegistered}</p>
                 </div>
+                <div>
+                  <label className="text-sm font-medium text-gray-700">QR Code</label>
+                  <p className="text-sm text-gray-900">
+                    {resident.qrCode ? (
+                      <span className="text-green-600">Generated</span>
+                    ) : (
+                      <span className="text-red-600">Not available</span>
+                    )}
+                  </p>
+                </div>
               </div>
             </div>
           </div>
           
+          {/* House Location */}
+          {resident.houseLocation && (
+            <div>
+              <h4 className="font-semibold text-gray-900 mb-4 flex items-center">
+                <MapPin className="h-5 w-5 mr-2" />
+                House Location
+              </h4>
+              <div className="bg-gray-50 p-4 rounded-lg">
+                <p className="text-sm text-gray-900 mb-2">
+                  <strong>Address:</strong> {resident.houseLocation.address}
+                </p>
+                <p className="text-sm text-gray-600">
+                  <strong>Coordinates:</strong> {resident.houseLocation.lat.toFixed(6)}, {resident.houseLocation.lng.toFixed(6)}
+                </p>
+              </div>
+            </div>
+          )}
+
+          {/* Government IDs */}
+          {resident.governmentIds && Object.keys(resident.governmentIds).length > 0 && (
+            <div>
+              <h4 className="font-semibold text-gray-900 mb-4 flex items-center">
+                <IdCard className="h-5 w-5 mr-2" />
+                Government IDs
+              </h4>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {Object.entries(resident.governmentIds).map(([idType, idData]: [string, any]) => (
+                  <div key={idType} className="bg-gray-50 p-4 rounded-lg">
+                    <div className="flex items-center justify-between mb-2">
+                      <h5 className="font-medium text-gray-900 capitalize">
+                        {idType === 'driversLicense' ? "Driver's License" : idType.toUpperCase()}
+                      </h5>
+                      <span className={`px-2 py-1 text-xs font-semibold rounded-full ${
+                        idData.verified ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'
+                      }`}>
+                        {idData.verified ? 'Verified' : 'Pending'}
+                      </span>
+                    </div>
+                    <p className="text-sm text-gray-600 mb-1">
+                      <strong>Number:</strong> {idData.number}
+                    </p>
+                    {idData.uploadDate && (
+                      <p className="text-xs text-gray-500">
+                        Uploaded: {idData.uploadDate}
+                      </p>
+                    )}
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
           <div>
             <h4 className="font-semibold text-gray-900 mb-4 flex items-center">
               <Users className="h-5 w-5 mr-2" />
               Family Tree
             </h4>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {resident.familyTree.map((member: any) => (
-                <div key={member.id} className="bg-gray-50 p-4 rounded-lg">
-                  <h5 className="font-medium text-gray-900">{member.name}</h5>
-                  <p className="text-sm text-gray-600 capitalize">{member.relation}</p>
-                </div>
-              ))}
-            </div>
+            {resident.familyTree && resident.familyTree.length > 0 ? (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                {resident.familyTree.map((member: any) => (
+                  <div key={member.id} className="bg-gray-50 p-4 rounded-lg">
+                    <h5 className="font-medium text-gray-900">{member.name}</h5>
+                    <p className="text-sm text-gray-600 capitalize">{member.relation}</p>
+                    <p className="text-xs text-gray-500">Age: {member.age}</p>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <p className="text-gray-500 text-sm">No family members added</p>
+            )}
           </div>
         </div>
       </div>

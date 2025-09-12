@@ -9,6 +9,7 @@ import ModuleControl from '../components/ModuleControl';
 import SystemSettings from '../components/SystemSettings';
 import Analytics from '../components/Analytics';
 import ProjectGallery from '../components/ProjectGallery';
+import KYCVerificationCenter from '../components/KYCVerificationCenter';
 import { 
   Users, 
   Shield, 
@@ -23,7 +24,8 @@ import {
   Save,
   AlertTriangle,
   CheckCircle,
-  X
+  X,
+  UserCheck
 } from 'lucide-react';
 
 export default function SuperAdminDashboard() {
@@ -40,6 +42,7 @@ export default function SuperAdminDashboard() {
     { id: 'overview', label: 'Overview', icon: Activity },
     { id: 'users', label: 'User Management', icon: Users },
     { id: 'residents', label: 'Resident Management', icon: Users },
+    { id: 'kyc-verification', label: 'KYC Verification Center', icon: UserCheck },
     { id: 'modules', label: 'Module Control', icon: Database },
     { id: 'projects', label: 'Projects & Gallery', icon: Camera },
     { id: 'analytics', label: 'Analytics', icon: BarChart3 },
@@ -55,6 +58,8 @@ export default function SuperAdminDashboard() {
         return <UserManagement />;
       case 'residents':
         return <ResidentManagement />;
+      case 'kyc-verification':
+        return <KYCVerificationCenter />;
       case 'modules':
         return <ModuleControl />;
       case 'projects':
