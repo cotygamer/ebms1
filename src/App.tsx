@@ -60,7 +60,7 @@ function AppRoutes() {
       
       {/* Additional disaster portal route for barangay officials */}
       <Route 
-        path="/disaster-portal-dashboard" 
+        path="/disaster-portal" 
         element={user && (user.role === 'disaster-portal' || user.role === 'barangay-official' || user.role === 'super-admin') ? <DisasterPortal /> : <Navigate to="/login" />} 
       />
       

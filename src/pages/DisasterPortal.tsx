@@ -4,319 +4,228 @@ import { useAuth } from '../contexts/AuthContext';
 import { 
   AlertTriangle, 
   Shield, 
-  Radio, 
-  MapPin, 
   Users, 
-  Activity,
+  MapPin, 
+  Radio, 
+  Bell,
   Plus,
   Search,
   Filter,
   Download,
+  Upload,
   Eye,
   Edit,
   Trash2,
   ArrowLeft,
   LogOut,
-  Bell,
-  Phone,
+  Activity,
   Calendar,
   Clock,
   CheckCircle,
   X,
   Save,
-  Zap,
   Cloud,
   Thermometer,
   Wind,
   Droplets,
   Sun,
   CloudRain,
+  Zap,
   Navigation,
+  Satellite,
+  Globe,
+  RefreshCw,
+  TrendingUp,
+  BarChart3,
   Home,
   Building2,
-  Car,
-  Truck,
-  Ambulance,
-  Target,
-  Megaphone,
-  FileText,
-  BarChart3,
-  Send,
-  Volume2,
+  Phone,
   Siren,
-  Map,
-  Compass,
-  Route,
-  Timer,
-  UserCheck,
-  AlertCircle,
-  Info,
-  Wifi,
-  WifiOff,
-  Battery,
-  Signal,
-  Globe,
-  Satellite
+  Truck,
+  Heart,
+  Wrench
 } from 'lucide-react';
 
 const DisasterPortal: React.FC = () => {
-  const { user } = useAuth();
+  const { user, logout } = useAuth();
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState('dashboard');
   const [showAlertForm, setShowAlertForm] = useState(false);
   const [showEvacuationForm, setShowEvacuationForm] = useState(false);
-  const [showIncidentForm, setShowIncidentForm] = useState(false);
-  const [showBroadcastForm, setShowBroadcastForm] = useState(false);
+  const [showResourceForm, setShowResourceForm] = useState(false);
+  const [weatherData, setWeatherData] = useState<any>(null);
+  const [mapCenter, setMapCenter] = useState({ lat: 14.5995, lng: 120.9842 });
+  const [isLoadingWeather, setIsLoadingWeather] = useState(false);
 
   const [alerts, setAlerts] = useState([
     {
-      id: 1,
-      type: 'weather',
-      title: 'Heavy Rainfall Warning',
-      message: 'Heavy rainfall expected in the next 24 hours. Residents in low-lying areas should be prepared for possible flooding.',
-      priority: 'high' as 'low' | 'medium' | 'high',
-      status: 'active',
-      date: '2024-03-20',
-      time: '14:30',
-      affectedAreas: ['Zone 1', 'Zone 2', 'Zone 3'],
-      estimatedDuration: '24 hours',
-      responseTeams: ['Emergency Response Team A', 'Flood Control Unit'],
-      evacuationRecommended: true
-    },
-    {
-      id: 2,
+      id: '1',
       type: 'flood',
-      title: 'Flood Advisory - Main Creek',
-      message: 'Rising water levels detected in Main Creek. Residents near the creek should monitor conditions and be ready to evacuate if necessary.',
-      priority: 'medium' as 'low' | 'medium' | 'high',
-      status: 'monitoring',
-      date: '2024-03-19',
-      time: '08:15',
-      affectedAreas: ['Zone 3', 'Riverside Area'],
-      estimatedDuration: '12 hours',
-      responseTeams: ['Flood Monitoring Team'],
-      evacuationRecommended: false
+      title: 'Flood Warning - Purok 3',
+      description: 'Heavy rainfall causing water accumulation in low-lying areas of Purok 3. Residents advised to prepare for possible evacuation.',
+      severity: 'high',
+      status: 'active',
+      affectedAreas: ['Purok 3', 'Main Street'],
+      issuedBy: 'NDRRMC Officer',
+      issuedAt: '2024-03-20 14:30',
+      expiresAt: '2024-03-21 06:00',
+      evacuationSites: ['Barangay Hall', 'Community Center'],
+      contactNumbers: ['+63 912 345 6789', '+63 917 654 3210']
     },
     {
-      id: 3,
-      type: 'fire',
-      title: 'Fire Incident - Resolved',
-      message: 'House fire at Block 5 has been successfully extinguished. No casualties reported. Area is now safe.',
-      priority: 'high' as 'low' | 'medium' | 'high',
-      status: 'resolved',
-      date: '2024-03-18',
-      time: '15:45',
-      affectedAreas: ['Block 5'],
-      estimatedDuration: 'Resolved',
-      responseTeams: ['Fire Department', 'Medical Team', 'Security'],
-      evacuationRecommended: false
+      id: '2',
+      type: 'typhoon',
+      title: 'Typhoon Signal #2 - Preparation Phase',
+      description: 'Typhoon approaching the area. All residents should secure properties and prepare emergency kits.',
+      severity: 'critical',
+      status: 'active',
+      affectedAreas: ['All Puroks'],
+      issuedBy: 'PAGASA',
+      issuedAt: '2024-03-20 08:00',
+      expiresAt: '2024-03-22 18:00',
+      evacuationSites: ['Elementary School', 'High School', 'Covered Court'],
+      contactNumbers: ['+63 912 345 6789']
     }
   ]);
 
-  const [evacuationCenters, setEvacuationCenters] = useState([
-    { 
-      id: 1, 
-      name: 'Barangay Hall Main Building', 
-      capacity: 200, 
-      current: 45, 
-      status: 'operational', 
-      address: 'Main Street, Barangay Center', 
-      contact: '+63 912 345 6789',
-      facilities: ['Restrooms', 'Kitchen', 'Medical Station', 'WiFi'],
-      coordinator: 'Maria Santos',
-      lastUpdated: '2024-03-20 14:30'
+  const [evacuationSites, setEvacuationSites] = useState([
+    {
+      id: '1',
+      name: 'Barangay Hall',
+      capacity: 150,
+      currentOccupancy: 45,
+      status: 'operational',
+      facilities: ['Restrooms', 'Kitchen', 'Medical Station'],
+      coordinates: { lat: 14.5995, lng: 120.9842 },
+      contactPerson: 'Maria Santos',
+      contactNumber: '+63 912 345 6789'
     },
-    { 
-      id: 2, 
-      name: 'Community Center Gymnasium', 
-      capacity: 150, 
-      current: 0, 
-      status: 'standby', 
-      address: 'Center Road, Zone 2', 
-      contact: '+63 917 654 3210',
-      facilities: ['Restrooms', 'Kitchen', 'First Aid'],
-      coordinator: 'Juan Dela Cruz',
-      lastUpdated: '2024-03-20 12:00'
+    {
+      id: '2',
+      name: 'Community Center',
+      capacity: 200,
+      currentOccupancy: 0,
+      status: 'standby',
+      facilities: ['Restrooms', 'Kitchen', 'Generator'],
+      coordinates: { lat: 14.6005, lng: 120.9852 },
+      contactPerson: 'Juan Dela Cruz',
+      contactNumber: '+63 917 654 3210'
     },
-    { 
-      id: 3, 
-      name: 'San Miguel Elementary School', 
-      capacity: 300, 
-      current: 0, 
-      status: 'standby', 
-      address: 'School Avenue, Zone 4', 
-      contact: '+63 922 111 2222',
-      facilities: ['Restrooms', 'Classrooms', 'Playground', 'Cafeteria'],
-      coordinator: 'Ana Garcia',
-      lastUpdated: '2024-03-20 10:15'
+    {
+      id: '3',
+      name: 'Elementary School',
+      capacity: 300,
+      currentOccupancy: 0,
+      status: 'standby',
+      facilities: ['Classrooms', 'Restrooms', 'Cafeteria', 'Medical Room'],
+      coordinates: { lat: 14.5985, lng: 120.9832 },
+      contactPerson: 'Ana Garcia',
+      contactNumber: '+63 918 765 4321'
     }
   ]);
 
-  const [incidents, setIncidents] = useState([
-    { 
-      id: 1, 
-      type: 'Fire', 
-      location: 'Block 5, Lot 12', 
-      status: 'resolved', 
-      priority: 'high', 
-      date: '2024-03-18', 
-      time: '15:45', 
-      responders: 3,
-      description: 'House fire caused by electrical malfunction',
-      casualties: 0,
-      damages: 'Partial house damage',
-      responseTime: '8 minutes'
-    },
-    { 
-      id: 2, 
-      type: 'Medical Emergency', 
-      location: 'Zone 2, House 45', 
-      status: 'ongoing', 
-      priority: 'high', 
-      date: '2024-03-20', 
-      time: '10:30', 
-      responders: 2,
-      description: 'Elderly resident experiencing chest pains',
-      casualties: 0,
-      damages: 'None',
-      responseTime: '5 minutes'
-    },
-    { 
-      id: 3, 
-      type: 'Traffic Accident', 
-      location: 'Main Street Intersection', 
-      status: 'resolved', 
-      priority: 'medium', 
-      date: '2024-03-19', 
-      time: '12:15', 
-      responders: 4,
-      description: 'Minor vehicle collision, no injuries',
-      casualties: 0,
-      damages: 'Minor vehicle damage',
-      responseTime: '12 minutes'
-    }
+  const [resources, setResources] = useState([
+    { id: '1', type: 'Food', item: 'Rice', quantity: 500, unit: 'kg', location: 'Warehouse A', status: 'available' },
+    { id: '2', type: 'Water', item: 'Bottled Water', quantity: 1000, unit: 'bottles', location: 'Warehouse A', status: 'available' },
+    { id: '3', type: 'Medical', item: 'First Aid Kits', quantity: 50, unit: 'kits', location: 'Health Center', status: 'available' },
+    { id: '4', type: 'Equipment', item: 'Flashlights', quantity: 100, unit: 'pieces', location: 'Warehouse B', status: 'available' },
+    { id: '5', type: 'Shelter', item: 'Tents', quantity: 25, unit: 'pieces', location: 'Warehouse B', status: 'available' }
   ]);
 
-  const [emergencyContacts] = useState([
-    { category: 'Fire Department', number: '911', alternate: '+63 2 8123 4567', available: '24/7' },
-    { category: 'Medical Emergency', number: '911', alternate: '+63 2 8765 4321', available: '24/7' },
-    { category: 'Police', number: '911', alternate: '+63 2 8111 2222', available: '24/7' },
-    { category: 'Barangay Emergency', number: '+63 912 345 6789', alternate: '+63 917 654 3210', available: '24/7' },
-    { category: 'Red Cross', number: '143', alternate: '+63 2 8527 0000', available: '24/7' },
-    { category: 'NDRRMC', number: '+63 2 8911 1406', alternate: '+63 2 8912 2665', available: '24/7' }
+  const [emergencyContacts, setEmergencyContacts] = useState([
+    { id: '1', name: 'Barangay Emergency Hotline', number: '+63 912 345 6789', type: 'primary' },
+    { id: '2', name: 'Police Station', number: '117', type: 'police' },
+    { id: '3', name: 'Fire Department', number: '116', type: 'fire' },
+    { id: '4', name: 'Medical Emergency', number: '911', type: 'medical' },
+    { id: '5', name: 'NDRRMC Regional Office', number: '+63 917 654 3210', type: 'disaster' }
   ]);
 
-  const [newAlert, setNewAlert] = useState({
-    type: 'weather',
-    title: '',
-    message: '',
-    priority: 'medium' as 'low' | 'medium' | 'high',
-    affectedAreas: [] as string[],
-    estimatedDuration: '',
-    evacuationRecommended: false,
-    responseTeams: [] as string[]
-  });
-
-  const [weatherData, setWeatherData] = useState({
-    temperature: '28°C',
-    humidity: '75%',
-    windSpeed: '15 km/h',
-    windDirection: 'NE',
-    rainfall: '12mm',
-    pressure: '1013 hPa',
-    visibility: '10 km',
-    condition: 'Partly Cloudy',
-    lastUpdated: new Date().toLocaleString()
-  });
-
-  const [systemStatus] = useState({
-    communicationSystems: {
-      radio: 'operational',
-      internet: 'operational',
-      mobile: 'operational',
-      satellite: 'standby'
-    },
-    emergencyEquipment: {
-      generators: 'operational',
-      vehicles: 'operational',
-      medicalSupplies: 'adequate',
-      communicationDevices: 'operational'
-    },
-    personnel: {
-      onDuty: 12,
-      available: 8,
-      training: 2,
-      total: 22
-    }
-  });
-
+  // Fixed logout function
   const handleLogout = () => {
-    const { logout } = useAuth();
-    logout();
-    navigate('/');
-  };
-
-  const handleAddAlert = () => {
-    if (newAlert.title && newAlert.message) {
-      const alert = {
-        id: Date.now(),
-        ...newAlert,
-        status: 'active',
-        date: new Date().toISOString().split('T')[0],
-        time: new Date().toLocaleTimeString('en-US', { hour12: false, hour: '2-digit', minute: '2-digit' })
-      };
-      setAlerts(prev => [alert, ...prev]);
-      setNewAlert({
-        type: 'weather',
-        title: '',
-        message: '',
-        priority: 'medium',
-        affectedAreas: [],
-        estimatedDuration: '',
-        evacuationRecommended: false,
-        responseTeams: []
-      });
-      setShowAlertForm(false);
+    try {
+      logout();
+      navigate('/');
+    } catch (error) {
+      console.error('Logout error:', error);
+      // Force navigation even if logout fails
+      navigate('/');
     }
   };
 
-  const handleBroadcastAlert = (alertId: number) => {
-    // Simulate broadcasting alert to all residents
-    alert(`Broadcasting alert to all residents via SMS, email, and mobile app notifications...`);
+  // Weather data fetching
+  const fetchWeatherData = async () => {
+    setIsLoadingWeather(true);
+    try {
+      // Simulated weather data - in production, integrate with actual weather API
+      const mockWeatherData = {
+        current: {
+          temperature: 28,
+          humidity: 75,
+          windSpeed: 15,
+          windDirection: 'NE',
+          pressure: 1013,
+          visibility: 10,
+          uvIndex: 6,
+          condition: 'Partly Cloudy',
+          icon: 'partly-cloudy'
+        },
+        forecast: [
+          { day: 'Today', high: 32, low: 24, condition: 'Partly Cloudy', precipitation: 20 },
+          { day: 'Tomorrow', high: 30, low: 23, condition: 'Rainy', precipitation: 80 },
+          { day: 'Friday', high: 29, low: 22, condition: 'Thunderstorms', precipitation: 90 },
+          { day: 'Saturday', high: 31, low: 25, condition: 'Sunny', precipitation: 10 },
+          { day: 'Sunday', high: 33, low: 26, condition: 'Partly Cloudy', precipitation: 30 }
+        ],
+        alerts: [
+          { type: 'rainfall', message: 'Heavy rainfall expected in the next 6 hours', severity: 'moderate' },
+          { type: 'wind', message: 'Strong winds up to 45 km/h possible', severity: 'low' }
+        ]
+      };
+      
+      setWeatherData(mockWeatherData);
+    } catch (error) {
+      console.error('Error fetching weather data:', error);
+    } finally {
+      setIsLoadingWeather(false);
+    }
   };
+
+  useEffect(() => {
+    fetchWeatherData();
+    // Refresh weather data every 10 minutes
+    const interval = setInterval(fetchWeatherData, 10 * 60 * 1000);
+    return () => clearInterval(interval);
+  }, []);
 
   const stats = [
     { label: 'Active Alerts', value: alerts.filter(a => a.status === 'active').length.toString(), icon: AlertTriangle, color: 'bg-red-500', trend: '+2' },
-    { label: 'Evacuation Centers', value: evacuationCenters.length.toString(), icon: Shield, color: 'bg-blue-500', trend: '3' },
-    { label: 'Current Evacuees', value: evacuationCenters.reduce((sum, center) => sum + center.current, 0).toString(), icon: Users, color: 'bg-green-500', trend: '+45' },
-    { label: 'Response Teams', value: systemStatus.personnel.onDuty.toString(), icon: Radio, color: 'bg-purple-500', trend: 'Ready' }
+    { label: 'Evacuation Sites', value: evacuationSites.length.toString(), icon: Shield, color: 'bg-blue-500', trend: '0' },
+    { label: 'People Evacuated', value: evacuationSites.reduce((sum, site) => sum + site.currentOccupancy, 0).toString(), icon: Users, color: 'bg-green-500', trend: '+45' },
+    { label: 'Available Resources', value: resources.filter(r => r.status === 'available').length.toString(), icon: Truck, color: 'bg-purple-500', trend: '+5' }
   ];
+
+  const getAlertColor = (severity: string) => {
+    switch (severity) {
+      case 'critical': return 'bg-red-100 text-red-800 border-red-200';
+      case 'high': return 'bg-orange-100 text-orange-800 border-orange-200';
+      case 'moderate': return 'bg-yellow-100 text-yellow-800 border-yellow-200';
+      case 'low': return 'bg-blue-100 text-blue-800 border-blue-200';
+      default: return 'bg-gray-100 text-gray-800 border-gray-200';
+    }
+  };
+
+  const getStatusColor = (status: string) => {
+    switch (status) {
+      case 'operational': return 'bg-green-100 text-green-800';
+      case 'standby': return 'bg-yellow-100 text-yellow-800';
+      case 'full': return 'bg-red-100 text-red-800';
+      case 'maintenance': return 'bg-gray-100 text-gray-800';
+      default: return 'bg-gray-100 text-gray-800';
+    }
+  };
 
   const renderDashboard = () => (
     <div className="space-y-6">
-      {/* Emergency Status Banner */}
-      {alerts.filter(a => a.status === 'active' && a.priority === 'high').length > 0 && (
-        <div className="bg-red-600 text-white p-4 rounded-lg">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center">
-              <Siren className="h-6 w-6 mr-3 animate-pulse" />
-              <div>
-                <h3 className="font-bold">HIGH PRIORITY EMERGENCY ACTIVE</h3>
-                <p className="text-red-100">
-                  {alerts.filter(a => a.status === 'active' && a.priority === 'high').length} high priority alert(s) require immediate attention
-                </p>
-              </div>
-            </div>
-            <button
-              onClick={() => setActiveTab('alerts')}
-              className="bg-red-700 text-white px-4 py-2 rounded-lg hover:bg-red-800"
-            >
-              View Alerts
-            </button>
-          </div>
-        </div>
-      )}
-
       {/* Stats Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         {stats.map((stat, index) => (
@@ -325,7 +234,9 @@ const DisasterPortal: React.FC = () => {
               <div>
                 <p className="text-sm font-medium text-gray-600">{stat.label}</p>
                 <p className="text-2xl font-bold text-gray-900">{stat.value}</p>
-                <p className="text-sm text-gray-500">{stat.trend}</p>
+                <p className="text-sm text-gray-500">
+                  {stat.trend.startsWith('+') ? `+${stat.trend.slice(1)} today` : 'No change'}
+                </p>
               </div>
               <div className={`${stat.color} p-3 rounded-lg`}>
                 <stat.icon className="h-6 w-6 text-white" />
@@ -335,191 +246,204 @@ const DisasterPortal: React.FC = () => {
         ))}
       </div>
 
-      {/* System Status Overview */}
-      <div className="bg-white rounded-lg shadow-md p-6">
-        <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
-          <Activity className="h-5 w-5 mr-2" />
-          System Status Overview
-        </h3>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          {/* Communication Systems */}
-          <div className="bg-blue-50 p-4 rounded-lg">
-            <h4 className="font-semibold text-blue-800 mb-3 flex items-center">
-              <Radio className="h-4 w-4 mr-2" />
-              Communication Systems
-            </h4>
-            <div className="space-y-2">
-              <div className="flex items-center justify-between">
-                <span className="text-sm text-blue-700">Radio Network</span>
-                <div className="flex items-center">
-                  <div className="w-2 h-2 bg-green-500 rounded-full mr-2"></div>
-                  <span className="text-xs text-green-600">Operational</span>
-                </div>
-              </div>
-              <div className="flex items-center justify-between">
-                <span className="text-sm text-blue-700">Internet</span>
-                <div className="flex items-center">
-                  <div className="w-2 h-2 bg-green-500 rounded-full mr-2"></div>
-                  <span className="text-xs text-green-600">Operational</span>
-                </div>
-              </div>
-              <div className="flex items-center justify-between">
-                <span className="text-sm text-blue-700">Mobile Network</span>
-                <div className="flex items-center">
-                  <div className="w-2 h-2 bg-green-500 rounded-full mr-2"></div>
-                  <span className="text-xs text-green-600">Operational</span>
-                </div>
-              </div>
-              <div className="flex items-center justify-between">
-                <span className="text-sm text-blue-700">Satellite Backup</span>
-                <div className="flex items-center">
-                  <div className="w-2 h-2 bg-yellow-500 rounded-full mr-2"></div>
-                  <span className="text-xs text-yellow-600">Standby</span>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* Emergency Equipment */}
-          <div className="bg-green-50 p-4 rounded-lg">
-            <h4 className="font-semibold text-green-800 mb-3 flex items-center">
-              <Shield className="h-4 w-4 mr-2" />
-              Emergency Equipment
-            </h4>
-            <div className="space-y-2">
-              <div className="flex items-center justify-between">
-                <span className="text-sm text-green-700">Generators</span>
-                <div className="flex items-center">
-                  <div className="w-2 h-2 bg-green-500 rounded-full mr-2"></div>
-                  <span className="text-xs text-green-600">Ready</span>
-                </div>
-              </div>
-              <div className="flex items-center justify-between">
-                <span className="text-sm text-green-700">Emergency Vehicles</span>
-                <div className="flex items-center">
-                  <div className="w-2 h-2 bg-green-500 rounded-full mr-2"></div>
-                  <span className="text-xs text-green-600">Ready</span>
-                </div>
-              </div>
-              <div className="flex items-center justify-between">
-                <span className="text-sm text-green-700">Medical Supplies</span>
-                <div className="flex items-center">
-                  <div className="w-2 h-2 bg-green-500 rounded-full mr-2"></div>
-                  <span className="text-xs text-green-600">Adequate</span>
-                </div>
-              </div>
-              <div className="flex items-center justify-between">
-                <span className="text-sm text-green-700">Communication Devices</span>
-                <div className="flex items-center">
-                  <div className="w-2 h-2 bg-green-500 rounded-full mr-2"></div>
-                  <span className="text-xs text-green-600">Operational</span>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* Personnel Status */}
-          <div className="bg-purple-50 p-4 rounded-lg">
-            <h4 className="font-semibold text-purple-800 mb-3 flex items-center">
-              <Users className="h-4 w-4 mr-2" />
-              Personnel Status
-            </h4>
-            <div className="space-y-2">
-              <div className="flex items-center justify-between">
-                <span className="text-sm text-purple-700">On Duty</span>
-                <span className="text-sm font-semibold text-purple-800">{systemStatus.personnel.onDuty}</span>
-              </div>
-              <div className="flex items-center justify-between">
-                <span className="text-sm text-purple-700">Available</span>
-                <span className="text-sm font-semibold text-purple-800">{systemStatus.personnel.available}</span>
-              </div>
-              <div className="flex items-center justify-between">
-                <span className="text-sm text-purple-700">In Training</span>
-                <span className="text-sm font-semibold text-purple-800">{systemStatus.personnel.training}</span>
-              </div>
-              <div className="flex items-center justify-between">
-                <span className="text-sm text-purple-700">Total Staff</span>
-                <span className="text-sm font-semibold text-purple-800">{systemStatus.personnel.total}</span>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* Weather Information */}
+      {/* Weather Monitoring Section */}
       <div className="bg-white rounded-lg shadow-md p-6">
         <div className="flex items-center justify-between mb-4">
           <h3 className="text-lg font-semibold text-gray-900 flex items-center">
             <Cloud className="h-5 w-5 mr-2" />
-            Current Weather Conditions
+            Real-Time Weather Monitoring
           </h3>
-          <div className="text-sm text-gray-500">
-            Last updated: {weatherData.lastUpdated}
+          <button
+            onClick={fetchWeatherData}
+            disabled={isLoadingWeather}
+            className="flex items-center px-3 py-2 text-blue-600 hover:text-blue-800 disabled:opacity-50"
+          >
+            <RefreshCw className={`h-4 w-4 mr-2 ${isLoadingWeather ? 'animate-spin' : ''}`} />
+            Refresh
+          </button>
+        </div>
+
+        {weatherData ? (
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            {/* Current Weather */}
+            <div className="bg-gradient-to-br from-blue-50 to-blue-100 p-6 rounded-lg">
+              <h4 className="font-semibold text-blue-900 mb-4">Current Conditions</h4>
+              <div className="space-y-3">
+                <div className="flex items-center justify-between">
+                  <span className="text-blue-700">Temperature</span>
+                  <span className="font-bold text-blue-900">{weatherData.current.temperature}°C</span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-blue-700">Humidity</span>
+                  <span className="font-bold text-blue-900">{weatherData.current.humidity}%</span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-blue-700">Wind Speed</span>
+                  <span className="font-bold text-blue-900">{weatherData.current.windSpeed} km/h</span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-blue-700">Pressure</span>
+                  <span className="font-bold text-blue-900">{weatherData.current.pressure} hPa</span>
+                </div>
+              </div>
+            </div>
+
+            {/* Weather Alerts */}
+            <div className="bg-gradient-to-br from-yellow-50 to-orange-100 p-6 rounded-lg">
+              <h4 className="font-semibold text-orange-900 mb-4">Weather Alerts</h4>
+              <div className="space-y-3">
+                {weatherData.alerts.map((alert: any, index: number) => (
+                  <div key={index} className={`p-3 rounded-lg border ${
+                    alert.severity === 'high' ? 'bg-red-50 border-red-200' :
+                    alert.severity === 'moderate' ? 'bg-yellow-50 border-yellow-200' :
+                    'bg-blue-50 border-blue-200'
+                  }`}>
+                    <div className="flex items-center mb-2">
+                      <AlertTriangle className={`h-4 w-4 mr-2 ${
+                        alert.severity === 'high' ? 'text-red-600' :
+                        alert.severity === 'moderate' ? 'text-yellow-600' :
+                        'text-blue-600'
+                      }`} />
+                      <span className="font-medium capitalize">{alert.type} Alert</span>
+                    </div>
+                    <p className="text-sm text-gray-700">{alert.message}</p>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* 5-Day Forecast */}
+            <div className="bg-gradient-to-br from-green-50 to-green-100 p-6 rounded-lg">
+              <h4 className="font-semibold text-green-900 mb-4">5-Day Forecast</h4>
+              <div className="space-y-3">
+                {weatherData.forecast.map((day: any, index: number) => (
+                  <div key={index} className="flex items-center justify-between">
+                    <span className="text-green-700 text-sm">{day.day}</span>
+                    <div className="flex items-center space-x-2">
+                      <span className="text-xs text-green-600">{day.high}°/{day.low}°</span>
+                      <span className="text-xs text-green-600">{day.precipitation}%</span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        ) : (
+          <div className="text-center py-8">
+            <Cloud className="h-16 w-16 text-gray-300 mx-auto mb-4" />
+            <p className="text-gray-500">Loading weather data...</p>
+          </div>
+        )}
+      </div>
+
+      {/* Google Maps Integration */}
+      <div className="bg-white rounded-lg shadow-md p-6">
+        <div className="flex items-center justify-between mb-4">
+          <h3 className="text-lg font-semibold text-gray-900 flex items-center">
+            <MapPin className="h-5 w-5 mr-2" />
+            Barangay Emergency Map
+          </h3>
+          <div className="flex items-center space-x-2">
+            <button className="flex items-center px-3 py-2 text-blue-600 hover:text-blue-800 text-sm">
+              <Satellite className="h-4 w-4 mr-1" />
+              Satellite View
+            </button>
+            <a
+              href="https://zoom.earth/"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex items-center px-3 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 text-sm"
+            >
+              <Globe className="h-4 w-4 mr-1" />
+              Zoom.earth Live Weather
+            </a>
           </div>
         </div>
-        <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-8 gap-4">
-          <div className="text-center p-4 bg-blue-50 rounded-lg">
-            <Thermometer className="h-8 w-8 text-blue-600 mx-auto mb-2" />
-            <div className="text-xl font-bold text-blue-600">{weatherData.temperature}</div>
-            <div className="text-xs text-blue-800">Temperature</div>
-          </div>
-          
-          <div className="text-center p-4 bg-green-50 rounded-lg">
-            <Droplets className="h-8 w-8 text-green-600 mx-auto mb-2" />
-            <div className="text-xl font-bold text-green-600">{weatherData.humidity}</div>
-            <div className="text-xs text-green-800">Humidity</div>
-          </div>
-          
-          <div className="text-center p-4 bg-purple-50 rounded-lg">
-            <Wind className="h-8 w-8 text-purple-600 mx-auto mb-2" />
-            <div className="text-xl font-bold text-purple-600">{weatherData.windSpeed}</div>
-            <div className="text-xs text-purple-800">Wind Speed</div>
-          </div>
-          
-          <div className="text-center p-4 bg-indigo-50 rounded-lg">
-            <Compass className="h-8 w-8 text-indigo-600 mx-auto mb-2" />
-            <div className="text-xl font-bold text-indigo-600">{weatherData.windDirection}</div>
-            <div className="text-xs text-indigo-800">Wind Direction</div>
-          </div>
-          
-          <div className="text-center p-4 bg-cyan-50 rounded-lg">
-            <CloudRain className="h-8 w-8 text-cyan-600 mx-auto mb-2" />
-            <div className="text-xl font-bold text-cyan-600">{weatherData.rainfall}</div>
-            <div className="text-xs text-cyan-800">Rainfall (24h)</div>
-          </div>
-          
-          <div className="text-center p-4 bg-gray-50 rounded-lg">
-            <Target className="h-8 w-8 text-gray-600 mx-auto mb-2" />
-            <div className="text-xl font-bold text-gray-600">{weatherData.pressure}</div>
-            <div className="text-xs text-gray-800">Pressure</div>
-          </div>
-          
-          <div className="text-center p-4 bg-teal-50 rounded-lg">
-            <Eye className="h-8 w-8 text-teal-600 mx-auto mb-2" />
-            <div className="text-xl font-bold text-teal-600">{weatherData.visibility}</div>
-            <div className="text-xs text-teal-800">Visibility</div>
-          </div>
-          
-          <div className="text-center p-4 bg-yellow-50 rounded-lg">
-            <Sun className="h-8 w-8 text-yellow-600 mx-auto mb-2" />
-            <div className="text-lg font-bold text-yellow-600">{weatherData.condition}</div>
-            <div className="text-xs text-yellow-800">Condition</div>
+
+        <div className="bg-gray-100 rounded-lg overflow-hidden">
+          <div className="h-96 bg-gradient-to-br from-green-100 to-blue-100 flex items-center justify-center relative">
+            {/* Simulated Map Interface */}
+            <div className="absolute inset-0 p-4">
+              <div className="grid grid-cols-3 gap-2 h-full">
+                {/* Evacuation Sites Markers */}
+                {evacuationSites.map((site, index) => (
+                  <div
+                    key={site.id}
+                    className={`relative bg-white rounded-lg shadow-md p-3 ${
+                      site.status === 'operational' ? 'border-2 border-red-500' : 'border border-gray-300'
+                    }`}
+                    style={{
+                      gridColumn: index === 0 ? '1' : index === 1 ? '2' : '3',
+                      gridRow: index === 0 ? '1' : index === 1 ? '2' : '1'
+                    }}
+                  >
+                    <div className="flex items-center space-x-2 mb-2">
+                      <Shield className={`h-4 w-4 ${
+                        site.status === 'operational' ? 'text-red-600' : 'text-gray-400'
+                      }`} />
+                      <span className="text-xs font-medium">{site.name}</span>
+                    </div>
+                    <div className="text-xs text-gray-600">
+                      <p>Capacity: {site.capacity}</p>
+                      <p>Current: {site.currentOccupancy}</p>
+                      <p className={`font-medium ${
+                        site.status === 'operational' ? 'text-red-600' : 'text-gray-500'
+                      }`}>
+                        {site.status.toUpperCase()}
+                      </p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+              
+              {/* Map Legend */}
+              <div className="absolute bottom-4 left-4 bg-white rounded-lg shadow-md p-3">
+                <h5 className="font-semibold text-gray-900 mb-2 text-sm">Legend</h5>
+                <div className="space-y-1 text-xs">
+                  <div className="flex items-center">
+                    <div className="w-3 h-3 bg-red-500 rounded-full mr-2"></div>
+                    <span>Active Evacuation Site</span>
+                  </div>
+                  <div className="flex items-center">
+                    <div className="w-3 h-3 bg-yellow-500 rounded-full mr-2"></div>
+                    <span>Standby Site</span>
+                  </div>
+                  <div className="flex items-center">
+                    <div className="w-3 h-3 bg-blue-500 rounded-full mr-2"></div>
+                    <span>Flood-Prone Area</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Weather Overlay */}
+              <div className="absolute top-4 right-4 bg-white rounded-lg shadow-md p-3">
+                <div className="flex items-center space-x-2 mb-2">
+                  <Cloud className="h-4 w-4 text-blue-600" />
+                  <span className="text-sm font-medium">Live Weather</span>
+                </div>
+                <div className="text-xs text-gray-600">
+                  <p>Temp: {weatherData?.current.temperature || '--'}°C</p>
+                  <p>Wind: {weatherData?.current.windSpeed || '--'} km/h</p>
+                  <p>Humidity: {weatherData?.current.humidity || '--'}%</p>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
       </div>
 
       {/* Quick Actions */}
       <div className="bg-white rounded-lg shadow-md p-6">
-        <h3 className="text-lg font-semibold text-gray-900 mb-4">Emergency Actions</h3>
+        <h3 className="text-lg font-semibold text-gray-900 mb-4">Emergency Quick Actions</h3>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
           <button
             onClick={() => setShowAlertForm(true)}
             className="flex items-center p-4 bg-red-50 rounded-lg hover:bg-red-100 transition-colors"
           >
-            <AlertTriangle className="h-8 w-8 text-red-600 mr-3" />
+            <Siren className="h-8 w-8 text-red-600 mr-3" />
             <div className="text-left">
               <h4 className="font-semibold text-gray-900">Issue Alert</h4>
-              <p className="text-sm text-gray-600">Send emergency alert</p>
+              <p className="text-sm text-gray-600">Emergency broadcast</p>
             </div>
           </button>
           
@@ -527,32 +451,29 @@ const DisasterPortal: React.FC = () => {
             onClick={() => setShowEvacuationForm(true)}
             className="flex items-center p-4 bg-blue-50 rounded-lg hover:bg-blue-100 transition-colors"
           >
-            <Shield className="h-8 w-8 text-blue-600 mr-3" />
+            <Users className="h-8 w-8 text-blue-600 mr-3" />
             <div className="text-left">
-              <h4 className="font-semibold text-gray-900">Evacuation</h4>
-              <p className="text-sm text-gray-600">Manage evacuation</p>
+              <h4 className="font-semibold text-gray-900">Manage Evacuation</h4>
+              <p className="text-sm text-gray-600">Site coordination</p>
             </div>
           </button>
           
           <button
-            onClick={() => setShowIncidentForm(true)}
+            onClick={() => setShowResourceForm(true)}
             className="flex items-center p-4 bg-green-50 rounded-lg hover:bg-green-100 transition-colors"
           >
-            <Radio className="h-8 w-8 text-green-600 mr-3" />
+            <Truck className="h-8 w-8 text-green-600 mr-3" />
             <div className="text-left">
-              <h4 className="font-semibold text-gray-900">Report Incident</h4>
-              <p className="text-sm text-gray-600">Log new incident</p>
+              <h4 className="font-semibold text-gray-900">Resource Update</h4>
+              <p className="text-sm text-gray-600">Inventory management</p>
             </div>
           </button>
           
-          <button
-            onClick={() => setShowBroadcastForm(true)}
-            className="flex items-center p-4 bg-purple-50 rounded-lg hover:bg-purple-100 transition-colors"
-          >
-            <Megaphone className="h-8 w-8 text-purple-600 mr-3" />
+          <button className="flex items-center p-4 bg-purple-50 rounded-lg hover:bg-purple-100 transition-colors">
+            <Radio className="h-8 w-8 text-purple-600 mr-3" />
             <div className="text-left">
-              <h4 className="font-semibold text-gray-900">Broadcast</h4>
-              <p className="text-sm text-gray-600">Public announcement</p>
+              <h4 className="font-semibold text-gray-900">Communication</h4>
+              <p className="text-sm text-gray-600">Radio check</p>
             </div>
           </button>
         </div>
@@ -562,7 +483,7 @@ const DisasterPortal: React.FC = () => {
         {/* Active Alerts */}
         <div className="bg-white rounded-lg shadow-md p-6">
           <div className="flex items-center justify-between mb-4">
-            <h3 className="text-lg font-semibold text-gray-900">Active Alerts</h3>
+            <h3 className="text-lg font-semibold text-gray-900">Active Emergency Alerts</h3>
             <button 
               onClick={() => setActiveTab('alerts')}
               className="text-orange-600 hover:text-orange-800 text-sm font-medium"
@@ -572,42 +493,28 @@ const DisasterPortal: React.FC = () => {
           </div>
           <div className="space-y-3">
             {alerts.filter(alert => alert.status === 'active').slice(0, 3).map((alert) => (
-              <div key={alert.id} className={`p-3 rounded-lg border-l-4 ${
-                alert.priority === 'high' ? 'bg-red-50 border-red-500' :
-                alert.priority === 'medium' ? 'bg-yellow-50 border-yellow-500' :
-                'bg-blue-50 border-blue-500'
-              }`}>
-                <div className="flex items-start justify-between">
-                  <div>
-                    <h4 className="font-medium text-gray-900">{alert.title}</h4>
-                    <p className="text-sm text-gray-600 mt-1">{alert.message.substring(0, 100)}...</p>
-                    <div className="flex items-center mt-2 text-xs text-gray-500">
-                      <Clock className="h-3 w-3 mr-1" />
-                      {alert.date} {alert.time}
-                    </div>
-                  </div>
-                  <div className="flex flex-col space-y-1">
-                    <span className={`px-2 py-1 text-xs font-semibold rounded-full ${
-                      alert.priority === 'high' ? 'bg-red-100 text-red-800' :
-                      alert.priority === 'medium' ? 'bg-yellow-100 text-yellow-800' :
-                      'bg-blue-100 text-blue-800'
-                    }`}>
-                      {alert.priority.toUpperCase()}
-                    </span>
-                    <button
-                      onClick={() => handleBroadcastAlert(alert.id)}
-                      className="text-xs bg-orange-600 text-white px-2 py-1 rounded hover:bg-orange-700"
-                    >
-                      Broadcast
-                    </button>
-                  </div>
+              <div key={alert.id} className={`p-4 rounded-lg border ${getAlertColor(alert.severity)}`}>
+                <div className="flex items-start justify-between mb-2">
+                  <h4 className="font-medium">{alert.title}</h4>
+                  <span className={`px-2 py-1 text-xs font-semibold rounded-full ${
+                    alert.severity === 'critical' ? 'bg-red-600 text-white' :
+                    alert.severity === 'high' ? 'bg-orange-600 text-white' :
+                    'bg-yellow-600 text-white'
+                  }`}>
+                    {alert.severity.toUpperCase()}
+                  </span>
+                </div>
+                <p className="text-sm mb-2">{alert.description}</p>
+                <div className="text-xs">
+                  <p>Issued: {alert.issuedAt}</p>
+                  <p>Expires: {alert.expiresAt}</p>
                 </div>
               </div>
             ))}
           </div>
         </div>
 
-        {/* Evacuation Centers */}
+        {/* Evacuation Status */}
         <div className="bg-white rounded-lg shadow-md p-6">
           <div className="flex items-center justify-between mb-4">
             <h3 className="text-lg font-semibold text-gray-900">Evacuation Centers</h3>
@@ -615,37 +522,30 @@ const DisasterPortal: React.FC = () => {
               onClick={() => setActiveTab('evacuation')}
               className="text-orange-600 hover:text-orange-800 text-sm font-medium"
             >
-              View All
+              Manage Sites
             </button>
           </div>
           <div className="space-y-3">
-            {evacuationCenters.slice(0, 3).map((center) => (
-              <div key={center.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+            {evacuationSites.map((site) => (
+              <div key={site.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
                 <div className="flex items-center space-x-3">
                   <div className={`w-10 h-10 rounded-full flex items-center justify-center ${
-                    center.status === 'operational' ? 'bg-green-100' : 'bg-gray-100'
+                    site.status === 'operational' ? 'bg-red-100' : 'bg-gray-100'
                   }`}>
-                    <Home className={`h-5 w-5 ${
-                      center.status === 'operational' ? 'text-green-600' : 'text-gray-600'
+                    <Shield className={`h-5 w-5 ${
+                      site.status === 'operational' ? 'text-red-600' : 'text-gray-400'
                     }`} />
                   </div>
                   <div>
-                    <p className="font-medium text-gray-900">{center.name}</p>
+                    <p className="font-medium text-gray-900">{site.name}</p>
                     <p className="text-sm text-gray-600">
-                      {center.current}/{center.capacity} occupancy
+                      {site.currentOccupancy}/{site.capacity} occupancy
                     </p>
                   </div>
                 </div>
-                <div className="text-right">
-                  <span className={`px-2 py-1 text-xs font-semibold rounded-full ${
-                    center.status === 'operational' ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'
-                  }`}>
-                    {center.status}
-                  </span>
-                  <p className="text-xs text-gray-500 mt-1">
-                    {Math.round((center.current / center.capacity) * 100)}% full
-                  </p>
-                </div>
+                <span className={`px-2 py-1 text-xs font-semibold rounded-full ${getStatusColor(site.status)}`}>
+                  {site.status}
+                </span>
               </div>
             ))}
           </div>
@@ -654,48 +554,29 @@ const DisasterPortal: React.FC = () => {
 
       {/* Emergency Contacts */}
       <div className="bg-white rounded-lg shadow-md p-6">
-        <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
-          <Phone className="h-5 w-5 mr-2" />
-          Emergency Contacts
-        </h3>
+        <h3 className="text-lg font-semibold text-gray-900 mb-4">Emergency Contacts</h3>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {emergencyContacts.map((contact, index) => (
-            <div key={index} className="flex items-center p-4 bg-red-50 rounded-lg border border-red-200">
-              <div className="flex-1">
-                <p className="font-medium text-gray-900">{contact.category}</p>
-                <p className="text-sm text-red-600 font-mono">{contact.number}</p>
-                <p className="text-xs text-gray-600">{contact.alternate}</p>
-                <p className="text-xs text-green-600">{contact.available}</p>
+          {emergencyContacts.map((contact) => (
+            <div key={contact.id} className="flex items-center p-4 bg-gray-50 rounded-lg">
+              <div className={`w-10 h-10 rounded-full flex items-center justify-center mr-3 ${
+                contact.type === 'primary' ? 'bg-orange-100' :
+                contact.type === 'police' ? 'bg-blue-100' :
+                contact.type === 'fire' ? 'bg-red-100' :
+                contact.type === 'medical' ? 'bg-green-100' :
+                'bg-purple-100'
+              }`}>
+                {contact.type === 'primary' ? <Phone className="h-5 w-5 text-orange-600" /> :
+                 contact.type === 'police' ? <Shield className="h-5 w-5 text-blue-600" /> :
+                 contact.type === 'fire' ? <Siren className="h-5 w-5 text-red-600" /> :
+                 contact.type === 'medical' ? <Heart className="h-5 w-5 text-green-600" /> :
+                 <AlertTriangle className="h-5 w-5 text-purple-600" />}
               </div>
-              <button className="bg-red-600 text-white p-2 rounded-lg hover:bg-red-700">
-                <Phone className="h-4 w-4" />
-              </button>
+              <div>
+                <p className="font-medium text-gray-900">{contact.name}</p>
+                <p className="text-sm text-gray-600">{contact.number}</p>
+              </div>
             </div>
           ))}
-        </div>
-      </div>
-
-      {/* Recent Incidents Summary */}
-      <div className="bg-white rounded-lg shadow-md p-6">
-        <h3 className="text-lg font-semibold text-gray-900 mb-4">Recent Incidents Summary</h3>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <div className="text-center p-4 bg-red-50 rounded-lg">
-            <AlertTriangle className="h-12 w-12 text-red-600 mx-auto mb-2" />
-            <div className="text-2xl font-bold text-red-600">{incidents.filter(i => i.priority === 'high').length}</div>
-            <div className="text-sm text-red-800">High Priority</div>
-          </div>
-          
-          <div className="text-center p-4 bg-blue-50 rounded-lg">
-            <Activity className="h-12 w-12 text-blue-600 mx-auto mb-2" />
-            <div className="text-2xl font-bold text-blue-600">{incidents.filter(i => i.status === 'ongoing').length}</div>
-            <div className="text-sm text-blue-800">Ongoing</div>
-          </div>
-          
-          <div className="text-center p-4 bg-green-50 rounded-lg">
-            <CheckCircle className="h-12 w-12 text-green-600 mx-auto mb-2" />
-            <div className="text-2xl font-bold text-green-600">{incidents.filter(i => i.status === 'resolved').length}</div>
-            <div className="text-sm text-green-800">Resolved Today</div>
-          </div>
         </div>
       </div>
     </div>
@@ -704,175 +585,59 @@ const DisasterPortal: React.FC = () => {
   const renderAlerts = () => (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
-        <h2 className="text-2xl font-bold text-gray-900">Emergency Alert Management</h2>
-        <div className="flex space-x-2">
-          <button 
-            onClick={() => setShowBroadcastForm(true)}
-            className="bg-purple-600 text-white px-4 py-2 rounded-lg hover:bg-purple-700 flex items-center"
-          >
-            <Megaphone className="h-4 w-4 mr-2" />
-            Broadcast
-          </button>
-          <button 
-            onClick={() => setShowAlertForm(true)}
-            className="bg-orange-600 text-white px-4 py-2 rounded-lg hover:bg-orange-700 flex items-center"
-          >
-            <Plus className="h-4 w-4 mr-2" />
-            Issue Alert
-          </button>
-        </div>
+        <h2 className="text-2xl font-bold text-gray-900">Emergency Alerts & Warnings</h2>
+        <button 
+          onClick={() => setShowAlertForm(true)}
+          className="bg-orange-600 text-white px-4 py-2 rounded-lg hover:bg-orange-700 flex items-center"
+        >
+          <Plus className="h-4 w-4 mr-2" />
+          Issue Alert
+        </button>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-        <div className="bg-white p-6 rounded-lg shadow-md border-l-4 border-red-500">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm font-medium text-gray-600">High Priority</p>
-              <p className="text-2xl font-bold text-red-600">{alerts.filter(a => a.priority === 'high').length}</p>
-            </div>
-            <AlertTriangle className="h-8 w-8 text-red-600" />
-          </div>
-        </div>
-
-        <div className="bg-white p-6 rounded-lg shadow-md border-l-4 border-yellow-500">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm font-medium text-gray-600">Medium Priority</p>
-              <p className="text-2xl font-bold text-yellow-600">{alerts.filter(a => a.priority === 'medium').length}</p>
-            </div>
-            <Bell className="h-8 w-8 text-yellow-600" />
-          </div>
-        </div>
-
-        <div className="bg-white p-6 rounded-lg shadow-md border-l-4 border-green-500">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm font-medium text-gray-600">Active Alerts</p>
-              <p className="text-2xl font-bold text-green-600">{alerts.filter(a => a.status === 'active').length}</p>
-            </div>
-            <Activity className="h-8 w-8 text-green-600" />
-          </div>
-        </div>
-
-        <div className="bg-white p-6 rounded-lg shadow-md border-l-4 border-blue-500">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm font-medium text-gray-600">Total Alerts</p>
-              <p className="text-2xl font-bold text-blue-600">{alerts.length}</p>
-            </div>
-            <Radio className="h-8 w-8 text-blue-600" />
-          </div>
-        </div>
-      </div>
-
-      <div className="bg-white rounded-lg shadow-md p-6">
-        <div className="flex flex-col sm:flex-row gap-4 mb-6">
-          <div className="flex-1">
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
-              <input
-                type="text"
-                placeholder="Search alerts..."
-                className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
-              />
-            </div>
-          </div>
-          <button className="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 flex items-center">
-            <Filter className="h-4 w-4 mr-2" />
-            Filter
-          </button>
-          <button className="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 flex items-center">
-            <Download className="h-4 w-4 mr-2" />
-            Export
-          </button>
-        </div>
-
-        <div className="space-y-4">
-          {alerts.map((alert) => (
-            <div key={alert.id} className={`p-6 rounded-lg border-l-4 ${
-              alert.priority === 'high' ? 'bg-red-50 border-red-500' :
-              alert.priority === 'medium' ? 'bg-yellow-50 border-yellow-500' :
-              'bg-blue-50 border-blue-500'
-            }`}>
-              <div className="flex items-start justify-between">
-                <div className="flex-1">
-                  <div className="flex items-center space-x-2 mb-3">
-                    <span className={`px-3 py-1 rounded-full text-xs font-medium ${
-                      alert.type === 'weather' ? 'bg-blue-100 text-blue-800' :
-                      alert.type === 'flood' ? 'bg-indigo-100 text-indigo-800' :
-                      alert.type === 'fire' ? 'bg-red-100 text-red-800' :
-                      'bg-gray-100 text-gray-800'
-                    }`}>
-                      {alert.type.toUpperCase()}
-                    </span>
-                    <span className={`px-3 py-1 rounded-full text-xs font-medium ${
-                      alert.priority === 'high' ? 'bg-red-100 text-red-800' :
-                      alert.priority === 'medium' ? 'bg-yellow-100 text-yellow-800' :
-                      'bg-green-100 text-green-800'
-                    }`}>
-                      {alert.priority.toUpperCase()} PRIORITY
-                    </span>
-                    <span className={`px-3 py-1 rounded-full text-xs font-medium ${
-                      alert.status === 'active' ? 'bg-green-100 text-green-800' : 
-                      alert.status === 'monitoring' ? 'bg-blue-100 text-blue-800' :
-                      'bg-gray-100 text-gray-800'
-                    }`}>
-                      {alert.status.toUpperCase()}
-                    </span>
-                  </div>
-                  <h3 className="text-lg font-semibold text-gray-900 mb-2">{alert.title}</h3>
-                  <p className="text-gray-600 mb-3">{alert.message}</p>
-                  
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm text-gray-600">
-                    <div>
-                      <div className="flex items-center mb-1">
-                        <Clock className="h-4 w-4 mr-2" />
-                        <span><strong>Time:</strong> {alert.date} {alert.time}</span>
-                      </div>
-                      <div className="flex items-center mb-1">
-                        <Timer className="h-4 w-4 mr-2" />
-                        <span><strong>Duration:</strong> {alert.estimatedDuration}</span>
-                      </div>
-                    </div>
-                    <div>
-                      <div className="flex items-center mb-1">
-                        <MapPin className="h-4 w-4 mr-2" />
-                        <span><strong>Areas:</strong> {alert.affectedAreas.join(', ')}</span>
-                      </div>
-                      <div className="flex items-center mb-1">
-                        <Users className="h-4 w-4 mr-2" />
-                        <span><strong>Teams:</strong> {alert.responseTeams?.join(', ')}</span>
-                      </div>
-                    </div>
-                  </div>
-                  
-                  {alert.evacuationRecommended && (
-                    <div className="mt-3 p-2 bg-red-100 border border-red-300 rounded text-sm text-red-800">
-                      <strong>⚠️ EVACUATION RECOMMENDED</strong> - Residents in affected areas should prepare to evacuate
-                    </div>
-                  )}
+      <div className="space-y-4">
+        {alerts.map((alert) => (
+          <div key={alert.id} className={`p-6 rounded-lg border ${getAlertColor(alert.severity)}`}>
+            <div className="flex items-start justify-between mb-4">
+              <div className="flex-1">
+                <div className="flex items-center space-x-2 mb-2">
+                  <span className={`px-3 py-1 text-xs font-semibold rounded-full ${
+                    alert.severity === 'critical' ? 'bg-red-600 text-white' :
+                    alert.severity === 'high' ? 'bg-orange-600 text-white' :
+                    alert.severity === 'moderate' ? 'bg-yellow-600 text-white' :
+                    'bg-blue-600 text-white'
+                  }`}>
+                    {alert.severity.toUpperCase()}
+                  </span>
+                  <span className="text-xs font-medium text-gray-600 uppercase">{alert.type}</span>
                 </div>
-                <div className="flex flex-col space-y-2 ml-4">
-                  <button className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors">
-                    <Eye className="h-4 w-4" />
-                  </button>
-                  <button className="p-2 text-green-600 hover:bg-green-50 rounded-lg transition-colors">
-                    <Edit className="h-4 w-4" />
-                  </button>
-                  <button 
-                    onClick={() => handleBroadcastAlert(alert.id)}
-                    className="p-2 text-purple-600 hover:bg-purple-50 rounded-lg transition-colors"
-                  >
-                    <Send className="h-4 w-4" />
-                  </button>
-                  <button className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors">
-                    <Trash2 className="h-4 w-4" />
-                  </button>
+                <h3 className="text-xl font-semibold text-gray-900 mb-2">{alert.title}</h3>
+                <p className="text-gray-700 mb-4">{alert.description}</p>
+                
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+                  <div>
+                    <p><strong>Affected Areas:</strong> {alert.affectedAreas.join(', ')}</p>
+                    <p><strong>Issued by:</strong> {alert.issuedBy}</p>
+                    <p><strong>Issued at:</strong> {alert.issuedAt}</p>
+                  </div>
+                  <div>
+                    <p><strong>Expires:</strong> {alert.expiresAt}</p>
+                    <p><strong>Evacuation Sites:</strong> {alert.evacuationSites.join(', ')}</p>
+                    <p><strong>Emergency Contacts:</strong> {alert.contactNumbers.join(', ')}</p>
+                  </div>
                 </div>
               </div>
+              <div className="flex items-center space-x-2 ml-4">
+                <button className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg">
+                  <Edit className="h-4 w-4" />
+                </button>
+                <button className="p-2 text-red-600 hover:bg-red-50 rounded-lg">
+                  <X className="h-4 w-4" />
+                </button>
+              </div>
             </div>
-          ))}
-        </div>
+          </div>
+        ))}
       </div>
     </div>
   );
@@ -886,226 +651,44 @@ const DisasterPortal: React.FC = () => {
           className="bg-orange-600 text-white px-4 py-2 rounded-lg hover:bg-orange-700 flex items-center"
         >
           <Plus className="h-4 w-4 mr-2" />
-          Add Center
+          Add Site
         </button>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         <div className="bg-white p-6 rounded-lg shadow-md border-l-4 border-green-500">
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm font-medium text-gray-600">Total Capacity</p>
-              <p className="text-2xl font-bold text-green-600">{evacuationCenters.reduce((sum, center) => sum + center.capacity, 0)}</p>
+              <p className="text-2xl font-bold text-green-600">
+                {evacuationSites.reduce((sum, site) => sum + site.capacity, 0)}
+              </p>
             </div>
-            <Home className="h-8 w-8 text-green-600" />
+            <Shield className="h-8 w-8 text-green-600" />
           </div>
         </div>
 
         <div className="bg-white p-6 rounded-lg shadow-md border-l-4 border-blue-500">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm font-medium text-gray-600">Current Evacuees</p>
-              <p className="text-2xl font-bold text-blue-600">{evacuationCenters.reduce((sum, center) => sum + center.current, 0)}</p>
-            </div>
-            <Users className="h-8 w-8 text-blue-600" />
-          </div>
-        </div>
-
-        <div className="bg-white p-6 rounded-lg shadow-md border-l-4 border-purple-500">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm font-medium text-gray-600">Available Space</p>
-              <p className="text-2xl font-bold text-purple-600">
-                {evacuationCenters.reduce((sum, center) => sum + (center.capacity - center.current), 0)}
+              <p className="text-sm font-medium text-gray-600">Current Occupancy</p>
+              <p className="text-2xl font-bold text-blue-600">
+                {evacuationSites.reduce((sum, site) => sum + site.currentOccupancy, 0)}
               </p>
             </div>
-            <Shield className="h-8 w-8 text-purple-600" />
+            <Users className="h-8 w-8 text-blue-600" />
           </div>
         </div>
 
         <div className="bg-white p-6 rounded-lg shadow-md border-l-4 border-orange-500">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm font-medium text-gray-600">Occupancy Rate</p>
+              <p className="text-sm font-medium text-gray-600">Available Space</p>
               <p className="text-2xl font-bold text-orange-600">
-                {Math.round((evacuationCenters.reduce((sum, center) => sum + center.current, 0) / 
-                evacuationCenters.reduce((sum, center) => sum + center.capacity, 0)) * 100)}%
+                {evacuationSites.reduce((sum, site) => sum + (site.capacity - site.currentOccupancy), 0)}
               </p>
             </div>
-            <BarChart3 className="h-8 w-8 text-orange-600" />
-          </div>
-        </div>
-      </div>
-
-      <div className="bg-white rounded-lg shadow-md p-6">
-        <h3 className="text-lg font-semibold text-gray-900 mb-4">Evacuation Centers</h3>
-        <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
-          {evacuationCenters.map((center) => (
-            <div key={center.id} className="border border-gray-200 rounded-lg p-6 hover:shadow-md transition-shadow">
-              <div className="flex items-center justify-between mb-4">
-                <h4 className="text-lg font-semibold text-gray-900">{center.name}</h4>
-                <span className={`px-3 py-1 text-xs font-semibold rounded-full ${
-                  center.status === 'operational' ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'
-                }`}>
-                  {center.status.toUpperCase()}
-                </span>
-              </div>
-              
-              <div className="space-y-3">
-                <div className="flex items-center justify-between">
-                  <span className="text-sm text-gray-600">Capacity:</span>
-                  <span className="font-medium">{center.capacity} people</span>
-                </div>
-                
-                <div className="flex items-center justify-between">
-                  <span className="text-sm text-gray-600">Current Occupancy:</span>
-                  <span className="font-medium">{center.current} people</span>
-                </div>
-                
-                <div className="w-full bg-gray-200 rounded-full h-3">
-                  <div 
-                    className={`h-3 rounded-full transition-all duration-300 ${
-                      (center.current / center.capacity) > 0.8 ? 'bg-red-500' :
-                      (center.current / center.capacity) > 0.6 ? 'bg-yellow-500' : 'bg-green-500'
-                    }`}
-                    style={{ width: `${Math.min((center.current / center.capacity) * 100, 100)}%` }}
-                  ></div>
-                </div>
-                
-                <div className="text-xs text-gray-500 text-center">
-                  {Math.round((center.current / center.capacity) * 100)}% occupied
-                </div>
-                
-                <div className="pt-3 border-t border-gray-100">
-                  <div className="space-y-2">
-                    <div className="flex items-center text-sm text-gray-600">
-                      <MapPin className="h-4 w-4 mr-2" />
-                      {center.address}
-                    </div>
-                    <div className="flex items-center text-sm text-gray-600">
-                      <Phone className="h-4 w-4 mr-2" />
-                      {center.contact}
-                    </div>
-                    <div className="flex items-center text-sm text-gray-600">
-                      <UserCheck className="h-4 w-4 mr-2" />
-                      Coordinator: {center.coordinator}
-                    </div>
-                  </div>
-                </div>
-                
-                <div className="pt-3 border-t border-gray-100">
-                  <h5 className="text-sm font-medium text-gray-900 mb-2">Available Facilities:</h5>
-                  <div className="flex flex-wrap gap-1">
-                    {center.facilities.map((facility, index) => (
-                      <span key={index} className="px-2 py-1 bg-blue-100 text-blue-800 text-xs rounded">
-                        {facility}
-                      </span>
-                    ))}
-                  </div>
-                </div>
-                
-                <div className="flex space-x-2 pt-3">
-                  <button className="flex-1 bg-blue-600 text-white py-2 px-3 rounded text-sm hover:bg-blue-700 transition-colors">
-                    Manage
-                  </button>
-                  <button className="flex-1 border border-gray-300 text-gray-700 py-2 px-3 rounded text-sm hover:bg-gray-50 transition-colors">
-                    Contact
-                  </button>
-                </div>
-                
-                <div className="text-xs text-gray-500 text-center pt-2">
-                  Last updated: {center.lastUpdated}
-                </div>
-              </div>
-            </div>
-          ))}
-        </div>
-      </div>
-
-      {/* Evacuation Routes */}
-      <div className="bg-white rounded-lg shadow-md p-6">
-        <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
-          <Route className="h-5 w-5 mr-2" />
-          Evacuation Routes & Procedures
-        </h3>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <div className="bg-blue-50 p-4 rounded-lg">
-            <h4 className="font-semibold text-blue-800 mb-3">Primary Evacuation Routes</h4>
-            <ul className="text-sm text-blue-700 space-y-2">
-              <li>• <strong>Zone 1-2:</strong> Main Street → Barangay Hall</li>
-              <li>• <strong>Zone 3-4:</strong> Center Road → Community Center</li>
-              <li>• <strong>Zone 5-6:</strong> School Avenue → Elementary School</li>
-              <li>• <strong>Riverside:</strong> Creek Road → Higher Ground (Zone 7)</li>
-            </ul>
-          </div>
-          
-          <div className="bg-green-50 p-4 rounded-lg">
-            <h4 className="font-semibold text-green-800 mb-3">Emergency Procedures</h4>
-            <ol className="text-sm text-green-700 space-y-2">
-              <li>1. <strong>Alert Reception:</strong> Listen for emergency sirens/announcements</li>
-              <li>2. <strong>Preparation:</strong> Gather emergency kit and important documents</li>
-              <li>3. <strong>Evacuation:</strong> Follow designated routes to nearest center</li>
-              <li>4. <strong>Registration:</strong> Check in at evacuation center</li>
-              <li>5. <strong>Communication:</strong> Inform family/relatives of your status</li>
-            </ol>
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-
-  const renderIncidents = () => (
-    <div className="space-y-6">
-      <div className="flex justify-between items-center">
-        <h2 className="text-2xl font-bold text-gray-900">Incident Management</h2>
-        <button 
-          onClick={() => setShowIncidentForm(true)}
-          className="bg-orange-600 text-white px-4 py-2 rounded-lg hover:bg-orange-700 flex items-center"
-        >
-          <Plus className="h-4 w-4 mr-2" />
-          Report Incident
-        </button>
-      </div>
-
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-        <div className="bg-white p-6 rounded-lg shadow-md border-l-4 border-red-500">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm font-medium text-gray-600">High Priority</p>
-              <p className="text-2xl font-bold text-red-600">{incidents.filter(i => i.priority === 'high').length}</p>
-            </div>
-            <AlertTriangle className="h-8 w-8 text-red-600" />
-          </div>
-        </div>
-
-        <div className="bg-white p-6 rounded-lg shadow-md border-l-4 border-blue-500">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm font-medium text-gray-600">Ongoing</p>
-              <p className="text-2xl font-bold text-blue-600">{incidents.filter(i => i.status === 'ongoing').length}</p>
-            </div>
-            <Activity className="h-8 w-8 text-blue-600" />
-          </div>
-        </div>
-
-        <div className="bg-white p-6 rounded-lg shadow-md border-l-4 border-green-500">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm font-medium text-gray-600">Resolved</p>
-              <p className="text-2xl font-bold text-green-600">{incidents.filter(i => i.status === 'resolved').length}</p>
-            </div>
-            <CheckCircle className="h-8 w-8 text-green-600" />
-          </div>
-        </div>
-
-        <div className="bg-white p-6 rounded-lg shadow-md border-l-4 border-purple-500">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm font-medium text-gray-600">Avg Response Time</p>
-              <p className="text-2xl font-bold text-purple-600">8.3</p>
-              <p className="text-xs text-purple-600">minutes</p>
-            </div>
-            <Timer className="h-8 w-8 text-purple-600" />
+            <Home className="h-8 w-8 text-orange-600" />
           </div>
         </div>
       </div>
@@ -1115,41 +698,53 @@ const DisasterPortal: React.FC = () => {
           <table className="min-w-full divide-y divide-gray-200">
             <thead className="bg-gray-50">
               <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Incident Type</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Location</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Site</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Capacity</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Occupancy</th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Priority</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date/Time</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Response Time</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Responders</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Contact</th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
               </tr>
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
-              {incidents.map((incident) => (
-                <tr key={incident.id} className="hover:bg-gray-50">
-                  <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{incident.type}</td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{incident.location}</td>
+              {evacuationSites.map((site) => (
+                <tr key={site.id} className="hover:bg-gray-50">
                   <td className="px-6 py-4 whitespace-nowrap">
-                    <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
-                      incident.status === 'ongoing' ? 'bg-blue-100 text-blue-800' : 'bg-green-100 text-green-800'
-                    }`}>
-                      {incident.status}
-                    </span>
+                    <div className="flex items-center">
+                      <Shield className="h-5 w-5 text-orange-600 mr-3" />
+                      <div>
+                        <div className="text-sm font-medium text-gray-900">{site.name}</div>
+                        <div className="text-sm text-gray-500">{site.facilities.join(', ')}</div>
+                      </div>
+                    </div>
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{site.capacity}</td>
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    <div className="flex items-center">
+                      <span className="text-sm text-gray-900 mr-2">{site.currentOccupancy}</span>
+                      <div className="w-16 bg-gray-200 rounded-full h-2">
+                        <div 
+                          className={`h-2 rounded-full ${
+                            (site.currentOccupancy / site.capacity) > 0.8 ? 'bg-red-500' :
+                            (site.currentOccupancy / site.capacity) > 0.6 ? 'bg-yellow-500' :
+                            'bg-green-500'
+                          }`}
+                          style={{ width: `${(site.currentOccupancy / site.capacity) * 100}%` }}
+                        />
+                      </div>
+                    </div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
-                    <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
-                      incident.priority === 'high' ? 'bg-red-100 text-red-800' : 'bg-yellow-100 text-yellow-800'
-                    }`}>
-                      {incident.priority}
+                    <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${getStatusColor(site.status)}`}>
+                      {site.status}
                     </span>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                    {incident.date}<br />
-                    <span className="text-xs text-gray-500">{incident.time}</span>
+                    <div>
+                      <p>{site.contactPerson}</p>
+                      <p className="text-gray-500">{site.contactNumber}</p>
+                    </div>
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{incident.responseTime}</td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{incident.responders}</td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm font-medium space-x-2">
                     <button className="text-blue-600 hover:text-blue-900">
                       <Eye className="h-4 w-4" />
@@ -1171,108 +766,365 @@ const DisasterPortal: React.FC = () => {
     <div className="space-y-6">
       <div className="flex justify-between items-center">
         <h2 className="text-2xl font-bold text-gray-900">Emergency Resources</h2>
-        <button className="bg-orange-600 text-white px-4 py-2 rounded-lg hover:bg-orange-700 flex items-center">
+        <button 
+          onClick={() => setShowResourceForm(true)}
+          className="bg-orange-600 text-white px-4 py-2 rounded-lg hover:bg-orange-700 flex items-center"
+        >
           <Plus className="h-4 w-4 mr-2" />
           Add Resource
         </button>
       </div>
 
-      {/* Resource Categories */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        <div className="bg-white p-6 rounded-lg shadow-md border-l-4 border-red-500">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm font-medium text-gray-600">Emergency Vehicles</p>
-              <p className="text-2xl font-bold text-red-600">8</p>
-              <p className="text-xs text-green-600">All operational</p>
+      <div className="grid grid-cols-1 md:grid-cols-5 gap-6">
+        {['Food', 'Water', 'Medical', 'Equipment', 'Shelter'].map((type) => (
+          <div key={type} className="bg-white p-6 rounded-lg shadow-md border-l-4 border-orange-500">
+            <div className="text-center">
+              <div className="text-2xl font-bold text-orange-600 mb-1">
+                {resources.filter(r => r.type === type && r.status === 'available').length}
+              </div>
+              <div className="text-sm text-orange-800">{type} Items</div>
             </div>
-            <Truck className="h-8 w-8 text-red-600" />
           </div>
-        </div>
-
-        <div className="bg-white p-6 rounded-lg shadow-md border-l-4 border-blue-500">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm font-medium text-gray-600">Medical Supplies</p>
-              <p className="text-2xl font-bold text-blue-600">95%</p>
-              <p className="text-xs text-green-600">Well stocked</p>
-            </div>
-            <Heart className="h-8 w-8 text-blue-600" />
-          </div>
-        </div>
-
-        <div className="bg-white p-6 rounded-lg shadow-md border-l-4 border-green-500">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm font-medium text-gray-600">Communication Equipment</p>
-              <p className="text-2xl font-bold text-green-600">12</p>
-              <p className="text-xs text-green-600">All functional</p>
-            </div>
-            <Radio className="h-8 w-8 text-green-600" />
-          </div>
-        </div>
-
-        <div className="bg-white p-6 rounded-lg shadow-md border-l-4 border-purple-500">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm font-medium text-gray-600">Emergency Kits</p>
-              <p className="text-2xl font-bold text-purple-600">150</p>
-              <p className="text-xs text-green-600">Ready for distribution</p>
-            </div>
-            <Shield className="h-8 w-8 text-purple-600" />
-          </div>
-        </div>
+        ))}
       </div>
 
-      {/* Resource Inventory */}
       <div className="bg-white rounded-lg shadow-md p-6">
-        <h3 className="text-lg font-semibold text-gray-900 mb-4">Resource Inventory</h3>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <div>
-            <h4 className="font-medium text-gray-900 mb-3">Emergency Vehicles</h4>
-            <div className="space-y-2">
-              <div className="flex items-center justify-between p-2 bg-gray-50 rounded">
-                <span className="text-sm">Ambulance Units</span>
-                <span className="text-sm font-medium">2 available</span>
-              </div>
-              <div className="flex items-center justify-between p-2 bg-gray-50 rounded">
-                <span className="text-sm">Fire Trucks</span>
-                <span className="text-sm font-medium">1 available</span>
-              </div>
-              <div className="flex items-center justify-between p-2 bg-gray-50 rounded">
-                <span className="text-sm">Rescue Vehicles</span>
-                <span className="text-sm font-medium">3 available</span>
-              </div>
-              <div className="flex items-center justify-between p-2 bg-gray-50 rounded">
-                <span className="text-sm">Supply Trucks</span>
-                <span className="text-sm font-medium">2 available</span>
-              </div>
+        <div className="overflow-x-auto">
+          <table className="min-w-full divide-y divide-gray-200">
+            <thead className="bg-gray-50">
+              <tr>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Type</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Item</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Quantity</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Location</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+              </tr>
+            </thead>
+            <tbody className="bg-white divide-y divide-gray-200">
+              {resources.map((resource) => (
+                <tr key={resource.id} className="hover:bg-gray-50">
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    <span className={`px-2 py-1 text-xs font-semibold rounded-full ${
+                      resource.type === 'Food' ? 'bg-green-100 text-green-800' :
+                      resource.type === 'Water' ? 'bg-blue-100 text-blue-800' :
+                      resource.type === 'Medical' ? 'bg-red-100 text-red-800' :
+                      resource.type === 'Equipment' ? 'bg-purple-100 text-purple-800' :
+                      'bg-yellow-100 text-yellow-800'
+                    }`}>
+                      {resource.type}
+                    </span>
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{resource.item}</td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{resource.quantity} {resource.unit}</td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{resource.location}</td>
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
+                      resource.status === 'available' ? 'bg-green-100 text-green-800' :
+                      resource.status === 'deployed' ? 'bg-blue-100 text-blue-800' :
+                      'bg-red-100 text-red-800'
+                    }`}>
+                      {resource.status}
+                    </span>
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm font-medium space-x-2">
+                    <button className="text-blue-600 hover:text-blue-900">
+                      <Edit className="h-4 w-4" />
+                    </button>
+                    <button className="text-green-600 hover:text-green-900">
+                      <Truck className="h-4 w-4" />
+                    </button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  );
+
+  const renderPlanning = () => (
+    <div className="space-y-6">
+      <h2 className="text-2xl font-bold text-gray-900">Emergency Planning & Preparedness</h2>
+      
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div className="bg-white rounded-lg shadow-md p-6">
+          <div className="flex items-center mb-4">
+            <Calendar className="h-8 w-8 text-blue-600 mr-3" />
+            <h3 className="text-lg font-semibold text-gray-900">Emergency Drills</h3>
+          </div>
+          <div className="space-y-3">
+            <div className="p-3 bg-blue-50 rounded-lg">
+              <p className="font-medium text-blue-900">Fire Drill</p>
+              <p className="text-sm text-blue-700">Next: March 25, 2024</p>
+            </div>
+            <div className="p-3 bg-green-50 rounded-lg">
+              <p className="font-medium text-green-900">Earthquake Drill</p>
+              <p className="text-sm text-green-700">Next: April 15, 2024</p>
+            </div>
+            <div className="p-3 bg-yellow-50 rounded-lg">
+              <p className="font-medium text-yellow-900">Flood Evacuation</p>
+              <p className="text-sm text-yellow-700">Next: May 10, 2024</p>
             </div>
           </div>
-          
-          <div>
-            <h4 className="font-medium text-gray-900 mb-3">Emergency Supplies</h4>
-            <div className="space-y-2">
-              <div className="flex items-center justify-between p-2 bg-gray-50 rounded">
-                <span className="text-sm">Food Packs</span>
-                <span className="text-sm font-medium">500 units</span>
-              </div>
-              <div className="flex items-center justify-between p-2 bg-gray-50 rounded">
-                <span className="text-sm">Water Containers</span>
-                <span className="text-sm font-medium">200 units</span>
-              </div>
-              <div className="flex items-center justify-between p-2 bg-gray-50 rounded">
-                <span className="text-sm">Blankets</span>
-                <span className="text-sm font-medium">300 units</span>
-              </div>
-              <div className="flex items-center justify-between p-2 bg-gray-50 rounded">
-                <span className="text-sm">First Aid Kits</span>
-                <span className="text-sm font-medium">50 units</span>
-              </div>
+        </div>
+
+        <div className="bg-white rounded-lg shadow-md p-6">
+          <div className="flex items-center mb-4">
+            <Wrench className="h-8 w-8 text-green-600 mr-3" />
+            <h3 className="text-lg font-semibold text-gray-900">Equipment Status</h3>
+          </div>
+          <div className="space-y-3">
+            <div className="flex items-center justify-between">
+              <span className="text-sm text-gray-700">Emergency Radios</span>
+              <span className="text-sm font-medium text-green-600">12/12 Working</span>
+            </div>
+            <div className="flex items-center justify-between">
+              <span className="text-sm text-gray-700">Generators</span>
+              <span className="text-sm font-medium text-green-600">3/3 Working</span>
+            </div>
+            <div className="flex items-center justify-between">
+              <span className="text-sm text-gray-700">Emergency Vehicles</span>
+              <span className="text-sm font-medium text-yellow-600">2/3 Working</span>
+            </div>
+            <div className="flex items-center justify-between">
+              <span className="text-sm text-gray-700">Medical Kits</span>
+              <span className="text-sm font-medium text-green-600">50/50 Ready</span>
+            </div>
+          </div>
+        </div>
+
+        <div className="bg-white rounded-lg shadow-md p-6">
+          <div className="flex items-center mb-4">
+            <BarChart3 className="h-8 w-8 text-purple-600 mr-3" />
+            <h3 className="text-lg font-semibold text-gray-900">Risk Assessment</h3>
+          </div>
+          <div className="space-y-3">
+            <div className="flex items-center justify-between">
+              <span className="text-sm text-gray-700">Flood Risk</span>
+              <span className="px-2 py-1 text-xs font-semibold bg-red-100 text-red-800 rounded-full">High</span>
+            </div>
+            <div className="flex items-center justify-between">
+              <span className="text-sm text-gray-700">Fire Risk</span>
+              <span className="px-2 py-1 text-xs font-semibold bg-yellow-100 text-yellow-800 rounded-full">Medium</span>
+            </div>
+            <div className="flex items-center justify-between">
+              <span className="text-sm text-gray-700">Earthquake Risk</span>
+              <span className="px-2 py-1 text-xs font-semibold bg-yellow-100 text-yellow-800 rounded-full">Medium</span>
+            </div>
+            <div className="flex items-center justify-between">
+              <span className="text-sm text-gray-700">Typhoon Risk</span>
+              <span className="px-2 py-1 text-xs font-semibold bg-red-100 text-red-800 rounded-full">High</span>
             </div>
           </div>
         </div>
       </div>
+
+      {/* Emergency Response Plans */}
+      <div className="bg-white rounded-lg shadow-md p-6">
+        <h3 className="text-lg font-semibold text-gray-900 mb-4">Emergency Response Plans</h3>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div className="border border-gray-200 rounded-lg p-4">
+            <h4 className="font-medium text-gray-900 mb-3">Flood Response Plan</h4>
+            <ul className="text-sm text-gray-600 space-y-1">
+              <li>• Monitor water levels every 30 minutes</li>
+              <li>• Issue evacuation orders when water reaches 1.5m</li>
+              <li>• Activate all evacuation centers</li>
+              <li>• Deploy rescue boats and equipment</li>
+              <li>• Coordinate with LGU and NDRRMC</li>
+            </ul>
+            <button className="mt-3 text-blue-600 hover:text-blue-800 text-sm font-medium">
+              View Full Plan
+            </button>
+          </div>
+
+          <div className="border border-gray-200 rounded-lg p-4">
+            <h4 className="font-medium text-gray-900 mb-3">Typhoon Response Plan</h4>
+            <ul className="text-sm text-gray-600 space-y-1">
+              <li>• Pre-position resources 48 hours before landfall</li>
+              <li>• Mandatory evacuation for high-risk areas</li>
+              <li>• Secure all outdoor equipment and signage</li>
+              <li>• Establish communication protocols</li>
+              <li>• Coordinate with regional disaster office</li>
+            </ul>
+            <button className="mt-3 text-blue-600 hover:text-blue-800 text-sm font-medium">
+              View Full Plan
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+
+  const renderWeatherMonitoring = () => (
+    <div className="space-y-6">
+      <div className="flex items-center justify-between">
+        <h2 className="text-2xl font-bold text-gray-900">Weather Monitoring System</h2>
+        <div className="flex items-center space-x-2">
+          <button
+            onClick={fetchWeatherData}
+            disabled={isLoadingWeather}
+            className="flex items-center px-3 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50"
+          >
+            <RefreshCw className={`h-4 w-4 mr-2 ${isLoadingWeather ? 'animate-spin' : ''}`} />
+            Refresh Data
+          </button>
+          <a
+            href="https://zoom.earth/"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="flex items-center px-3 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700"
+          >
+            <Globe className="h-4 w-4 mr-2" />
+            Zoom.earth Live
+          </a>
+        </div>
+      </div>
+
+      {weatherData && (
+        <>
+          {/* Current Weather Dashboard */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+            <div className="bg-white rounded-lg shadow-md p-6 border-l-4 border-blue-500">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-medium text-gray-600">Temperature</p>
+                  <p className="text-3xl font-bold text-blue-600">{weatherData.current.temperature}°C</p>
+                </div>
+                <Thermometer className="h-12 w-12 text-blue-600" />
+              </div>
+            </div>
+
+            <div className="bg-white rounded-lg shadow-md p-6 border-l-4 border-green-500">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-medium text-gray-600">Humidity</p>
+                  <p className="text-3xl font-bold text-green-600">{weatherData.current.humidity}%</p>
+                </div>
+                <Droplets className="h-12 w-12 text-green-600" />
+              </div>
+            </div>
+
+            <div className="bg-white rounded-lg shadow-md p-6 border-l-4 border-purple-500">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-medium text-gray-600">Wind Speed</p>
+                  <p className="text-3xl font-bold text-purple-600">{weatherData.current.windSpeed}</p>
+                  <p className="text-xs text-purple-500">km/h {weatherData.current.windDirection}</p>
+                </div>
+                <Wind className="h-12 w-12 text-purple-600" />
+              </div>
+            </div>
+
+            <div className="bg-white rounded-lg shadow-md p-6 border-l-4 border-yellow-500">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-medium text-gray-600">UV Index</p>
+                  <p className="text-3xl font-bold text-yellow-600">{weatherData.current.uvIndex}</p>
+                  <p className="text-xs text-yellow-500">Moderate</p>
+                </div>
+                <Sun className="h-12 w-12 text-yellow-600" />
+              </div>
+            </div>
+          </div>
+
+          {/* Weather Forecast */}
+          <div className="bg-white rounded-lg shadow-md p-6">
+            <h3 className="text-lg font-semibold text-gray-900 mb-4">5-Day Weather Forecast</h3>
+            <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
+              {weatherData.forecast.map((day: any, index: number) => (
+                <div key={index} className="text-center p-4 bg-gray-50 rounded-lg">
+                  <p className="font-medium text-gray-900 mb-2">{day.day}</p>
+                  <div className="mb-2">
+                    {day.condition === 'Sunny' ? <Sun className="h-8 w-8 text-yellow-500 mx-auto" /> :
+                     day.condition === 'Rainy' ? <CloudRain className="h-8 w-8 text-blue-500 mx-auto" /> :
+                     day.condition === 'Thunderstorms' ? <Zap className="h-8 w-8 text-purple-500 mx-auto" /> :
+                     <Cloud className="h-8 w-8 text-gray-500 mx-auto" />}
+                  </div>
+                  <p className="text-sm font-medium text-gray-900">{day.high}° / {day.low}°</p>
+                  <p className="text-xs text-blue-600">{day.precipitation}% rain</p>
+                  <p className="text-xs text-gray-600 mt-1">{day.condition}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Weather Alerts */}
+          <div className="bg-white rounded-lg shadow-md p-6">
+            <h3 className="text-lg font-semibold text-gray-900 mb-4">Weather Alerts & Warnings</h3>
+            <div className="space-y-3">
+              {weatherData.alerts.map((alert: any, index: number) => (
+                <div key={index} className={`p-4 rounded-lg border ${
+                  alert.severity === 'high' ? 'bg-red-50 border-red-200' :
+                  alert.severity === 'moderate' ? 'bg-yellow-50 border-yellow-200' :
+                  'bg-blue-50 border-blue-200'
+                }`}>
+                  <div className="flex items-center mb-2">
+                    <AlertTriangle className={`h-5 w-5 mr-2 ${
+                      alert.severity === 'high' ? 'text-red-600' :
+                      alert.severity === 'moderate' ? 'text-yellow-600' :
+                      'text-blue-600'
+                    }`} />
+                    <span className="font-medium capitalize">{alert.type} Alert</span>
+                    <span className={`ml-auto px-2 py-1 text-xs font-semibold rounded-full ${
+                      alert.severity === 'high' ? 'bg-red-600 text-white' :
+                      alert.severity === 'moderate' ? 'bg-yellow-600 text-white' :
+                      'bg-blue-600 text-white'
+                    }`}>
+                      {alert.severity.toUpperCase()}
+                    </span>
+                  </div>
+                  <p className="text-sm text-gray-700">{alert.message}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Zoom.earth Integration */}
+          <div className="bg-white rounded-lg shadow-md p-6">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-lg font-semibold text-gray-900">Live Weather Radar</h3>
+              <a
+                href="https://zoom.earth/"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700"
+              >
+                <Satellite className="h-4 w-4 mr-2" />
+                Open Zoom.earth
+              </a>
+            </div>
+            <div className="bg-gradient-to-br from-blue-50 to-green-50 rounded-lg p-8 text-center">
+              <Globe className="h-16 w-16 text-blue-600 mx-auto mb-4" />
+              <h4 className="text-lg font-semibold text-gray-900 mb-2">Enhanced Weather Monitoring</h4>
+              <p className="text-gray-600 mb-4">
+                Access real-time satellite imagery, weather radar, and global weather patterns through Zoom.earth integration.
+              </p>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+                <div className="bg-white p-3 rounded-lg">
+                  <h5 className="font-medium text-gray-900 mb-1">Available Features:</h5>
+                  <ul className="text-gray-600 text-left space-y-1">
+                    <li>• Live satellite imagery</li>
+                    <li>• Weather radar overlays</li>
+                    <li>• Storm tracking</li>
+                    <li>• Cloud movement patterns</li>
+                  </ul>
+                </div>
+                <div className="bg-white p-3 rounded-lg">
+                  <h5 className="font-medium text-gray-900 mb-1">Data Sources:</h5>
+                  <ul className="text-gray-600 text-left space-y-1">
+                    <li>• GOES-16/17 satellites</li>
+                    <li>• Himawari-8 satellite</li>
+                    <li>• Global weather models</li>
+                    <li>• Real-time radar data</li>
+                  </ul>
+                </div>
+              </div>
+            </div>
+          </div>
+        </>
+      )}
     </div>
   );
 
@@ -1280,9 +1132,9 @@ const DisasterPortal: React.FC = () => {
     { id: 'dashboard', label: 'Dashboard', icon: Activity },
     { id: 'alerts', label: 'Emergency Alerts', icon: AlertTriangle },
     { id: 'evacuation', label: 'Evacuation Centers', icon: Shield },
-    { id: 'incidents', label: 'Incident Reports', icon: Radio },
-    { id: 'resources', label: 'Emergency Resources', icon: Truck },
-    { id: 'communications', label: 'Communications', icon: Megaphone }
+    { id: 'resources', label: 'Resources', icon: Truck },
+    { id: 'planning', label: 'Emergency Planning', icon: Calendar },
+    { id: 'weather', label: 'Weather Monitoring', icon: Cloud }
   ];
 
   return (
@@ -1292,9 +1144,9 @@ const DisasterPortal: React.FC = () => {
         <div className="max-w-7xl mx-auto">
           <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between p-6 space-y-4 sm:space-y-0">
             <div className="flex items-center space-x-4">
-              {user?.role === 'barangay-official' && (
+              {(user?.role === 'barangay-official' || user?.role === 'super-admin') && (
                 <Link
-                  to="/barangay-official-dashboard"
+                  to={user.role === 'barangay-official' ? '/barangay-official-dashboard' : '/super-admin-dashboard'}
                   className="text-orange-200 hover:text-white flex items-center"
                 >
                   <ArrowLeft className="h-6 w-6" />
@@ -1304,9 +1156,11 @@ const DisasterPortal: React.FC = () => {
               <div>
                 <h1 className="text-2xl sm:text-3xl font-bold flex items-center">
                   <AlertTriangle className="mr-3 h-8 w-8" />
-                  Disaster Management Portal
+                  NDRRMC Portal
                 </h1>
-                <p className="text-orange-100 mt-2 text-sm sm:text-base">Emergency Response & Disaster Preparedness System</p>
+                <p className="text-orange-100 mt-2 text-sm sm:text-base">
+                  Disaster Response & Emergency Planning System
+                </p>
               </div>
             </div>
             <div className="flex items-center space-x-2 sm:space-x-4">
@@ -1356,15 +1210,9 @@ const DisasterPortal: React.FC = () => {
         {activeTab === 'dashboard' && renderDashboard()}
         {activeTab === 'alerts' && renderAlerts()}
         {activeTab === 'evacuation' && renderEvacuation()}
-        {activeTab === 'incidents' && renderIncidents()}
         {activeTab === 'resources' && renderResources()}
-        {activeTab === 'communications' && (
-          <div className="text-center py-12">
-            <Megaphone className="h-24 w-24 text-gray-300 mx-auto mb-4" />
-            <h3 className="text-lg font-semibold text-gray-900 mb-2">Communication Center</h3>
-            <p className="text-gray-600">Mass communication and alert broadcasting features coming soon!</p>
-          </div>
-        )}
+        {activeTab === 'planning' && renderPlanning()}
+        {activeTab === 'weather' && renderWeatherMonitoring()}
       </div>
 
       {/* Alert Form Modal */}
@@ -1385,31 +1233,25 @@ const DisasterPortal: React.FC = () => {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">Alert Type</label>
-                  <select
-                    value={newAlert.type}
-                    onChange={(e) => setNewAlert({...newAlert, type: e.target.value})}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
-                  >
-                    <option value="weather">Weather Emergency</option>
+                  <select className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500">
+                    <option value="">Select alert type</option>
                     <option value="flood">Flood Warning</option>
+                    <option value="typhoon">Typhoon Alert</option>
+                    <option value="earthquake">Earthquake Alert</option>
                     <option value="fire">Fire Emergency</option>
-                    <option value="earthquake">Earthquake</option>
+                    <option value="landslide">Landslide Warning</option>
                     <option value="health">Health Emergency</option>
                     <option value="security">Security Alert</option>
-                    <option value="evacuation">Evacuation Order</option>
                   </select>
                 </div>
                 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Priority Level</label>
-                  <select
-                    value={newAlert.priority}
-                    onChange={(e) => setNewAlert({...newAlert, priority: e.target.value as 'low' | 'medium' | 'high'})}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
-                  >
-                    <option value="low">Low Priority</option>
-                    <option value="medium">Medium Priority</option>
-                    <option value="high">High Priority - URGENT</option>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Severity Level</label>
+                  <select className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500">
+                    <option value="low">Low</option>
+                    <option value="moderate">Moderate</option>
+                    <option value="high">High</option>
+                    <option value="critical">Critical</option>
                   </select>
                 </div>
               </div>
@@ -1418,21 +1260,17 @@ const DisasterPortal: React.FC = () => {
                 <label className="block text-sm font-medium text-gray-700 mb-1">Alert Title</label>
                 <input
                   type="text"
-                  value={newAlert.title}
-                  onChange={(e) => setNewAlert({...newAlert, title: e.target.value})}
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
-                  placeholder="Enter clear, descriptive alert title"
+                  placeholder="Enter alert title"
                 />
               </div>
               
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Alert Message</label>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Description</label>
                 <textarea
-                  value={newAlert.message}
-                  onChange={(e) => setNewAlert({...newAlert, message: e.target.value})}
                   rows={4}
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
-                  placeholder="Enter detailed alert message with specific instructions for residents"
+                  placeholder="Provide detailed alert description"
                 />
               </div>
               
@@ -1441,43 +1279,18 @@ const DisasterPortal: React.FC = () => {
                   <label className="block text-sm font-medium text-gray-700 mb-1">Affected Areas</label>
                   <input
                     type="text"
-                    placeholder="Zone 1, Zone 2, Riverside Area, etc."
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+                    placeholder="e.g., Purok 1, Purok 2"
                   />
                 </div>
                 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Estimated Duration</label>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Expires At</label>
                   <input
-                    type="text"
-                    value={newAlert.estimatedDuration}
-                    onChange={(e) => setNewAlert({...newAlert, estimatedDuration: e.target.value})}
+                    type="datetime-local"
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
-                    placeholder="e.g., 24 hours, 3 days, ongoing"
                   />
                 </div>
-              </div>
-              
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Response Teams</label>
-                <input
-                  type="text"
-                  placeholder="Emergency Response Team A, Medical Team, etc."
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
-                />
-              </div>
-              
-              <div className="flex items-center space-x-3">
-                <input
-                  type="checkbox"
-                  id="evacuationRecommended"
-                  checked={newAlert.evacuationRecommended}
-                  onChange={(e) => setNewAlert({...newAlert, evacuationRecommended: e.target.checked})}
-                  className="h-4 w-4 text-orange-600 focus:ring-orange-500 border-gray-300 rounded"
-                />
-                <label htmlFor="evacuationRecommended" className="text-sm font-medium text-gray-700">
-                  Recommend evacuation for affected areas
-                </label>
               </div>
             </div>
             
@@ -1488,90 +1301,13 @@ const DisasterPortal: React.FC = () => {
               >
                 Cancel
               </button>
-              <button
-                onClick={handleAddAlert}
-                className="px-4 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700"
-              >
+              <button className="px-4 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700">
                 Issue Alert
               </button>
             </div>
           </div>
         </div>
       )}
-
-      {/* Broadcast Form Modal */}
-      {showBroadcastForm && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-lg p-6 w-full max-w-md">
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="text-lg font-semibold">Broadcast Message</h3>
-              <button
-                onClick={() => setShowBroadcastForm(false)}
-                className="text-gray-400 hover:text-gray-600"
-              >
-                <X className="h-5 w-5" />
-              </button>
-            </div>
-            
-            <div className="space-y-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Broadcast Type</label>
-                <select className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500">
-                  <option value="general">General Announcement</option>
-                  <option value="emergency">Emergency Alert</option>
-                  <option value="weather">Weather Update</option>
-                  <option value="evacuation">Evacuation Notice</option>
-                </select>
-              </div>
-              
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Message</label>
-                <textarea
-                  rows={4}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500"
-                  placeholder="Enter broadcast message"
-                />
-              </div>
-              
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Broadcast Channels</label>
-                <div className="space-y-2">
-                  <label className="flex items-center">
-                    <input type="checkbox" defaultChecked className="mr-2" />
-                    <span className="text-sm">SMS to all residents</span>
-                  </label>
-                  <label className="flex items-center">
-                    <input type="checkbox" defaultChecked className="mr-2" />
-                    <span className="text-sm">Email notifications</span>
-                  </label>
-                  <label className="flex items-center">
-                    <input type="checkbox" defaultChecked className="mr-2" />
-                    <span className="text-sm">Mobile app push notifications</span>
-                  </label>
-                  <label className="flex items-center">
-                    <input type="checkbox" className="mr-2" />
-                    <span className="text-sm">Public address system</span>
-                  </label>
-                </div>
-              </div>
-            </div>
-            
-            <div className="flex justify-end space-x-3 mt-6">
-              <button
-                onClick={() => setShowBroadcastForm(false)}
-                className="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50"
-              >
-                Cancel
-              </button>
-              <button className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700">
-                Broadcast Now
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Other modals would go here... */}
     </div>
   );
 };

@@ -96,8 +96,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   const logout = () => {
-    setUser(null);
-    localStorage.removeItem('user');
+    try {
+      setUser(null);
+      localStorage.removeItem('user');
+      // Clear any other auth-related storage
+      localStorage.removeItem('authToken');
+      sessionStorage.clear();
+    } catch (error) {
+      console.error('Logout error:', error);
+      // Force clear even if there's an error
+      setUser(null);
+    }
   };
 
   const updateUser = (updates: Partial<User>) => {
