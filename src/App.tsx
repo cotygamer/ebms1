@@ -52,6 +52,10 @@ function AppRoutes() {
         path="/disaster-portal" 
         element={user && user.role === 'disaster-portal' ? <DisasterPortal /> : <Navigate to="/login" />} 
       />
+      <Route 
+        path="/disaster-portal-dashboard" 
+        element={user && (user.role === 'disaster-portal' || user.role === 'barangay-official') ? <DisasterPortal /> : <Navigate to="/login" />} 
+      />
     </Routes>
   );
 }
