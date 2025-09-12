@@ -4,13 +4,30 @@ interface Resident {
   id: string;
   name: string;
   email: string;
-  verificationStatus: 'non-verified' | 'semi-verified' | 'verified';
+  verificationStatus: 'non-verified' | 'details-updated' | 'semi-verified' | 'verified';
   qrCode?: string;
   familyTree: any[];
   address: string;
   phoneNumber: string;
   dateRegistered: string;
   documents: string[];
+  profileData?: {
+    phone?: string;
+    address?: string;
+    birthDate?: string;
+    gender?: string;
+    civilStatus?: string;
+    occupation?: string;
+    emergencyContact?: string;
+    houseLocation?: { lat: number; lng: number; address: string };
+  };
+  auditTrail?: {
+    timestamp: string;
+    action: string;
+    previousStatus?: string;
+    newStatus?: string;
+    approvedBy?: string;
+  }[];
 }
 
 interface SystemSettings {

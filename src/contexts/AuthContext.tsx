@@ -5,9 +5,26 @@ export interface User {
   email: string;
   name: string;
   role: 'super-admin' | 'barangay-official' | 'resident' | 'medical-portal' | 'accounting-portal' | 'disaster-portal';
-  verificationStatus?: 'non-verified' | 'semi-verified' | 'verified';
+  verificationStatus?: 'non-verified' | 'details-updated' | 'semi-verified' | 'verified';
   qrCode?: string;
   familyTree?: any[];
+  profileData?: {
+    phone?: string;
+    address?: string;
+    birthDate?: string;
+    gender?: string;
+    civilStatus?: string;
+    occupation?: string;
+    emergencyContact?: string;
+    houseLocation?: { lat: number; lng: number; address: string };
+  };
+  auditTrail?: {
+    timestamp: string;
+    action: string;
+    previousStatus?: string;
+    newStatus?: string;
+    approvedBy?: string;
+  }[];
 }
 
 interface AuthContextType {
