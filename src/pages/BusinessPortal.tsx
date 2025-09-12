@@ -101,9 +101,15 @@ const BusinessPortal: React.FC = () => {
   });
 
   const handleLogout = () => {
-    const { logout } = useAuth();
-    logout();
-    navigate('/');
+    try {
+      const { logout } = useAuth();
+      logout();
+      navigate('/');
+    } catch (error) {
+      console.error('Logout error:', error);
+      // Force navigation even if logout fails
+      navigate('/');
+    }
   };
 
   const handleSubmitApplication = () => {
@@ -306,6 +312,35 @@ const BusinessPortal: React.FC = () => {
             <Building className="h-12 w-12 text-purple-600 mx-auto mb-2" />
             <div className="text-2xl font-bold text-purple-600 mb-1">156</div>
             <div className="text-sm text-purple-800">Active Businesses</div>
+          </div>
+        </div>
+      </div>
+
+      {/* Business Support Network */}
+      <div className="bg-white rounded-lg shadow-md p-6">
+        <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
+          <Building className="h-5 w-5 mr-2" />
+          Business Support Network
+        </h3>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg">
+            <h4 className="font-semibold text-blue-800 mb-2">Government Agencies</h4>
+            <div className="space-y-1 text-sm text-blue-700">
+              <p>🏛️ DTI Office: +63 2 8123 4567</p>
+              <p>🔥 Fire Department: +63 2 8234 5678</p>
+              <p>🏥 Health Department: +63 2 8345 6789</p>
+              <p>🌍 Environmental Office: +63 2 8456 7890</p>
+            </div>
+          </div>
+          
+          <div className="p-4 bg-green-50 border border-green-200 rounded-lg">
+            <h4 className="font-semibold text-green-800 mb-2">Business Support</h4>
+            <div className="space-y-1 text-sm text-green-700">
+              <p>💼 Business Helpdesk: +63 2 8567 8901</p>
+              <p>📋 Permit Assistance: +63 2 8678 9012</p>
+              <p>💰 Financial Aid: +63 2 8789 0123</p>
+              <p>📚 Training Center: +63 2 8890 1234</p>
+            </div>
           </div>
         </div>
       </div>

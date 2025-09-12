@@ -40,8 +40,14 @@ export default function BarangayOfficialDashboard() {
   const navigate = useNavigate();
 
   const handleLogout = () => {
-    logout();
-    navigate('/');
+    try {
+      logout();
+      navigate('/');
+    } catch (error) {
+      console.error('Logout error:', error);
+      // Force navigation even if logout fails
+      navigate('/');
+    }
   };
 
   const menuItems = [
@@ -250,6 +256,60 @@ function BarangayOfficialOverview() {
                 <span className="text-sm text-yellow-600">Processing</span>
               </div>
             </div>
+          </div>
+        </div>
+
+        {/* Integrated Portal Status */}
+        <div className="bg-white rounded-lg shadow-sm p-6">
+          <h3 className="text-lg font-semibold text-gray-900 mb-4">Integrated Portal Network</h3>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+            <Link
+              to="/medical-portal"
+              className="p-4 bg-red-50 border border-red-200 rounded-lg hover:bg-red-100 transition-colors"
+            >
+              <div className="flex items-center justify-between mb-2">
+                <Heart className="h-6 w-6 text-red-600" />
+                <CheckCircle className="h-5 w-5 text-green-500" />
+              </div>
+              <h4 className="font-semibold text-red-800">Medical Portal</h4>
+              <p className="text-xs text-red-700">Health center operational</p>
+            </Link>
+            
+            <Link
+              to="/accounting-portal"
+              className="p-4 bg-green-50 border border-green-200 rounded-lg hover:bg-green-100 transition-colors"
+            >
+              <div className="flex items-center justify-between mb-2">
+                <Calculator className="h-6 w-6 text-green-600" />
+                <CheckCircle className="h-5 w-5 text-green-500" />
+              </div>
+              <h4 className="font-semibold text-green-800">Accounting Portal</h4>
+              <p className="text-xs text-green-700">Financial systems online</p>
+            </Link>
+            
+            <Link
+              to="/disaster-portal"
+              className="p-4 bg-orange-50 border border-orange-200 rounded-lg hover:bg-orange-100 transition-colors"
+            >
+              <div className="flex items-center justify-between mb-2">
+                <AlertTriangle className="h-6 w-6 text-orange-600" />
+                <CheckCircle className="h-5 w-5 text-green-500" />
+              </div>
+              <h4 className="font-semibold text-orange-800">Disaster Portal</h4>
+              <p className="text-xs text-orange-700">Emergency systems enhanced</p>
+            </Link>
+            
+            <Link
+              to="/security-portal"
+              className="p-4 bg-purple-50 border border-purple-200 rounded-lg hover:bg-purple-100 transition-colors"
+            >
+              <div className="flex items-center justify-between mb-2">
+                <Shield className="h-6 w-6 text-purple-600" />
+                <CheckCircle className="h-5 w-5 text-green-500" />
+              </div>
+              <h4 className="font-semibold text-purple-800">Security Portal</h4>
+              <p className="text-xs text-purple-700">Security network active</p>
+            </Link>
           </div>
         </div>
       </div>

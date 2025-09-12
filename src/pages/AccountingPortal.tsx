@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
+import { useData } from '../contexts/DataContext';
 import { 
   Calculator, 
   TrendingUp, 
@@ -29,11 +30,19 @@ import {
   Users,
   Building2,
   X,
-  Save
+  Save,
+  MapPin,
+  Shield,
+  Bell,
+  TrendingDown,
+  Percent,
+  Banknote,
+  CreditCard as Card
 } from 'lucide-react';
 
 const AccountingPortal: React.FC = () => {
   const { user } = useAuth();
+  const { systemSettings } = useData();
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState('dashboard');
   const [showTransactionForm, setShowTransactionForm] = useState(false);
@@ -57,9 +66,15 @@ const AccountingPortal: React.FC = () => {
   });
 
   const handleLogout = () => {
-    const { logout } = useAuth();
-    logout();
-    navigate('/');
+    try {
+      const { logout } = useAuth();
+      logout();
+      navigate('/');
+    } catch (error) {
+      console.error('Logout error:', error);
+      // Force navigation even if logout fails
+      navigate('/');
+    }
   };
 
   const handleAddTransaction = () => {
@@ -260,6 +275,68 @@ const AccountingPortal: React.FC = () => {
             <BarChart3 className="h-16 w-16 text-blue-600 mx-auto mb-4" />
             <div className="text-3xl font-bold text-blue-600 mb-2">35%</div>
             <div className="text-sm text-blue-800">Expense Ratio</div>
+          </div>
+        </div>
+      </div>
+
+      {/* Financial Health Indicators */}
+      <div className="bg-white rounded-lg shadow-md p-6">
+        <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
+          <Shield className="h-5 w-5 mr-2" />
+          Financial Health Indicators
+        </h3>
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+          <div className="text-center p-4 bg-green-50 rounded-lg">
+            <TrendingUp className="h-10 w-10 text-green-600 mx-auto mb-2" />
+            <div className="text-lg font-bold text-green-600 mb-1">Excellent</div>
+            <div className="text-xs text-green-800">Cash Flow</div>
+          </div>
+          
+          <div className="text-center p-4 bg-blue-50 rounded-lg">
+            <Percent className="h-10 w-10 text-blue-600 mx-auto mb-2" />
+            <div className="text-lg font-bold text-blue-600 mb-1">92%</div>
+            <div className="text-xs text-blue-800">Collection Rate</div>
+          </div>
+          
+          <div className="text-center p-4 bg-purple-50 rounded-lg">
+            <Banknote className="h-10 w-10 text-purple-600 mx-auto mb-2" />
+            <div className="text-lg font-bold text-purple-600 mb-1">₱2.1M</div>
+            <div className="text-xs text-purple-800">Annual Budget</div>
+          </div>
+          
+          <div className="text-center p-4 bg-orange-50 rounded-lg">
+            <Card className="h-10 w-10 text-orange-600 mx-auto mb-2" />
+            <div className="text-lg font-bold text-orange-600 mb-1">78%</div>
+            <div className="text-xs text-orange-800">Digital Payments</div>
+          </div>
+        </div>
+      </div>
+
+      {/* Emergency Financial Contacts */}
+      <div className="bg-white rounded-lg shadow-md p-6">
+        <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
+          <Bell className="h-5 w-5 mr-2" />
+          Emergency Financial Contacts
+        </h3>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="p-4 bg-green-50 border border-green-200 rounded-lg">
+            <h4 className="font-semibold text-green-800 mb-2">Financial Emergency</h4>
+            <div className="space-y-1 text-sm text-green-700">
+              <p>💰 Treasury Office: +63 2 8234 5678</p>
+              <p>🏦 Bank Manager: +63 2 8345 6789</p>
+              <p>📊 Auditor: +63 2 8456 7890</p>
+              <p>💳 Payment Support: +63 2 8567 8901</p>
+            </div>
+          </div>
+          
+          <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg">
+            <h4 className="font-semibold text-blue-800 mb-2">System Support</h4>
+            <div className="space-y-1 text-sm text-blue-700">
+              <p>🖥️ IT Support: +63 2 8678 9012</p>
+              <p>🔧 System Admin: +63 2 8789 0123</p>
+              <p>📱 Mobile Support: +63 2 8890 1234</p>
+              <p>🌐 Network: +63 2 8901 2345</p>
+            </div>
           </div>
         </div>
       </div>

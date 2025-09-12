@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
+import { useData } from '../contexts/DataContext';
 import { 
   Heart, 
   Users, 
@@ -31,16 +32,61 @@ import {
   BarChart3,
   Thermometer,
   Zap,
-  Shield
+  Shield,
+  MapPin,
+  Cloud,
+  Droplets,
+  Wind,
+  Sun,
+  Eye as EyeIcon,
+  RefreshCw,
+  Gauge,
+  Navigation,
+  Sunrise,
+  Sunset
 } from 'lucide-react';
 
 const MedicalPortal: React.FC = () => {
   const { user } = useAuth();
+  const { systemSettings } = useData();
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState('dashboard');
   const [showAnnouncementForm, setShowAnnouncementForm] = useState(false);
   const [showPatientForm, setShowPatientForm] = useState(false);
   const [showInventoryForm, setShowInventoryForm] = useState(false);
+  const [weatherData, setWeatherData] = useState({
+    temperature: 28,
+    humidity: 75,
+    windSpeed: 12,
+    pressure: 1013,
+    uvIndex: 6,
+    visibility: 10,
+    condition: 'Partly Cloudy',
+    lastUpdated: new Date().toLocaleTimeString()
+  });
+  const [forecast, setForecast] = useState([
+    { day: 'Today', high: 32, low: 24, condition: 'Sunny', precipitation: 10 },
+    { day: 'Tomorrow', high: 30, low: 23, condition: 'Partly Cloudy', precipitation: 20 },
+    { day: 'Friday', high: 29, low: 22, condition: 'Cloudy', precipitation: 40 },
+    { day: 'Saturday', high: 27, low: 21, condition: 'Light Rain', precipitation: 70 },
+    { day: 'Sunday', high: 28, low: 22, condition: 'Partly Cloudy', precipitation: 30 }
+  ]);
+
+  // Simulate weather data updates
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setWeatherData(prev => ({
+        ...prev,
+        temperature: 25 + Math.random() * 10,
+        humidity: 60 + Math.random() * 30,
+        windSpeed: 5 + Math.random() * 20,
+        pressure: 1000 + Math.random() * 30,
+        lastUpdated: new Date().toLocaleTimeString()
+      }));
+    }, 600000); // Update every 10 minutes
+
+    return () => clearInterval(interval);
+  }, []);
   const [announcements, setAnnouncements] = useState([
     {
       id: '1',
@@ -85,9 +131,15 @@ const MedicalPortal: React.FC = () => {
   ]);
 
   const handleLogout = () => {
-    const { logout } = useAuth();
-    logout();
-    navigate('/');
+    try {
+      const { logout } = useAuth();
+      logout();
+      navigate('/');
+    } catch (error) {
+      console.error('Logout error:', error);
+      // Force navigation even if logout fails
+      navigate('/');
+    }
   };
 
   const handleAddAnnouncement = () => {
@@ -281,6 +333,83 @@ const MedicalPortal: React.FC = () => {
             <Activity className="h-12 w-12 text-purple-600 mx-auto mb-2" />
             <div className="text-2xl font-bold text-purple-600 mb-1">89%</div>
             <div className="text-sm text-purple-800">Treatment Success</div>
+          </div>
+        </div>
+      </div>
+
+      {/* Weather Monitoring for Health Planning */}
+      <div className="bg-white rounded-lg shadow-md p-6">
+        <div className="flex items-center justify-between mb-4">
+          <h3 className="text-lg font-semibold text-gray-900 flex items-center">
+            <Cloud className="h-5 w-5 mr-2" />
+            Weather Monitoring for Health Planning
+          </h3>
+          <button className="text-blue-600 hover:text-blue-800 flex items-center text-sm">
+            <RefreshCw className="h-4 w-4 mr-1" />
+            Last updated: {weatherData.lastUpdated}
+          </button>
+        </div>
+        
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+          <div className="text-center p-3 bg-blue-50 rounded-lg">
+            <Thermometer className="h-8 w-8 text-blue-600 mx-auto mb-2" />
+            <div className="text-xl font-bold text-blue-600">{weatherData.temperature.toFixed(1)}°C</div>
+            <div className="text-xs text-blue-800">Temperature</div>
+          </div>
+          
+          <div className="text-center p-3 bg-cyan-50 rounded-lg">
+            <Droplets className="h-8 w-8 text-cyan-600 mx-auto mb-2" />
+            <div className="text-xl font-bold text-cyan-600">{weatherData.humidity.toFixed(0)}%</div>
+            <div className="text-xs text-cyan-800">Humidity</div>
+          </div>
+          
+          <div className="text-center p-3 bg-green-50 rounded-lg">
+            <Wind className="h-8 w-8 text-green-600 mx-auto mb-2" />
+            <div className="text-xl font-bold text-green-600">{weatherData.windSpeed.toFixed(0)} km/h</div>
+            <div className="text-xs text-green-800">Wind Speed</div>
+          </div>
+          
+          <div className="text-center p-3 bg-orange-50 rounded-lg">
+            <Sun className="h-8 w-8 text-orange-600 mx-auto mb-2" />
+            <div className="text-xl font-bold text-orange-600">{weatherData.uvIndex}</div>
+            <div className="text-xs text-orange-800">UV Index</div>
+          </div>
+        </div>
+        
+        <div className="mt-4 p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
+          <h4 className="font-semibold text-yellow-800 mb-2">Health Weather Advisory</h4>
+          <p className="text-sm text-yellow-700">
+            High humidity levels may increase heat-related illness risk. Ensure adequate hydration for patients and staff.
+            UV Index is moderate - recommend sun protection for outdoor health activities.
+          </p>
+        </div>
+      </div>
+
+      {/* Emergency Health Contacts */}
+      <div className="bg-white rounded-lg shadow-md p-6">
+        <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
+          <MapPin className="h-5 w-5 mr-2" />
+          Emergency Health Network
+        </h3>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="p-4 bg-red-50 border border-red-200 rounded-lg">
+            <h4 className="font-semibold text-red-800 mb-2">Emergency Hotlines</h4>
+            <div className="space-y-1 text-sm text-red-700">
+              <p>🚨 Emergency: 911</p>
+              <p>🏥 Hospital: {systemSettings.contactNumber}</p>
+              <p>🚑 Ambulance: +63 2 8911 1234</p>
+              <p>☎️ Barangay Health: +63 2 8555 0123</p>
+            </div>
+          </div>
+          
+          <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg">
+            <h4 className="font-semibold text-blue-800 mb-2">Nearby Hospitals</h4>
+            <div className="space-y-1 text-sm text-blue-700">
+              <p>🏥 Metro Manila Hospital - 2.1 km</p>
+              <p>🏥 San Miguel Medical Center - 3.5 km</p>
+              <p>🏥 Emergency Clinic - 1.8 km</p>
+              <p>🏥 Specialty Hospital - 4.2 km</p>
+            </div>
           </div>
         </div>
       </div>

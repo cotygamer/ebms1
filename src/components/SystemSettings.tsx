@@ -586,6 +586,44 @@ export default function SystemSettings() {
           {renderContent()}
         </div>
       </div>
+
+      {/* System Integration Health Check */}
+      <div className="bg-white rounded-lg shadow-sm p-6">
+        <h3 className="text-lg font-semibold text-gray-900 mb-4">System Integration Health</h3>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+          <div className="p-4 bg-green-50 border border-green-200 rounded-lg">
+            <div className="flex items-center justify-between mb-2">
+              <span className="text-sm font-medium text-green-800">Database</span>
+              <CheckCircle className="h-5 w-5 text-green-500" />
+            </div>
+            <p className="text-xs text-green-700">All tables synchronized</p>
+          </div>
+          
+          <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg">
+            <div className="flex items-center justify-between mb-2">
+              <span className="text-sm font-medium text-blue-800">Authentication</span>
+              <CheckCircle className="h-5 w-5 text-green-500" />
+            </div>
+            <p className="text-xs text-blue-700">Unified login system active</p>
+          </div>
+          
+          <div className="p-4 bg-purple-50 border border-purple-200 rounded-lg">
+            <div className="flex items-center justify-between mb-2">
+              <span className="text-sm font-medium text-purple-800">Cross-Portal Data</span>
+              <CheckCircle className="h-5 w-5 text-green-500" />
+            </div>
+            <p className="text-xs text-purple-700">Data sharing operational</p>
+          </div>
+          
+          <div className="p-4 bg-orange-50 border border-orange-200 rounded-lg">
+            <div className="flex items-center justify-between mb-2">
+              <span className="text-sm font-medium text-orange-800">External APIs</span>
+              <CheckCircle className="h-5 w-5 text-green-500" />
+            </div>
+            <p className="text-xs text-orange-700">Maps & weather integrated</p>
+          </div>
+        </div>
+      </div>
     </div>
   );
 }

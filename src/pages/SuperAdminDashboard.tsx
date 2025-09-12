@@ -32,8 +32,14 @@ export default function SuperAdminDashboard() {
   const navigate = useNavigate();
 
   const handleLogout = () => {
-    logout();
-    navigate('/');
+    try {
+      logout();
+      navigate('/');
+    } catch (error) {
+      console.error('Logout error:', error);
+      // Force navigation even if logout fails
+      navigate('/');
+    }
   };
 
   const menuItems = [
@@ -162,7 +168,7 @@ function SuperAdminOverview() {
         <h2 className="text-xl font-semibold text-gray-900 mb-4">Quick Actions</h2>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
           <button
-            onClick={() => window.location.href = '#users'}
+            onClick={() => setActiveTab('users')}
             className="flex items-center p-4 bg-blue-50 rounded-lg hover:bg-blue-100 transition-colors text-left"
           >
             <Users className="h-8 w-8 text-blue-600 mr-3" />
@@ -173,7 +179,7 @@ function SuperAdminOverview() {
           </button>
           
           <button
-            onClick={() => window.location.href = '#modules'}
+            onClick={() => setActiveTab('modules')}
             className="flex items-center p-4 bg-green-50 rounded-lg hover:bg-green-100 transition-colors text-left"
           >
             <Database className="h-8 w-8 text-green-600 mr-3" />
@@ -184,7 +190,7 @@ function SuperAdminOverview() {
           </button>
           
           <button
-            onClick={() => window.location.href = '#settings'}
+            onClick={() => setActiveTab('settings')}
             className="flex items-center p-4 bg-purple-50 rounded-lg hover:bg-purple-100 transition-colors text-left"
           >
             <Settings className="h-8 w-8 text-purple-600 mr-3" />
@@ -193,6 +199,44 @@ function SuperAdminOverview() {
               <p className="text-sm text-gray-600">Configure system preferences</p>
             </div>
           </button>
+        </div>
+      </div>
+
+      {/* System Integration Status */}
+      <div className="bg-white rounded-lg shadow-sm p-6">
+        <h2 className="text-xl font-semibold text-gray-900 mb-4">Portal Integration Status</h2>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+          <div className="p-4 bg-red-50 border border-red-200 rounded-lg">
+            <div className="flex items-center justify-between mb-2">
+              <span className="text-sm font-medium text-red-800">Medical Portal</span>
+              <CheckCircle className="h-5 w-5 text-green-500" />
+            </div>
+            <p className="text-xs text-red-700">Health management system operational</p>
+          </div>
+          
+          <div className="p-4 bg-green-50 border border-green-200 rounded-lg">
+            <div className="flex items-center justify-between mb-2">
+              <span className="text-sm font-medium text-green-800">Accounting Portal</span>
+              <CheckCircle className="h-5 w-5 text-green-500" />
+            </div>
+            <p className="text-xs text-green-700">Financial systems synchronized</p>
+          </div>
+          
+          <div className="p-4 bg-orange-50 border border-orange-200 rounded-lg">
+            <div className="flex items-center justify-between mb-2">
+              <span className="text-sm font-medium text-orange-800">Disaster Portal</span>
+              <CheckCircle className="h-5 w-5 text-green-500" />
+            </div>
+            <p className="text-xs text-orange-700">Emergency systems enhanced</p>
+          </div>
+          
+          <div className="p-4 bg-purple-50 border border-purple-200 rounded-lg">
+            <div className="flex items-center justify-between mb-2">
+              <span className="text-sm font-medium text-purple-800">Security Portal</span>
+              <CheckCircle className="h-5 w-5 text-green-500" />
+            </div>
+            <p className="text-xs text-purple-700">Security network integrated</p>
+          </div>
         </div>
       </div>
     </div>

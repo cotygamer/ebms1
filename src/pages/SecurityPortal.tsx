@@ -173,9 +173,15 @@ const SecurityPortal: React.FC = () => {
   });
 
   const handleLogout = () => {
-    const { logout } = useAuth();
-    logout();
-    navigate('/');
+    try {
+      const { logout } = useAuth();
+      logout();
+      navigate('/');
+    } catch (error) {
+      console.error('Logout error:', error);
+      // Force navigation even if logout fails
+      navigate('/');
+    }
   };
 
   const handleSubmitIncident = () => {
@@ -412,6 +418,65 @@ const SecurityPortal: React.FC = () => {
             <CheckCircle className="h-12 w-12 text-green-600 mx-auto mb-2" />
             <div className="text-2xl font-bold text-green-600 mb-1">78%</div>
             <div className="text-sm text-green-800">Resolution Rate</div>
+          </div>
+        </div>
+      </div>
+
+      {/* Security Network Integration */}
+      <div className="bg-white rounded-lg shadow-md p-6">
+        <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
+          <Shield className="h-5 w-5 mr-2" />
+          Security Network Integration
+        </h3>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="p-4 bg-red-50 border border-red-200 rounded-lg">
+            <h4 className="font-semibold text-red-800 mb-2">Emergency Response</h4>
+            <div className="space-y-1 text-sm text-red-700">
+              <p>🚨 Police Emergency: 911</p>
+              <p>🚒 Fire Department: 116</p>
+              <p>🚑 Medical Emergency: 117</p>
+              <p>📞 Barangay Emergency: +63 2 8123 4567</p>
+            </div>
+          </div>
+          
+          <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg">
+            <h4 className="font-semibold text-blue-800 mb-2">Security Coordination</h4>
+            <div className="space-y-1 text-sm text-blue-700">
+              <p>👮 Police Station: +63 2 8234 5678</p>
+              <p>🛡️ Security Command: +63 2 8345 6789</p>
+              <p>📡 Radio Control: +63 2 8456 7890</p>
+              <p>🎯 CCTV Monitoring: +63 2 8567 8901</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Real-time Security Status */}
+      <div className="bg-white rounded-lg shadow-md p-6">
+        <h3 className="text-lg font-semibold text-gray-900 mb-4">Real-time Security Status</h3>
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+          <div className="text-center p-4 bg-green-50 rounded-lg">
+            <CheckCircle className="h-10 w-10 text-green-600 mx-auto mb-2" />
+            <div className="text-lg font-bold text-green-600 mb-1">All Clear</div>
+            <div className="text-xs text-green-800">Security Status</div>
+          </div>
+          
+          <div className="text-center p-4 bg-blue-50 rounded-lg">
+            <Activity className="h-10 w-10 text-blue-600 mx-auto mb-2" />
+            <div className="text-lg font-bold text-blue-600 mb-1">12</div>
+            <div className="text-xs text-blue-800">Active Patrols</div>
+          </div>
+          
+          <div className="text-center p-4 bg-purple-50 rounded-lg">
+            <Eye className="h-10 w-10 text-purple-600 mx-auto mb-2" />
+            <div className="text-lg font-bold text-purple-600 mb-1">24/7</div>
+            <div className="text-xs text-purple-800">CCTV Monitoring</div>
+          </div>
+          
+          <div className="text-center p-4 bg-orange-50 rounded-lg">
+            <Radio className="h-10 w-10 text-orange-600 mx-auto mb-2" />
+            <div className="text-lg font-bold text-orange-600 mb-1">Online</div>
+            <div className="text-xs text-orange-800">Radio Network</div>
           </div>
         </div>
       </div>

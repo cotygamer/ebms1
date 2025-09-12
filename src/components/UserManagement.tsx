@@ -79,6 +79,13 @@ export default function UserManagement() {
     }
   };
 
+  // Enhanced user statistics
+  const userStats = {
+    total: users.length,
+    active: users.filter(u => u.status === 'active').length,
+    admins: users.filter(u => u.role === 'super-admin' || u.role === 'barangay-official').length,
+    portalUsers: users.filter(u => u.role.includes('portal')).length
+  };
   return (
     <div className="space-y-6">
       <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
@@ -89,6 +96,49 @@ export default function UserManagement() {
             : 'As Barangay Official, you can manage residents and other officials (excluding Super Admins).'
           }
         </p>
+      </div>
+      
+      {/* Enhanced User Statistics */}
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+        <div className="bg-white p-6 rounded-lg shadow-sm border-l-4 border-blue-500">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm font-medium text-gray-600">Total Users</p>
+              <p className="text-2xl font-bold text-blue-600">{userStats.total}</p>
+            </div>
+            <Users className="h-8 w-8 text-blue-600" />
+          </div>
+        </div>
+        
+        <div className="bg-white p-6 rounded-lg shadow-sm border-l-4 border-green-500">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm font-medium text-gray-600">Active Users</p>
+              <p className="text-2xl font-bold text-green-600">{userStats.active}</p>
+            </div>
+            <UserCheck className="h-8 w-8 text-green-600" />
+          </div>
+        </div>
+        
+        <div className="bg-white p-6 rounded-lg shadow-sm border-l-4 border-purple-500">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm font-medium text-gray-600">Administrators</p>
+              <p className="text-2xl font-bold text-purple-600">{userStats.admins}</p>
+            </div>
+            <Shield className="h-8 w-8 text-purple-600" />
+          </div>
+        </div>
+        
+        <div className="bg-white p-6 rounded-lg shadow-sm border-l-4 border-orange-500">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm font-medium text-gray-600">Portal Staff</p>
+              <p className="text-2xl font-bold text-orange-600">{userStats.portalUsers}</p>
+            </div>
+            <Building2 className="h-8 w-8 text-orange-600" />
+          </div>
+        </div>
       </div>
       
       <div className="flex items-center justify-between">
