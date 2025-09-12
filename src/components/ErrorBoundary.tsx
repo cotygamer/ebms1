@@ -161,6 +161,7 @@ export const useErrorHandler = () => {
   const [isLoading, setIsLoading] = React.useState(false);
 
   const handleAsync = React.useCallback(<T>(
+  const handleAsync = React.useCallback(<T,>(
     operation: () => Promise<T>,
     onSuccess?: (data: T) => void,
     onError?: (error: string) => void
