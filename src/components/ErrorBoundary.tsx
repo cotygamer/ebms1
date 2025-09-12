@@ -183,6 +183,32 @@ export const useErrorHandler = () => {
     }
   }, []);
 
+  function handleAsync<T>(
+    operation: () => Promise<T>,
+    onSuccess?: (data: T) => void,
+    onError?: (error: unknown) => void
+  ) {
+    return async () => {
+      setIsLoading(true);
+      setError(null);
+
+      try {
+        const result = await operation();
+        onSuccess?.(result);
+        return result;
+      } catch (err: any) {
+        const errorMessage = err.message || 'An unexpected error occurred';
+        setError(errorMessage);
+        onError?.(errorMessage);
+        throw err;
+      } finally {
+        setIsLoading(false);
+      }
+    };
+  }
+
+  const memoizedHandleAsync = React.useCallback(handleAsync, []);
+
   const clearError = React.useCallback(() => {
     setError(null);
   }, []);
