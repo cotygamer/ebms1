@@ -52,6 +52,12 @@ function AppRoutes() {
         path="/disaster-portal" 
         element={user && user.role === 'disaster-portal' ? <DisasterPortal /> : <Navigate to="/login" />} 
       />
+      
+      {/* Additional disaster portal route for barangay officials */}
+      <Route 
+        path="/disaster-portal-dashboard" 
+        element={user && (user.role === 'disaster-portal' || user.role === 'barangay-official' || user.role === 'super-admin') ? <DisasterPortal /> : <Navigate to="/login" />} 
+      />
     </Routes>
   );
 }
