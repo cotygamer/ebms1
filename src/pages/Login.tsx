@@ -129,6 +129,8 @@ export default function Login() {
                 <p><strong>Medical Staff:</strong> medical@barangay.gov / password123</p>
                 <p><strong>Accounting Staff:</strong> accounting@barangay.gov / password123</p>
                 <p><strong>Disaster Staff:</strong> disaster@barangay.gov / password123</p>
+                <p><strong>Business Owner:</strong> business@email.com / password123</p>
+                <p><strong>Security Personnel:</strong> security@barangay.gov / password123</p>
               </div>
             </div>
           </div>
