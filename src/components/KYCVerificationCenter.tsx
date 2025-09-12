@@ -1,33 +1,7 @@
 import React, { useState } from 'react';
 import { useData } from '../contexts/DataContext';
 import { useAuth } from '../contexts/AuthContext';
-import { 
-  UserCheck, 
-  Users, 
-  Clock, 
-  CheckCircle, 
-  XCircle, 
-  Eye, 
-  MapPin, 
-  FileText, 
-  Phone, 
-  Mail, 
-  Home, 
-  Calendar,
-  Shield,
-  AlertTriangle,
-  Download,
-  Search,
-  Filter,
-  User,
-  IdCard,
-  Camera,
-  X,
-  Check,
-  History,
-  ChevronDown,
-  ChevronUp
-} from 'lucide-react';
+import { UserCheck, Users, Clock, CheckCircle, XCircle, Eye, MapPin, FileText, Phone, Mail, Home, Calendar, Shield, AlertTriangle, Download, Search, Filter, User, Car as IdCard, Camera, X, Check, History, ChevronDown, ChevronUp } from 'lucide-react';
 
 interface Resident {
   id: string;
