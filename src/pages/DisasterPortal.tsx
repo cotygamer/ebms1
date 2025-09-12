@@ -823,7 +823,7 @@ const DisasterPortal: React.FC = () => {
     { id: 'alerts', label: 'Alerts & Warnings', icon: AlertTriangle },
     { id: 'evacuation', label: 'Evacuation Centers', icon: Home },
     { id: 'resources', label: 'Emergency Resources', icon: Truck },
-    { id: 'contacts', label: 'Emergency Contacts', icon: Phone }
+    { id: 'contacts', label: 'Emergency Contacts', icon: Phone },
     { id: 'operations-map', label: 'Operations Map', icon: Layers }
   ];
 
