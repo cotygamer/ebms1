@@ -159,11 +159,12 @@ export const withErrorBoundary = <P extends object>(
 export const useErrorHandler = () => {
   const [error, setError] = React.useState<string | null>(null);
   const [isLoading, setIsLoading] = React.useState(false);
-  const handleAsync = React.useCallback(async <T>(
+
+  const handleAsync = React.useCallback(<T>(
     operation: () => Promise<T>,
     onSuccess?: (data: T) => void,
     onError?: (error: string) => void
-  ) => {
+  ) => async () => {
     setIsLoading(true);
     setError(null);
 
