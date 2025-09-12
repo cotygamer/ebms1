@@ -161,12 +161,10 @@ export const useErrorHandler = () => {
   const [isLoading, setIsLoading] = React.useState(false);
 
   const handleAsync = React.useCallback(async <T>(
-  const handleAsync = React.useCallback(<T>(async (
-    operation: () => Promise<T>
-  ) => {
+    operation: () => Promise<T>,
     onSuccess?: (data: T) => void,
     onError?: (error: string) => void
-  }) => {
+  ) => {
     setIsLoading(true);
     setError(null);
 
@@ -182,7 +180,7 @@ export const useErrorHandler = () => {
     } finally {
       setIsLoading(false);
     }
-  }), []);
+  }, []);
 
   const clearError = React.useCallback(() => {
     setError(null);
