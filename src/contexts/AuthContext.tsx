@@ -4,7 +4,7 @@ export interface User {
   id: string;
   email: string;
   name: string;
-  role: 'super-admin' | 'barangay-official' | 'resident' | 'medical-portal' | 'accounting-portal' | 'disaster-portal' | 'business-owner' | 'security-personnel';
+  role: 'super-admin' | 'barangay-official' | 'resident' | 'medical-portal' | 'accounting-portal' | 'disaster-portal';
   verificationStatus?: 'non-verified' | 'semi-verified' | 'verified';
   qrCode?: string;
   familyTree?: any[];
@@ -59,18 +59,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         role: 'disaster-portal'
       },
       {
-        id: '7',
-        email: 'business@email.com',
-        name: 'Carlos Business Owner',
-        role: 'business-owner'
-      },
-      {
-        id: '8',
-        email: 'security@barangay.gov',
-        name: 'Roberto Security',
-        role: 'security-personnel'
-      },
-      {
         id: '2',
         email: 'resident@email.com',
         name: 'Juan Dela Cruz',
@@ -96,17 +84,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   const logout = () => {
-    try {
-      setUser(null);
-      localStorage.removeItem('user');
-      // Clear any other auth-related storage
-      localStorage.removeItem('authToken');
-      sessionStorage.clear();
-    } catch (error) {
-      console.error('Logout error:', error);
-      // Force clear even if there's an error
-      setUser(null);
-    }
+    setUser(null);
+    localStorage.removeItem('user');
   };
 
   const updateUser = (updates: Partial<User>) => {

@@ -1,5 +1,5 @@
 import React from 'react';
-import { Users, UserCheck, FileText, TrendingUp, AlertTriangle, CheckCircle, Activity, Shield, Building2, Heart, Calculator, MapPin, BarChart3, PieChart } from 'lucide-react';
+import { Users, UserCheck, FileText, TrendingUp, AlertTriangle, CheckCircle } from 'lucide-react';
 
 export default function Analytics() {
   return (
@@ -53,71 +53,6 @@ export default function Analytics() {
         </div>
       </div>
 
-      {/* Portal Performance Analytics */}
-      <div className="bg-white rounded-lg shadow-sm p-6">
-        <h3 className="text-lg font-semibold text-gray-900 mb-4">Portal Performance Analytics</h3>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-          <div className="p-4 bg-red-50 border border-red-200 rounded-lg">
-            <div className="flex items-center justify-between mb-2">
-              <Heart className="h-6 w-6 text-red-600" />
-              <span className="text-xs font-semibold text-green-600">98.5% Uptime</span>
-            </div>
-            <h4 className="font-semibold text-red-800">Medical Portal</h4>
-            <p className="text-xs text-red-700">156 patients served this month</p>
-          </div>
-          
-          <div className="p-4 bg-green-50 border border-green-200 rounded-lg">
-            <div className="flex items-center justify-between mb-2">
-              <Calculator className="h-6 w-6 text-green-600" />
-              <span className="text-xs font-semibold text-green-600">99.2% Uptime</span>
-            </div>
-            <h4 className="font-semibold text-green-800">Accounting Portal</h4>
-            <p className="text-xs text-green-700">₱125k revenue processed</p>
-          </div>
-          
-          <div className="p-4 bg-orange-50 border border-orange-200 rounded-lg">
-            <div className="flex items-center justify-between mb-2">
-              <AlertTriangle className="h-6 w-6 text-orange-600" />
-              <span className="text-xs font-semibold text-green-600">100% Uptime</span>
-            </div>
-            <h4 className="font-semibold text-orange-800">Disaster Portal</h4>
-            <p className="text-xs text-orange-700">Enhanced with weather & maps</p>
-          </div>
-          
-          <div className="p-4 bg-purple-50 border border-purple-200 rounded-lg">
-            <div className="flex items-center justify-between mb-2">
-              <Shield className="h-6 w-6 text-purple-600" />
-              <span className="text-xs font-semibold text-green-600">97.8% Uptime</span>
-            </div>
-            <h4 className="font-semibold text-purple-800">Security Portal</h4>
-            <p className="text-xs text-purple-700">23 incidents managed</p>
-          </div>
-        </div>
-      </div>
-
-      {/* System Integration Metrics */}
-      <div className="bg-white rounded-lg shadow-sm p-6">
-        <h3 className="text-lg font-semibold text-gray-900 mb-4">System Integration Metrics</h3>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          <div className="text-center p-6 bg-blue-50 rounded-lg">
-            <Activity className="h-16 w-16 text-blue-600 mx-auto mb-4" />
-            <div className="text-3xl font-bold text-blue-600 mb-2">99.1%</div>
-            <div className="text-sm text-blue-800">Cross-Portal Sync Rate</div>
-          </div>
-          
-          <div className="text-center p-6 bg-green-50 rounded-lg">
-            <CheckCircle className="h-16 w-16 text-green-600 mx-auto mb-4" />
-            <div className="text-3xl font-bold text-green-600 mb-2">100%</div>
-            <div className="text-sm text-green-800">Authentication Success</div>
-          </div>
-          
-          <div className="text-center p-6 bg-purple-50 rounded-lg">
-            <BarChart3 className="h-16 w-16 text-purple-600 mx-auto mb-4" />
-            <div className="text-3xl font-bold text-purple-600 mb-2">8</div>
-            <div className="text-sm text-purple-800">Integrated Portals</div>
-          </div>
-        </div>
-      </div>
       {/* Charts Section */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <div className="bg-white rounded-lg shadow-sm p-6">

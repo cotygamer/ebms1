@@ -1,7 +1,5 @@
 import React, { useState, useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
-import ErrorBoundary from './components/ErrorBoundary';
-import { NotificationProvider } from './components/NotificationSystem';
 import LandingPage from './pages/LandingPage';
 import AboutPage from './pages/AboutPage';
 import Login from './pages/Login';
@@ -13,8 +11,6 @@ import ResidentDashboard from './pages/ResidentDashboard';
 import MedicalPortal from './pages/MedicalPortal';
 import AccountingPortal from './pages/AccountingPortal';
 import DisasterPortal from './pages/DisasterPortal';
-import BusinessPortal from './pages/BusinessPortal';
-import SecurityPortal from './pages/SecurityPortal';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import { DataProvider } from './contexts/DataContext';
 
@@ -22,8 +18,7 @@ function AppRoutes() {
   const { user } = useAuth();
 
   return (
-    <ErrorBoundary>
-      <Routes>
+    <Routes>
       <Route path="/" element={<LandingPage />} />
       <Route path="/about" element={<AboutPage />} />
       <Route path="/login" element={!user ? <Login /> : <Navigate to={`/${user.role}-dashboard`} />} />
@@ -57,44 +52,21 @@ function AppRoutes() {
         path="/disaster-portal" 
         element={user && user.role === 'disaster-portal' ? <DisasterPortal /> : <Navigate to="/login" />} 
       />
-      
-      {/* Disaster portal dashboard route */}
-      <Route 
-        path="/disaster-portal-dashboard" 
-        element={user && (user.role === 'disaster-portal' || user.role === 'barangay-official' || user.role === 'super-admin') ? <DisasterPortal /> : <Navigate to="/login" />} 
-      />
-      
-      {/* Business Portal Routes */}
-      <Route 
-        path="/business-portal" 
-        element={<BusinessPortal />} 
-      />
-      
-      {/* Security Portal Routes */}
-      <Route 
-        path="/security-portal" 
-        element={user && (user.role === 'security-personnel' || user.role === 'barangay-official' || user.role === 'super-admin') ? <SecurityPortal /> : <Navigate to="/login" />} 
-      />
-      </Routes>
-    </ErrorBoundary>
+    </Routes>
   );
 }
 
 function App() {
   return (
-    <ErrorBoundary>
-      <NotificationProvider>
-        <AuthProvider>
-          <DataProvider>
-            <Router>
-              <div className="App">
-                <AppRoutes />
-              </div>
-            </Router>
-          </DataProvider>
-        </AuthProvider>
-      </NotificationProvider>
-    </ErrorBoundary>
+    <AuthProvider>
+      <DataProvider>
+        <Router>
+          <div className="App">
+            <AppRoutes />
+          </div>
+        </Router>
+      </DataProvider>
+    </AuthProvider>
   );
 }
 

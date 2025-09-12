@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useData } from '../contexts/DataContext';
-import { Eye, UserCheck, UserX, QrCode, Users, Search, MapPin, Phone, Mail, Calendar, Shield, AlertTriangle, CheckCircle } from 'lucide-react';
+import { Eye, UserCheck, UserX, QrCode, Users, Search } from 'lucide-react';
 
 export default function ResidentManagement() {
   const { residents, verifyResident } = useData();
@@ -208,42 +208,6 @@ function ResidentDetailModal({ resident, onClose }: { resident: any; onClose: ()
                   <p className="text-sm text-gray-600 capitalize">{member.relation}</p>
                 </div>
               ))}
-            </div>
-          </div>
-        </div>
-
-        {/* Enhanced Resident Statistics */}
-        <div className="bg-white rounded-lg shadow-sm p-6">
-          <h3 className="text-lg font-semibold text-gray-900 mb-4">Resident Demographics</h3>
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-            <div className="text-center p-4 bg-blue-50 rounded-lg">
-              <Users className="h-10 w-10 text-blue-600 mx-auto mb-2" />
-              <div className="text-2xl font-bold text-blue-600 mb-1">{residents.length}</div>
-              <div className="text-xs text-blue-800">Total Residents</div>
-            </div>
-            
-            <div className="text-center p-4 bg-green-50 rounded-lg">
-              <Shield className="h-10 w-10 text-green-600 mx-auto mb-2" />
-              <div className="text-2xl font-bold text-green-600 mb-1">
-                {residents.filter(r => r.verificationStatus === 'verified').length}
-              </div>
-              <div className="text-xs text-green-800">Verified</div>
-            </div>
-            
-            <div className="text-center p-4 bg-yellow-50 rounded-lg">
-              <AlertTriangle className="h-10 w-10 text-yellow-600 mx-auto mb-2" />
-              <div className="text-2xl font-bold text-yellow-600 mb-1">
-                {residents.filter(r => r.verificationStatus === 'semi-verified').length}
-              </div>
-              <div className="text-xs text-yellow-800">Semi-Verified</div>
-            </div>
-            
-            <div className="text-center p-4 bg-red-50 rounded-lg">
-              <QrCode className="h-10 w-10 text-red-600 mx-auto mb-2" />
-              <div className="text-2xl font-bold text-red-600 mb-1">
-                {residents.filter(r => r.qrCode).length}
-              </div>
-              <div className="text-xs text-red-800">With QR Codes</div>
             </div>
           </div>
         </div>
