@@ -84,6 +84,23 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   const logout = () => {
+    try {
+      // Clear all authentication-related data
+      localStorage.removeItem('user');
+      localStorage.removeItem('authToken');
+      localStorage.removeItem('refreshToken');
+      localStorage.removeItem('sessionId');
+      
+      // Clear any session storage
+      sessionStorage.clear();
+      
+      // Reset user state
+      setUser(null);
+    } catch (error) {
+      console.error('Error during logout:', error);
+      // Force clear user state even if localStorage operations fail
+      setUser(null);
+    }
     setUser(null);
     localStorage.removeItem('user');
   };

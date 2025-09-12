@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
+import { useData } from '../contexts/DataContext';
 import { 
   AlertTriangle, 
   Users, 
@@ -39,11 +40,12 @@ import {
   Thermometer,
   Droplets,
   Sun,
-  Cloud
+  Cloud,
+  Layers
 } from 'lucide-react';
 
 const DisasterPortal: React.FC = () => {
-  const { user } = useAuth();
+  const { user, logout } = useAuth();
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState('dashboard');
   const [showAlertForm, setShowAlertForm] = useState(false);
@@ -152,8 +154,19 @@ const DisasterPortal: React.FC = () => {
   ]);
 
   const handleLogout = () => {
-    const { logout } = useAuth();
-    logout();
+    try {
+      // Clear any local storage data
+      localStorage.removeItem('user');
+      localStorage.removeItem('authToken');
+      // Call the logout function from auth context
+      logout();
+      // Navigate to home page
+      navigate('/');
+    } catch (error) {
+      console.error('Logout error:', error);
+      // Force navigation even if logout fails
+      navigate('/');
+    }
     navigate('/');
   };
 
@@ -811,6 +824,7 @@ const DisasterPortal: React.FC = () => {
     { id: 'evacuation', label: 'Evacuation Centers', icon: Home },
     { id: 'resources', label: 'Emergency Resources', icon: Truck },
     { id: 'contacts', label: 'Emergency Contacts', icon: Phone }
+    { id: 'operations-map', label: 'Operations Map', icon: Layers }
   ];
 
   return (
@@ -886,6 +900,7 @@ const DisasterPortal: React.FC = () => {
         {activeTab === 'evacuation' && renderEvacuation()}
         {activeTab === 'resources' && renderResources()}
         {activeTab === 'contacts' && renderContacts()}
+        {activeTab === 'operations-map' && <LiveOperationsMap />}
       </div>
 
       {/* Alert Form Modal */}
@@ -984,6 +999,304 @@ const DisasterPortal: React.FC = () => {
                   className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700"
                 >
                   Issue Alert
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+};
+
+// Live Operations Map Component
+const LiveOperationsMap: React.FC = () => {
+  const { systemSettings } = useData();
+  const [mapData, setMapData] = useState({
+    incidents: [
+      { id: 1, type: 'flood', location: { lat: 14.5995, lng: 120.9842 }, severity: 'high', status: 'active', description: 'Flooding in Zone 1' },
+      { id: 2, type: 'fire', location: { lat: 14.6010, lng: 120.9850 }, severity: 'medium', status: 'contained', description: 'House fire reported' },
+      { id: 3, type: 'medical', location: { lat: 14.5980, lng: 120.9835 }, severity: 'high', status: 'responding', description: 'Medical emergency' }
+    ],
+    resources: [
+      { id: 1, type: 'ambulance', location: { lat: 14.5990, lng: 120.9845 }, status: 'available', unit: 'AMB-001' },
+      { id: 2, type: 'fire-truck', location: { lat: 14.6000, lng: 120.9840 }, status: 'deployed', unit: 'FT-002' },
+      { id: 3, type: 'rescue-team', location: { lat: 14.5985, lng: 120.9838 }, status: 'available', unit: 'RT-003' }
+    ],
+    evacuationRoutes: [
+      { id: 1, from: { lat: 14.5995, lng: 120.9842 }, to: { lat: 14.6020, lng: 120.9860 }, status: 'clear' },
+      { id: 2, from: { lat: 14.6010, lng: 120.9850 }, to: { lat: 14.6030, lng: 120.9870 }, status: 'blocked' }
+    ]
+  });
+  const [selectedIncident, setSelectedIncident] = useState<any>(null);
+  const [mapCenter, setMapCenter] = useState({ lat: 14.5995, lng: 120.9842 });
+  const [lastUpdate, setLastUpdate] = useState(new Date());
+
+  // Simulate real-time data updates
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setMapData(prev => ({
+        ...prev,
+        incidents: prev.incidents.map(incident => ({
+          ...incident,
+          // Simulate status changes
+          status: Math.random() > 0.8 ? 
+            (incident.status === 'active' ? 'responding' : 
+             incident.status === 'responding' ? 'contained' : incident.status) : 
+            incident.status
+        }))
+      }));
+      setLastUpdate(new Date());
+    }, 30000); // Update every 30 seconds
+
+    return () => clearInterval(interval);
+  }, []);
+
+  const getIncidentIcon = (type: string) => {
+    switch (type) {
+      case 'flood': return '🌊';
+      case 'fire': return '🔥';
+      case 'medical': return '🚑';
+      case 'earthquake': return '🌍';
+      default: return '⚠️';
+    }
+  };
+
+  const getResourceIcon = (type: string) => {
+    switch (type) {
+      case 'ambulance': return '🚑';
+      case 'fire-truck': return '🚒';
+      case 'rescue-team': return '👥';
+      case 'police': return '🚔';
+      default: return '🚐';
+    }
+  };
+
+  const getSeverityColor = (severity: string) => {
+    switch (severity) {
+      case 'high': return 'text-red-600 bg-red-100';
+      case 'medium': return 'text-yellow-600 bg-yellow-100';
+      case 'low': return 'text-green-600 bg-green-100';
+      default: return 'text-gray-600 bg-gray-100';
+    }
+  };
+
+  const getStatusColor = (status: string) => {
+    switch (status) {
+      case 'active': return 'text-red-600 bg-red-100';
+      case 'responding': return 'text-blue-600 bg-blue-100';
+      case 'contained': return 'text-green-600 bg-green-100';
+      case 'available': return 'text-green-600 bg-green-100';
+      case 'deployed': return 'text-orange-600 bg-orange-100';
+      default: return 'text-gray-600 bg-gray-100';
+    }
+  };
+
+  return (
+    <div className="space-y-6">
+      <div className="flex items-center justify-between">
+        <h2 className="text-2xl font-bold text-gray-900">Live Operations Map</h2>
+        <div className="flex items-center space-x-4">
+          <div className="text-sm text-gray-600">
+            Last updated: {lastUpdate.toLocaleTimeString()}
+          </div>
+          <div className="flex items-center space-x-2">
+            <div className="w-3 h-3 bg-green-500 rounded-full animate-pulse"></div>
+            <span className="text-sm text-green-600 font-medium">Live</span>
+          </div>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
+        {/* Map Display */}
+        <div className="lg:col-span-3">
+          <div className="bg-white rounded-lg shadow-md overflow-hidden">
+            <div className="h-96 bg-gray-100 relative">
+              {systemSettings.googleMapsApiKey ? (
+                <div className="w-full h-full relative">
+                  <iframe
+                    src={`https://www.google.com/maps/embed/v1/view?key=${systemSettings.googleMapsApiKey}&center=${mapCenter.lat},${mapCenter.lng}&zoom=15`}
+                    width="100%"
+                    height="100%"
+                    style={{ border: 0 }}
+                    allowFullScreen
+                    loading="lazy"
+                    referrerPolicy="no-referrer-when-downgrade"
+                  ></iframe>
+                  
+                  {/* Overlay markers for incidents and resources */}
+                  <div className="absolute inset-0 pointer-events-none">
+                    {mapData.incidents.map((incident, index) => (
+                      <div
+                        key={incident.id}
+                        className="absolute transform -translate-x-1/2 -translate-y-1/2 pointer-events-auto cursor-pointer"
+                        style={{
+                          left: `${50 + (index * 10)}%`,
+                          top: `${40 + (index * 5)}%`
+                        }}
+                        onClick={() => setSelectedIncident(incident)}
+                      >
+                        <div className={`px-2 py-1 rounded-full text-xs font-bold ${getSeverityColor(incident.severity)} border-2 border-white shadow-lg`}>
+                          {getIncidentIcon(incident.type)}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              ) : (
+                <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-blue-100 to-green-100">
+                  <div className="text-center">
+                    <Layers className="h-16 w-16 text-gray-400 mx-auto mb-4" />
+                    <h3 className="text-lg font-semibold text-gray-700 mb-2">Operations Map</h3>
+                    <p className="text-gray-600 mb-4">Configure Google Maps API key in System Settings to enable live map</p>
+                    
+                    {/* Simulated map with incident markers */}
+                    <div className="relative w-full max-w-md mx-auto h-48 bg-white rounded-lg border-2 border-dashed border-gray-300 flex items-center justify-center">
+                      <div className="absolute inset-4">
+                        {mapData.incidents.map((incident, index) => (
+                          <div
+                            key={incident.id}
+                            className={`absolute w-6 h-6 rounded-full flex items-center justify-center text-xs cursor-pointer ${getSeverityColor(incident.severity)} border-2 border-white shadow`}
+                            style={{
+                              left: `${20 + (index * 25)}%`,
+                              top: `${30 + (index * 15)}%`
+                            }}
+                            onClick={() => setSelectedIncident(incident)}
+                            title={incident.description}
+                          >
+                            {getIncidentIcon(incident.type)}
+                          </div>
+                        ))}
+                      </div>
+                      <span className="text-gray-400 text-sm">Barangay Operations Area</span>
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+
+        {/* Control Panel */}
+        <div className="space-y-4">
+          {/* Active Incidents */}
+          <div className="bg-white rounded-lg shadow-md p-4">
+            <h3 className="font-semibold text-gray-900 mb-3 flex items-center">
+              <AlertTriangle className="h-5 w-5 text-red-600 mr-2" />
+              Active Incidents ({mapData.incidents.filter(i => i.status === 'active').length})
+            </h3>
+            <div className="space-y-2">
+              {mapData.incidents.map((incident) => (
+                <div
+                  key={incident.id}
+                  className={`p-2 rounded border cursor-pointer hover:bg-gray-50 ${
+                    selectedIncident?.id === incident.id ? 'border-blue-500 bg-blue-50' : 'border-gray-200'
+                  }`}
+                  onClick={() => setSelectedIncident(incident)}
+                >
+                  <div className="flex items-center justify-between mb-1">
+                    <span className="text-sm font-medium">{getIncidentIcon(incident.type)} {incident.type.toUpperCase()}</span>
+                    <span className={`px-2 py-1 text-xs rounded-full ${getStatusColor(incident.status)}`}>
+                      {incident.status}
+                    </span>
+                  </div>
+                  <p className="text-xs text-gray-600">{incident.description}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Available Resources */}
+          <div className="bg-white rounded-lg shadow-md p-4">
+            <h3 className="font-semibold text-gray-900 mb-3 flex items-center">
+              <Truck className="h-5 w-5 text-green-600 mr-2" />
+              Resources ({mapData.resources.filter(r => r.status === 'available').length} available)
+            </h3>
+            <div className="space-y-2">
+              {mapData.resources.map((resource) => (
+                <div key={resource.id} className="p-2 rounded border border-gray-200">
+                  <div className="flex items-center justify-between mb-1">
+                    <span className="text-sm font-medium">{getResourceIcon(resource.type)} {resource.unit}</span>
+                    <span className={`px-2 py-1 text-xs rounded-full ${getStatusColor(resource.status)}`}>
+                      {resource.status}
+                    </span>
+                  </div>
+                  <p className="text-xs text-gray-600 capitalize">{resource.type.replace('-', ' ')}</p>
+                </div>
+              ))}
+            </div>
+          {/* Map Controls */}
+          <div className="bg-white rounded-lg shadow-md p-4">
+            <h3 className="font-semibold text-gray-900 mb-3">Map Controls</h3>
+            <div className="space-y-2">
+              <button className="w-full text-left px-3 py-2 text-sm bg-blue-50 text-blue-700 rounded hover:bg-blue-100">
+                📍 Center on Barangay
+              </button>
+              <button className="w-full text-left px-3 py-2 text-sm bg-red-50 text-red-700 rounded hover:bg-red-100">
+                🚨 Show All Incidents
+              </button>
+              <button className="w-full text-left px-3 py-2 text-sm bg-green-50 text-green-700 rounded hover:bg-green-100">
+                🚐 Show Resources
+              </button>
+              <button className="w-full text-left px-3 py-2 text-sm bg-purple-50 text-purple-700 rounded hover:bg-purple-100">
+                🛣️ Evacuation Routes
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+          </div>
+      {/* Incident Details Modal */}
+      {selectedIncident && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-lg max-w-md w-full p-6">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-lg font-semibold flex items-center">
+                {getIncidentIcon(selectedIncident.type)}
+                <span className="ml-2 capitalize">{selectedIncident.type} Incident</span>
+              </h3>
+              <button
+                onClick={() => setSelectedIncident(null)}
+                className="text-gray-400 hover:text-gray-600"
+              >
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+            
+            <div className="space-y-4">
+              <div>
+                <label className="text-sm font-medium text-gray-700">Description</label>
+                <p className="text-gray-900">{selectedIncident.description}</p>
+              </div>
+              
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="text-sm font-medium text-gray-700">Severity</label>
+                  <span className={`inline-block px-2 py-1 text-xs rounded-full mt-1 ${getSeverityColor(selectedIncident.severity)}`}>
+                    {selectedIncident.severity.toUpperCase()}
+                  </span>
+                </div>
+                <div>
+                  <label className="text-sm font-medium text-gray-700">Status</label>
+                  <span className={`inline-block px-2 py-1 text-xs rounded-full mt-1 ${getStatusColor(selectedIncident.status)}`}>
+                    {selectedIncident.status.toUpperCase()}
+                  </span>
+                </div>
+              </div>
+              
+              <div>
+                <label className="text-sm font-medium text-gray-700">Location</label>
+                <p className="text-gray-900">
+                  {selectedIncident.location.lat.toFixed(4)}°N, {selectedIncident.location.lng.toFixed(4)}°E
+                </p>
+              </div>
+              
+              <div className="flex space-x-3 pt-4">
+                <button className="flex-1 bg-blue-600 text-white py-2 rounded-lg hover:bg-blue-700">
+                  Dispatch Resources
+                </button>
+                <button className="flex-1 bg-gray-600 text-white py-2 rounded-lg hover:bg-gray-700">
+                  Update Status
                 </button>
               </div>
             </div>
