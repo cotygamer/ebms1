@@ -73,11 +73,11 @@ export function useRealTimeData<T>(
           
           setLastSync(new Date())
         })
+      }
     }).catch(() => {
         console.error('Error fetching incidents:', error)
-        setIncidents([])
-      }
-    }
+        setData([])
+      })
   }, [tableName, fetchData])
 
   const refresh = useCallback(() => {
