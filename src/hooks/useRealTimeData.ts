@@ -73,16 +73,9 @@ export function useRealTimeData<T>(
           
           setLastSync(new Date())
         })
-      }
     }).catch(() => {
-      // Error already handled in fetchData
-    })
-
-    // Cleanup subscription on unmount
-    return () => {
-      window.removeEventListener('refreshAllData', handleRefresh)
-      if (subscription) {
-        dataService.unsubscribeFromTable(tableName)
+        console.error('Error fetching incidents:', error)
+        setIncidents([])
       }
     }
   }, [tableName, fetchData])

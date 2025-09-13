@@ -221,11 +221,6 @@ export class DataService {
         .order('created_at', { ascending: false })
       
       if (error) {
-        // Handle case where incidents table doesn't exist
-        if (error.code === 'PGRST205' || error.message?.includes('Could not find the table')) {
-          console.warn('Incidents table not found, returning empty array')
-          return []
-        }
         throw error
       }
       return data || []
@@ -236,7 +231,7 @@ export class DataService {
         return []
       }
       console.error('Error fetching incidents:', error)
-      throw error
+      return []
     }
   }
 
