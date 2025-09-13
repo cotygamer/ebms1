@@ -1,46 +1,31 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { useData } from '../contexts/DataContext';
 import { dataService } from '../services/dataService';
-import { Building2, ArrowLeft, User, MapPin, Plane, Home, Eye, EyeOff, CheckCircle, AlertTriangle, Phone, Mail, Calendar, Users, Shield, Star, Sparkles } from 'lucide-react';
+import { Building2, ArrowLeft, User, Eye, EyeOff, CheckCircle, AlertTriangle, Phone, Mail, Calendar, Shield, Star, Sparkles, Home, Users } from 'lucide-react';
 
 export default function Register() {
-  const { addUser } = useData();
   const [currentStep, setCurrentStep] = useState(1);
   const [formData, setFormData] = useState({
-    // Personal Information
+    // Basic Information
     firstName: '',
-    middleName: '',
     lastName: '',
-    suffix: '',
     email: '',
     password: '',
     confirmPassword: '',
     
-    // Contact & Address
+    // Contact Information
     phoneNumber: '',
     address: '',
-    purok: '',
-    zipCode: '',
     
     // Personal Details
     birthDate: '',
     gender: '',
     civilStatus: '',
-    nationality: 'Filipino',
-    occupation: '',
-    monthlyIncome: '',
-    
-    // Category & Purpose
-    category: 'resident',
-    stayDuration: '',
-    purpose: '',
     
     // Emergency Contact
     emergencyContactName: '',
     emergencyContactPhone: '',
-    emergencyContactRelation: '',
-    emergencyContactAddress: ''
+    emergencyContactRelation: ''
   });
   
   const [showPassword, setShowPassword] = useState(false);
@@ -50,7 +35,7 @@ export default function Register() {
   const [validationErrors, setValidationErrors] = useState<{[key: string]: string}>({});
   const navigate = useNavigate();
 
-  const totalSteps = 4;
+  const totalSteps = 3;
 
   const validateStep = (step: number): boolean => {
     const errors: {[key: string]: string} = {};
@@ -62,7 +47,7 @@ export default function Register() {
         if (!formData.email.trim()) errors.email = 'Email is required';
         if (!/\S+@\S+\.\S+/.test(formData.email)) errors.email = 'Email is invalid';
         if (!formData.password) errors.password = 'Password is required';
-        if (formData.password.length < 8) errors.password = 'Password must be at least 8 characters';
+        if (formData.password.length < 6) errors.password = 'Password must be at least 6 characters';
         if (formData.password !== formData.confirmPassword) errors.confirmPassword = 'Passwords do not match';
         break;
       case 2:
@@ -73,17 +58,6 @@ export default function Register() {
         if (!formData.civilStatus) errors.civilStatus = 'Civil status is required';
         break;
       case 3:
-        if (formData.category === 'transient' && !formData.stayDuration) {
-          errors.stayDuration = 'Stay duration is required for transients';
-        }
-        if (formData.category === 'transient' && !formData.purpose.trim()) {
-          errors.purpose = 'Purpose of stay is required for transients';
-        }
-        if (formData.category === 'tourist' && !formData.stayDuration) {
-          errors.stayDuration = 'Visit duration is required for tourists';
-        }
-        break;
-      case 4:
         if (!formData.emergencyContactName.trim()) errors.emergencyContactName = 'Emergency contact name is required';
         if (!formData.emergencyContactPhone.trim()) errors.emergencyContactPhone = 'Emergency contact phone is required';
         if (!formData.emergencyContactRelation.trim()) errors.emergencyContactRelation = 'Emergency contact relation is required';
@@ -115,8 +89,8 @@ export default function Register() {
     try {
       console.log('Starting registration process...');
       
-      // Create resident profile first
-      const fullName = `${formData.firstName} ${formData.middleName ? formData.middleName + ' ' : ''}${formData.lastName}${formData.suffix ? ' ' + formData.suffix : ''}`;
+      // Create resident profile
+      const fullName = `${formData.firstName} ${formData.lastName}`;
       
       const residentData = {
         name: fullName,
@@ -128,68 +102,22 @@ export default function Register() {
         gender: formData.gender,
         civil_status: formData.civilStatus,
         emergency_contact: `${formData.emergencyContactName} - ${formData.emergencyContactPhone} (${formData.emergencyContactRelation})`,
-        date_registered: new Date().toISOString().split('T')[0]
+        date_registered: new Date().toISOString().split('T')[0],
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString()
       };
 
       console.log('Creating resident with data:', residentData);
-      const newResident = await dataService.createResident(residentData);
-      console.log('Resident created successfully:', newResident);
-      
-      // Create corresponding user account (optional - for login purposes)
-      const userData = {
-        name: fullName,
-        email: formData.email,
-        role: 'resident' as const,
-        status: 'active' as const,
-        phone_number: formData.phoneNumber,
-        address: formData.address
-      };
+      await dataService.createResident(residentData);
+      console.log('Resident created successfully');
 
-      console.log('Creating user account with data:', userData);
-      await dataService.createUser(userData);
-      console.log('User account created successfully');
-
-      alert('Registration successful! You can now login and your profile will be visible to barangay officials for verification.');
+      alert('Registration successful! You can now login with your email and password.');
       navigate('/login');
-    } catch (err) {
+    } catch (err: any) {
       console.error('Registration error:', err);
-      
-      // Handle specific error types
-      if (err.message?.includes('Registration is temporarily unavailable')) {
-        setError('Registration is temporarily unavailable. Please contact the barangay office directly.');
-      } else if (err.message?.includes('row-level security policy')) {
-        setError('Registration system is being updated. Please try again in a few minutes or contact the barangay office.');
-      } else {
-        setError(`Registration failed: ${err.message || 'Please check your information and try again.'}`);
-      }
+      setError(`Registration failed: ${err.message || 'Please try again.'}`);
     } finally {
       setIsLoading(false);
-    }
-  };
-
-  const getCategoryIcon = (category: string) => {
-    switch (category) {
-      case 'resident':
-        return <Home className="h-6 w-6" />;
-      case 'tourist':
-        return <Plane className="h-6 w-6" />;
-      case 'transient':
-        return <MapPin className="h-6 w-6" />;
-      default:
-        return <User className="h-6 w-6" />;
-    }
-  };
-
-  const getCategoryColor = (category: string) => {
-    switch (category) {
-      case 'resident':
-        return 'border-blue-500 bg-blue-50 text-blue-700';
-      case 'tourist':
-        return 'border-green-500 bg-green-50 text-green-700';
-      case 'transient':
-        return 'border-purple-500 bg-purple-50 text-purple-700';
-      default:
-        return 'border-gray-300 bg-gray-50 text-gray-700';
     }
   };
 
@@ -224,7 +152,7 @@ export default function Register() {
         <div className="bg-blue-100 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
           <User className="h-8 w-8 text-blue-600" />
         </div>
-        <h3 className="text-xl font-bold text-gray-900">Personal Information</h3>
+        <h3 className="text-xl font-bold text-gray-900">Basic Information</h3>
         <p className="text-gray-600">Let's start with your basic details</p>
       </div>
 
@@ -264,37 +192,6 @@ export default function Register() {
             <p className="text-red-600 text-sm mt-1">{validationErrors.lastName}</p>
           )}
         </div>
-
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">
-            Middle Name
-          </label>
-          <input
-            type="text"
-            value={formData.middleName}
-            onChange={(e) => setFormData({ ...formData, middleName: e.target.value })}
-            className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all"
-            placeholder="Enter your middle name"
-          />
-        </div>
-
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">
-            Suffix
-          </label>
-          <select
-            value={formData.suffix}
-            onChange={(e) => setFormData({ ...formData, suffix: e.target.value })}
-            className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all"
-          >
-            <option value="">Select suffix</option>
-            <option value="Jr.">Jr.</option>
-            <option value="Sr.">Sr.</option>
-            <option value="II">II</option>
-            <option value="III">III</option>
-            <option value="IV">IV</option>
-          </select>
-        </div>
       </div>
 
       <div>
@@ -331,7 +228,7 @@ export default function Register() {
               className={`w-full px-4 py-3 pr-12 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all ${
                 validationErrors.password ? 'border-red-300 bg-red-50' : 'border-gray-300'
               }`}
-              placeholder="Create a strong password"
+              placeholder="Create a password"
             />
             <button
               type="button"
@@ -382,8 +279,8 @@ export default function Register() {
         <div className="bg-green-100 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
           <Phone className="h-8 w-8 text-green-600" />
         </div>
-        <h3 className="text-xl font-bold text-gray-900">Contact & Address</h3>
-        <p className="text-gray-600">How can we reach you?</p>
+        <h3 className="text-xl font-bold text-gray-900">Contact & Personal Details</h3>
+        <p className="text-gray-600">Tell us more about yourself</p>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -433,21 +330,24 @@ export default function Register() {
         <label className="block text-sm font-medium text-gray-700 mb-2">
           Complete Address *
         </label>
-        <textarea
-          value={formData.address}
-          onChange={(e) => setFormData({ ...formData, address: e.target.value })}
-          rows={3}
-          className={`w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all ${
-            validationErrors.address ? 'border-red-300 bg-red-50' : 'border-gray-300'
-          }`}
-          placeholder="House number, street, subdivision, city, province"
-        />
+        <div className="relative">
+          <Home className="absolute left-3 top-3 text-gray-400 h-5 w-5" />
+          <textarea
+            value={formData.address}
+            onChange={(e) => setFormData({ ...formData, address: e.target.value })}
+            rows={3}
+            className={`w-full pl-12 pr-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all ${
+              validationErrors.address ? 'border-red-300 bg-red-50' : 'border-gray-300'
+            }`}
+            placeholder="House number, street, subdivision, city, province"
+          />
+        </div>
         {validationErrors.address && (
           <p className="text-red-600 text-sm mt-1">{validationErrors.address}</p>
         )}
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-2">
             Gender *
@@ -490,195 +390,11 @@ export default function Register() {
             <p className="text-red-600 text-sm mt-1">{validationErrors.civilStatus}</p>
           )}
         </div>
-
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">
-            Nationality
-          </label>
-          <input
-            type="text"
-            value={formData.nationality}
-            onChange={(e) => setFormData({ ...formData, nationality: e.target.value })}
-            className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all"
-            placeholder="Filipino"
-          />
-        </div>
-      </div>
-
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">
-            Occupation
-          </label>
-          <input
-            type="text"
-            value={formData.occupation}
-            onChange={(e) => setFormData({ ...formData, occupation: e.target.value })}
-            className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all"
-            placeholder="Your occupation"
-          />
-        </div>
-
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">
-            Monthly Income
-          </label>
-          <select
-            value={formData.monthlyIncome}
-            onChange={(e) => setFormData({ ...formData, monthlyIncome: e.target.value })}
-            className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all"
-          >
-            <option value="">Select income range</option>
-            <option value="below-10000">Below ₱10,000</option>
-            <option value="10000-25000">₱10,000 - ₱25,000</option>
-            <option value="25000-50000">₱25,000 - ₱50,000</option>
-            <option value="50000-100000">₱50,000 - ₱100,000</option>
-            <option value="above-100000">Above ₱100,000</option>
-          </select>
-        </div>
       </div>
     </div>
   );
 
   const renderStep3 = () => (
-    <div className="space-y-6">
-      <div className="text-center mb-6">
-        <div className="bg-purple-100 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
-          <Users className="h-8 w-8 text-purple-600" />
-        </div>
-        <h3 className="text-xl font-bold text-gray-900">Registration Category</h3>
-        <p className="text-gray-600">Choose your registration type</p>
-      </div>
-
-      <div className="grid grid-cols-1 gap-4">
-        {[
-          { 
-            value: 'resident', 
-            label: 'Permanent Resident', 
-            desc: 'I am a permanent resident of this barangay',
-            features: ['Full access to all services', 'Voting rights', 'Community programs', 'Priority support']
-          },
-          { 
-            value: 'tourist', 
-            label: 'Tourist/Visitor', 
-            desc: 'I am visiting for tourism or short-term purposes',
-            features: ['Basic services access', 'Emergency assistance', 'Tourist information', 'Temporary permits']
-          },
-          { 
-            value: 'transient', 
-            label: 'Transient Resident', 
-            desc: 'I am staying temporarily for work, study, or family reasons',
-            features: ['Extended services access', 'Temporary permits', 'Community notifications', 'Basic healthcare']
-          }
-        ].map((category) => (
-          <label
-            key={category.value}
-            className={`relative flex flex-col p-6 border-2 rounded-xl cursor-pointer transition-all duration-300 hover:shadow-lg ${
-              formData.category === category.value
-                ? getCategoryColor(category.value) + ' shadow-lg transform scale-[1.02]'
-                : 'border-gray-200 hover:border-gray-300 bg-white'
-            }`}
-          >
-            <input
-              type="radio"
-              name="category"
-              value={category.value}
-              checked={formData.category === category.value}
-              onChange={(e) => setFormData({ ...formData, category: e.target.value })}
-              className="sr-only"
-            />
-            <div className="flex items-start space-x-4">
-              <div className={`p-3 rounded-lg ${
-                formData.category === category.value ? 'bg-white bg-opacity-50' : 'bg-gray-100'
-              }`}>
-                {getCategoryIcon(category.value)}
-              </div>
-              <div className="flex-1">
-                <div className="flex items-center space-x-2 mb-2">
-                  <h4 className="text-lg font-semibold">{category.label}</h4>
-                  {formData.category === category.value && (
-                    <CheckCircle className="h-5 w-5 text-current" />
-                  )}
-                </div>
-                <p className="text-sm opacity-80 mb-3">{category.desc}</p>
-                <div className="grid grid-cols-2 gap-2">
-                  {category.features.map((feature, idx) => (
-                    <div key={idx} className="flex items-center text-xs opacity-75">
-                      <Star className="h-3 w-3 mr-1" />
-                      {feature}
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </div>
-          </label>
-        ))}
-      </div>
-
-      {/* Category-specific fields */}
-      {(formData.category === 'transient' || formData.category === 'tourist') && (
-        <div className="bg-gradient-to-r from-blue-50 to-purple-50 p-6 rounded-xl border border-blue-200">
-          <h4 className="font-semibold text-gray-900 mb-4">Additional Information</h4>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                {formData.category === 'tourist' ? 'Visit Duration *' : 'Expected Stay Duration *'}
-              </label>
-              <select
-                value={formData.stayDuration}
-                onChange={(e) => setFormData({ ...formData, stayDuration: e.target.value })}
-                className={`w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all ${
-                  validationErrors.stayDuration ? 'border-red-300 bg-red-50' : 'border-gray-300 bg-white'
-                }`}
-              >
-                <option value="">Select duration</option>
-                {formData.category === 'tourist' ? (
-                  <>
-                    <option value="1-7 days">1-7 days</option>
-                    <option value="1-2 weeks">1-2 weeks</option>
-                    <option value="2-4 weeks">2-4 weeks</option>
-                    <option value="1+ months">1+ months</option>
-                  </>
-                ) : (
-                  <>
-                    <option value="1-3 months">1-3 months</option>
-                    <option value="3-6 months">3-6 months</option>
-                    <option value="6-12 months">6-12 months</option>
-                    <option value="1+ years">1+ years</option>
-                  </>
-                )}
-              </select>
-              {validationErrors.stayDuration && (
-                <p className="text-red-600 text-sm mt-1">{validationErrors.stayDuration}</p>
-              )}
-            </div>
-
-            {formData.category === 'transient' && (
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Purpose of Stay *
-                </label>
-                <input
-                  type="text"
-                  value={formData.purpose}
-                  onChange={(e) => setFormData({ ...formData, purpose: e.target.value })}
-                  className={`w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all ${
-                    validationErrors.purpose ? 'border-red-300 bg-red-50' : 'border-gray-300 bg-white'
-                  }`}
-                  placeholder="Work, study, family, etc."
-                />
-                {validationErrors.purpose && (
-                  <p className="text-red-600 text-sm mt-1">{validationErrors.purpose}</p>
-                )}
-              </div>
-            )}
-          </div>
-        </div>
-      )}
-    </div>
-  );
-
-  const renderStep4 = () => (
     <div className="space-y-6">
       <div className="text-center mb-6">
         <div className="bg-red-100 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
@@ -765,19 +481,6 @@ export default function Register() {
           <p className="text-red-600 text-sm mt-1">{validationErrors.emergencyContactRelation}</p>
         )}
       </div>
-
-      <div>
-        <label className="block text-sm font-medium text-gray-700 mb-2">
-          Contact Address
-        </label>
-        <textarea
-          value={formData.emergencyContactAddress}
-          onChange={(e) => setFormData({ ...formData, emergencyContactAddress: e.target.value })}
-          rows={3}
-          className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all"
-          placeholder="Emergency contact's complete address"
-        />
-      </div>
     </div>
   );
 
@@ -789,8 +492,6 @@ export default function Register() {
         return renderStep2();
       case 3:
         return renderStep3();
-      case 4:
-        return renderStep4();
       default:
         return renderStep1();
     }
@@ -799,12 +500,10 @@ export default function Register() {
   const getStepTitle = () => {
     switch (currentStep) {
       case 1:
-        return 'Personal Information';
+        return 'Basic Information';
       case 2:
-        return 'Contact & Address';
+        return 'Contact & Personal Details';
       case 3:
-        return 'Registration Category';
-      case 4:
         return 'Emergency Contact';
       default:
         return 'Registration';

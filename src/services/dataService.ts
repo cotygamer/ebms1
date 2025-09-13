@@ -99,39 +99,15 @@ export class DataService {
   static async createResident(residentData: any) {
     console.log('Creating resident with data:', residentData);
     
-    // Ensure all required fields are properly formatted
-    const formattedData = {
-      ...residentData,
-      date_registered: residentData.date_registered || new Date().toISOString().split('T')[0],
-      verification_status: residentData.verification_status || 'non-verified',
-      created_at: new Date().toISOString(),
-      updated_at: new Date().toISOString()
-    };
-    
-    console.log('Formatted resident data:', formattedData);
-    
     const { data, error } = await supabase
       .from('residents')
-      .insert([formattedData])
+      .insert([residentData])
       .select()
       .single()
     
     if (error) {
       console.error('Supabase error creating resident:', error);
-      
-      // Handle RLS policy errors specifically
-      if (error.code === '42501' && error.message.includes('row-level security policy')) {
-        throw new Error('Registration is temporarily unavailable. Please contact the barangay office.');
-      }
-      
-      throw new Error(`Failed to create resident: ${error.message}`);
-    }
-    
-    // Log the action (only if audit_logs table exists)
-    try {
-      await this.logAction('resident.create', 'resident', data.id, null, data)
-    } catch (logError) {
-      console.warn('Failed to log action (audit_logs table may not exist):', logError)
+      throw error;
     }
     
     console.log('Resident created successfully:', data);
