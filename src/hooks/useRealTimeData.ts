@@ -14,9 +14,27 @@ export function useRealTimeData<T>(
     try {
       setLoading(true)
       setError(null)
-      const result = await fetchFunction()
-      setData(result)
-      setLastSync(new Date())
+      
+      // Special handling for incidents table that might not exist
+      if (tableName === 'incidents') {
+        try {
+          const result = await fetchFunction()
+          setData(result)
+          setLastSync(new Date())
+        } catch (err: any) {
+          if (err.message?.includes('Could not find the table') || err.message?.includes('PGRST205')) {
+            console.warn(`Table ${tableName} not found, using empty data`)
+            setData([])
+            setLastSync(new Date())
+            return
+          }
+          throw err
+        }
+      } else {
+        const result = await fetchFunction()
+        setData(result)
+        setLastSync(new Date())
+      }
     } catch (err: any) {
       setError(err.message || 'Failed to fetch data')
       console.error(`Error fetching ${tableName}:`, err)
