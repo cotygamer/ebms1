@@ -99,13 +99,16 @@ export class DataService {
   static async createResident(residentData: any) {
     console.log('Creating resident with data:', residentData);
     
-    // Ensure date_registered is properly formatted
+    // Ensure all required fields are properly formatted
     const formattedData = {
       ...residentData,
       date_registered: residentData.date_registered || new Date().toISOString().split('T')[0],
+      verification_status: residentData.verification_status || 'non-verified',
       created_at: new Date().toISOString(),
       updated_at: new Date().toISOString()
     };
+    
+    console.log('Formatted resident data:', formattedData);
     
     const { data, error } = await supabase
       .from('residents')
@@ -115,6 +118,12 @@ export class DataService {
     
     if (error) {
       console.error('Supabase error creating resident:', error);
+      
+      // Handle RLS policy errors specifically
+      if (error.code === '42501' && error.message.includes('row-level security policy')) {
+        throw new Error('Registration is temporarily unavailable. Please contact the barangay office.');
+      }
+      
       throw new Error(`Failed to create resident: ${error.message}`);
     }
     
@@ -224,18 +233,21 @@ export class DataService {
   // Incidents Management
   static async getIncidents() {
     try {
+      console.log('Fetching incidents from Supabase...');
       const { data, error } = await supabase
         .from('incidents')
         .select('*')
         .order('created_at', { ascending: false })
       
       if (error) {
+        console.error('Error fetching incidents:', error);
         throw error
       }
+      console.log('Incidents fetched successfully:', data?.length || 0);
       return data || []
     } catch (error) {
       // Check if it's a table not found error
-      if (error.code === 'PGRST205' || error.message?.includes('Could not find the table')) {
+      if (error?.code === 'PGRST205' || error?.message?.includes('Could not find the table')) {
         console.warn('Incidents table not found, returning empty array')
         return []
       }
@@ -245,21 +257,35 @@ export class DataService {
   }
 
   static async createIncident(incidentData: any) {
-    const { data, error } = await supabase
-      .from('incidents')
-      .insert([{
-        ...incidentData,
-        date_submitted: new Date().toISOString()
-      }])
-      .select()
-      .single()
-    
-    if (error) throw error
-    
-    // Log the action
-    await this.logAction('incident.create', 'incident', data.id, null, data)
-    
-    return data
+    try {
+      const { data, error } = await supabase
+        .from('incidents')
+        .insert([{
+          ...incidentData,
+          date_submitted: new Date().toISOString().split('T')[0],
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString()
+        }])
+        .select()
+        .single()
+      
+      if (error) throw error
+      
+      // Log the action
+      try {
+        await this.logAction('incident.create', 'incident', data.id, null, data)
+      } catch (logError) {
+        console.warn('Failed to log incident creation:', logError)
+      }
+      
+      return data
+    } catch (error) {
+      if (error?.code === 'PGRST205' || error?.message?.includes('Could not find the table')) {
+        console.warn('Incidents table not found, cannot create incident')
+        throw new Error('Incident reporting is temporarily unavailable. Please contact the barangay office.')
+      }
+      throw error
+    }
   }
 
   static async updateIncident(id: string, updates: any) {

@@ -127,7 +127,8 @@ export default function Register() {
         birth_date: formData.birthDate,
         gender: formData.gender,
         civil_status: formData.civilStatus,
-        emergency_contact: `${formData.emergencyContactName} - ${formData.emergencyContactPhone} (${formData.emergencyContactRelation})`
+        emergency_contact: `${formData.emergencyContactName} - ${formData.emergencyContactPhone} (${formData.emergencyContactRelation})`,
+        date_registered: new Date().toISOString().split('T')[0]
       };
 
       console.log('Creating resident with data:', residentData);
@@ -152,7 +153,15 @@ export default function Register() {
       navigate('/login');
     } catch (err) {
       console.error('Registration error:', err);
-      setError(`Registration failed: ${err.message || 'Please check your information and try again.'}`);
+      
+      // Handle specific error types
+      if (err.message?.includes('Registration is temporarily unavailable')) {
+        setError('Registration is temporarily unavailable. Please contact the barangay office directly.');
+      } else if (err.message?.includes('row-level security policy')) {
+        setError('Registration system is being updated. Please try again in a few minutes or contact the barangay office.');
+      } else {
+        setError(`Registration failed: ${err.message || 'Please check your information and try again.'}`);
+      }
     } finally {
       setIsLoading(false);
     }
