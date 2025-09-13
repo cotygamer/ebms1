@@ -146,6 +146,10 @@ interface Complaint {
   assignedTo?: string;
   resolution?: string;
   location?: string;
+  dateOccurred?: string;
+  timeOccurred?: string;
+  witnessName?: string;
+  witnessContact?: string;
   createdAt: string;
   updatedAt: string;
 }

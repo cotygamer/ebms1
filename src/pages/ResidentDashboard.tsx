@@ -1,402 +1,713 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { useData } from '../contexts/DataContext';
 import VerificationStatus from '../components/VerificationStatus';
-import QRCodeGenerator from '../components/QRCodeGenerator';
+import QRCodeDisplay from '../components/QRCodeDisplay';
 import FamilyTreeView from '../components/FamilyTreeView';
 import { 
+  Building2, 
   User, 
-  FileText, 
-  Calendar, 
-  Bell, 
-  Settings, 
-  LogOut, 
   Shield, 
   QrCode, 
   Users, 
-  Home,
-  MapPin,
-  Phone,
-  Mail,
-  Camera,
-  Upload,
+  FileText, 
+  LogOut, 
+  Edit, 
+  Save, 
+  X, 
+  MapPin, 
+  Phone, 
+  Mail, 
+  Calendar, 
+  Home, 
+  Plus,
+  Eye,
+  Clock,
   CheckCircle,
   AlertTriangle,
-  Clock,
-  Edit,
-  Save,
-  X,
-  Eye,
-  EyeOff,
-  Building2,
-  ArrowLeft,
+  Download,
+  Search,
+  Filter,
+  Send,
+  MessageSquare,
+  Flag,
+  Camera,
+  Upload,
   Star,
-  Award,
-  Activity,
-  Heart,
-  Smartphone,
-  Monitor,
-  Tablet
+  Trash2
 } from 'lucide-react';
 
 export default function ResidentDashboard() {
-  const { user, logout, updateUser } = useAuth();
-  const { systemSettings } = useData();
+  const { user, updateUser, logout } = useAuth();
+  const { documents, addDocument, complaints, addComplaint } = useData();
   const navigate = useNavigate();
-  const [activeTab, setActiveTab] = useState('dashboard');
-  const [showProfileEdit, setShowProfileEdit] = useState(false);
-  const [showLocationPicker, setShowLocationPicker] = useState(false);
-  const [profileData, setProfileData] = useState({
-    name: user?.name || '',
-    email: user?.email || '',
-    phone: '',
-    address: '',
-    birthDate: '',
-    gender: '',
-    civilStatus: '',
-    occupation: '',
-    emergencyContact: '',
-    houseLocation: { lat: 0, lng: 0, address: '' }
+  const [activeTab, setActiveTab] = useState('profile');
+  const [isEditing, setIsEditing] = useState(false);
+  const [showDocumentRequest, setShowDocumentRequest] = useState(false);
+  const [showIncidentReport, setShowIncidentReport] = useState(false);
+  const [selectedDocument, setSelectedDocument] = useState<any>(null);
+  const [selectedComplaint, setSelectedComplaint] = useState<any>(null);
+
+  const [editData, setEditData] = useState({
+    firstName: user?.firstName || '',
+    middleName: user?.middleName || '',
+    lastName: user?.lastName || '',
+    suffix: user?.suffix || '',
+    phone: user?.phone || '',
+    birthDate: user?.birthDate || '',
+    gender: user?.gender || '',
+    civilStatus: user?.civilStatus || '',
+    nationality: user?.nationality || 'Filipino',
+    occupation: user?.occupation || '',
+    monthlyIncome: user?.monthlyIncome || '',
+    houseNumber: user?.houseNumber || '',
+    purok: user?.purok || '',
+    barangay: user?.barangay || 'San Miguel',
+    city: user?.city || 'Metro Manila',
+    province: user?.province || 'Metro Manila',
+    zipCode: user?.zipCode || '',
+    emergencyContactName: user?.emergencyContactName || '',
+    emergencyContactPhone: user?.emergencyContactPhone || '',
+    emergencyContactRelation: user?.emergencyContactRelation || '',
+    emergencyContactAddress: user?.emergencyContactAddress || ''
+  });
+
+  const [documentRequest, setDocumentRequest] = useState({
+    documentType: '',
+    purpose: '',
+    quantity: 1,
+    urgency: 'regular',
+    notes: ''
+  });
+
+  const [incidentReport, setIncidentReport] = useState({
+    type: '',
+    subject: '',
+    description: '',
+    location: '',
+    priority: 'medium',
+    evidence: [] as string[],
+    witnessName: '',
+    witnessContact: '',
+    dateOccurred: '',
+    timeOccurred: ''
   });
 
   const handleLogout = () => {
-    try {
-      // Clear all authentication-related data
-      localStorage.removeItem('user');
-      localStorage.removeItem('authToken');
-      localStorage.removeItem('refreshToken');
-      localStorage.removeItem('sessionId');
+    logout();
+    navigate('/');
+  };
+
+  const handleSaveProfile = () => {
+    updateUser(editData);
+    setIsEditing(false);
+  };
+
+  const handleDocumentRequest = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (documentRequest.documentType && documentRequest.purpose) {
+      const newDocument = {
+        residentId: user?.id || '',
+        documentType: documentRequest.documentType,
+        status: 'pending' as const,
+        requestedDate: new Date().toISOString().split('T')[0],
+        fee: getDocumentFee(documentRequest.documentType),
+        paymentStatus: 'unpaid' as const,
+        purpose: documentRequest.purpose,
+        notes: documentRequest.notes
+      };
       
-      // Clear any session storage
-      sessionStorage.clear();
-      
-      // Call auth context logout
-      logout();
-      
-      // Navigate to home page
-      navigate('/');
-    } catch (error) {
-      console.error('Error during logout:', error);
-      // Force navigation even if logout fails
-      navigate('/');
+      addDocument(newDocument);
+      setDocumentRequest({ documentType: '', purpose: '', quantity: 1, urgency: 'regular', notes: '' });
+      setShowDocumentRequest(false);
+      alert('Document request submitted successfully!');
     }
   };
 
-  const getVerificationBadge = (status: string) => {
-    switch (status) {
-      case 'verified':
-        return (
-          <div className="flex items-center bg-green-100 text-green-800 px-3 py-1 rounded-full text-sm font-medium">
-            <CheckCircle className="h-4 w-4 mr-1" />
-            Fully Verified
-          </div>
-        );
-      case 'semi-verified':
-        return (
-          <div className="flex items-center bg-yellow-100 text-yellow-800 px-3 py-1 rounded-full text-sm font-medium">
-            <Clock className="h-4 w-4 mr-1" />
-            Semi-Verified
-          </div>
-        );
-      case 'details-updated':
-        return (
-          <div className="flex items-center bg-blue-100 text-blue-800 px-3 py-1 rounded-full text-sm font-medium">
-            <Edit className="h-4 w-4 mr-1" />
-            Details Updated
-          </div>
-        );
-      default:
-        return (
-          <div className="flex items-center bg-red-100 text-red-800 px-3 py-1 rounded-full text-sm font-medium">
-            <AlertTriangle className="h-4 w-4 mr-1" />
-            Unverified
-          </div>
-        );
+  const handleIncidentReport = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (incidentReport.type && incidentReport.subject && incidentReport.description) {
+      const newComplaint = {
+        residentName: user?.name || '',
+        residentEmail: user?.email || '',
+        type: incidentReport.type,
+        subject: incidentReport.subject,
+        description: incidentReport.description,
+        status: 'pending' as const,
+        priority: incidentReport.priority as 'low' | 'medium' | 'high',
+        dateSubmitted: new Date().toISOString().split('T')[0],
+        location: incidentReport.location,
+        dateOccurred: incidentReport.dateOccurred,
+        timeOccurred: incidentReport.timeOccurred,
+        witnessName: incidentReport.witnessName,
+        witnessContact: incidentReport.witnessContact
+      };
+      
+      addComplaint(newComplaint);
+      setIncidentReport({
+        type: '',
+        subject: '',
+        description: '',
+        location: '',
+        priority: 'medium',
+        evidence: [],
+        witnessName: '',
+        witnessContact: '',
+        dateOccurred: '',
+        timeOccurred: ''
+      });
+      setShowIncidentReport(false);
+      alert('Incident report submitted successfully!');
     }
   };
 
-  const getAccessLevel = (status: string) => {
-    switch (status) {
-      case 'verified':
-        return {
-          level: 'Full Access',
-          description: 'Complete access to all barangay services',
-          color: 'text-green-600',
-          features: ['Document Requests', 'QR Code Access', 'Online Payments', 'Priority Support', 'All Services']
-        };
-      case 'semi-verified':
-        return {
-          level: 'Limited Access',
-          description: 'Access to basic services, pending final verification',
-          color: 'text-yellow-600',
-          features: ['Basic Document Requests', 'Profile Management', 'Announcements', 'Contact Support']
-        };
-      case 'details-updated':
-        return {
-          level: 'Basic Access',
-          description: 'Profile completed, awaiting document verification',
-          color: 'text-blue-600',
-          features: ['View Announcements', 'Update Profile', 'Contact Information']
-        };
-      default:
-        return {
-          level: 'Restricted Access',
-          description: 'Complete your profile to unlock services',
-          color: 'text-red-600',
-          features: ['View Public Information', 'Update Basic Profile']
-        };
-    }
-  };
-
-  const handleProfileUpdate = () => {
-    // Business Rule: Any profile changes revert status to semi-verified (except if non-verified)
-    let newStatus = user?.verificationStatus;
-    
-    if (user?.verificationStatus === 'non-verified') {
-      newStatus = 'details-updated';
-    } else if (user?.verificationStatus === 'verified') {
-      // Revert to semi-verified when fully verified user makes changes
-      newStatus = 'semi-verified';
-    }
-    
-    // Create audit trail entry
-    const auditEntry = {
-      timestamp: new Date().toISOString(),
-      action: 'Profile Updated',
-      previousStatus: user?.verificationStatus,
-      newStatus: newStatus,
-      approvedBy: 'Self (Resident)'
+  const getDocumentFee = (documentType: string) => {
+    const fees: { [key: string]: number } = {
+      'Barangay Clearance': 50,
+      'Certificate of Residency': 30,
+      'Certificate of Indigency': 25,
+      'Business Permit': 200,
+      'Building Permit': 500,
+      'Cedula': 35,
+      'Community Tax Certificate': 35,
+      'Barangay ID': 100
     };
-    
-    const updatedAuditTrail = [...(user?.auditTrail || []), auditEntry];
-    
-    updateUser({ 
-      ...profileData,
-      verificationStatus: newStatus,
-      auditTrail: updatedAuditTrail
-    });
-    setShowProfileEdit(false);
-    
-    // Show notification about status change
-    if (user?.verificationStatus === 'verified' && newStatus === 'semi-verified') {
-      alert('Your verification status has been changed to semi-verified due to profile updates. Barangay officials will need to re-verify your information.');
-    }
+    return fees[documentType] || 50;
   };
 
-  const renderDashboard = () => {
-    const accessLevel = getAccessLevel(user?.verificationStatus || 'non-verified');
-    
-    return (
-      <div className="space-y-4 sm:space-y-6">
-        {/* Welcome Section - Responsive */}
-        <div className="bg-gradient-to-r from-purple-600 to-blue-600 text-white rounded-lg p-4 sm:p-6">
-          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between space-y-4 sm:space-y-0">
-            <div className="flex-1">
-              <h2 className="text-xl sm:text-2xl font-bold mb-2">Welcome, {user?.name}!</h2>
-              <p className="text-purple-100 text-sm sm:text-base">
-                Your digital gateway to barangay services
-              </p>
-            </div>
-            <div className="flex flex-col sm:flex-row items-start sm:items-center space-y-2 sm:space-y-0 sm:space-x-4">
-              {getVerificationBadge(user?.verificationStatus || 'non-verified')}
-              <div className="text-right">
-                <p className={`font-semibold text-sm sm:text-base ${accessLevel.color}`}>
-                  {accessLevel.level}
-                </p>
-                <p className="text-purple-200 text-xs sm:text-sm">
-                  {accessLevel.description}
-                </p>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Verification Progress - Mobile Optimized */}
-        <div className="bg-white rounded-lg shadow-sm p-4 sm:p-6">
-          <h3 className="text-lg font-semibold text-gray-900 mb-4">Verification Progress</h3>
-          <VerificationProgressBar status={user?.verificationStatus || 'non-verified'} />
-        </div>
-
-        {/* Quick Actions Grid - Responsive */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-          <QuickActionCard
-            icon={FileText}
-            title="Documents"
-            description="Request certificates"
-            onClick={() => setActiveTab('documents')}
-            disabled={!['semi-verified', 'verified'].includes(user?.verificationStatus || '')}
-          />
-          <QuickActionCard
-            icon={QrCode}
-            title="QR Code"
-            description="Digital ID access"
-            onClick={() => setActiveTab('qr-code')}
-            disabled={user?.verificationStatus !== 'verified'}
-          />
-          <QuickActionCard
-            icon={Users}
-            title="Family Tree"
-            description="Manage family"
-            onClick={() => setActiveTab('family')}
-            disabled={false}
-          />
-          <QuickActionCard
-            icon={Bell}
-            title="Announcements"
-            description="Latest updates"
-            onClick={() => setActiveTab('announcements')}
-            disabled={false}
-          />
-        </div>
-
-        {/* Access Level Info - Mobile Friendly */}
-        <div className="bg-white rounded-lg shadow-sm p-4 sm:p-6">
-          <h3 className="text-lg font-semibold text-gray-900 mb-4">Available Services</h3>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-            {accessLevel.features.map((feature, index) => (
-              <div key={index} className="flex items-center p-3 bg-gray-50 rounded-lg">
-                <CheckCircle className="h-5 w-5 text-green-500 mr-3 flex-shrink-0" />
-                <span className="text-sm text-gray-700">{feature}</span>
-              </div>
-            ))}
-          </div>
-        </div>
-
-        {/* Device Compatibility Info */}
-        <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 sm:p-6">
-          <h3 className="text-lg font-semibold text-blue-900 mb-4 flex items-center">
-            <Smartphone className="h-5 w-5 mr-2" />
-            Multi-Device Access
-          </h3>
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-            <div className="flex items-center p-3 bg-white rounded-lg">
-              <Smartphone className="h-8 w-8 text-blue-600 mr-3" />
-              <div>
-                <p className="font-medium text-gray-900">Mobile</p>
-                <p className="text-sm text-gray-600">iOS & Android</p>
-              </div>
-            </div>
-            <div className="flex items-center p-3 bg-white rounded-lg">
-              <Tablet className="h-8 w-8 text-blue-600 mr-3" />
-              <div>
-                <p className="font-medium text-gray-900">Tablet</p>
-                <p className="text-sm text-gray-600">Touch Optimized</p>
-              </div>
-            </div>
-            <div className="flex items-center p-3 bg-white rounded-lg">
-              <Monitor className="h-8 w-8 text-blue-600 mr-3" />
-              <div>
-                <p className="font-medium text-gray-900">Desktop</p>
-                <p className="text-sm text-gray-600">Full Features</p>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    );
-  };
+  const userDocuments = documents.filter(doc => doc.residentId === user?.id);
+  const userComplaints = complaints.filter(complaint => complaint.residentEmail === user?.email);
 
   const renderProfile = () => (
-    <div className="space-y-4 sm:space-y-6">
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between space-y-4 sm:space-y-0">
-        <h2 className="text-xl sm:text-2xl font-bold text-gray-900">Profile Management</h2>
+    <div className="space-y-6">
+      <div className="flex items-center justify-between">
+        <h2 className="text-2xl font-semibold text-gray-900">My Profile</h2>
         <button
-          onClick={() => setShowProfileEdit(true)}
-          className="bg-purple-600 text-white px-4 py-2 rounded-lg hover:bg-purple-700 flex items-center text-sm sm:text-base"
+          onClick={() => setIsEditing(!isEditing)}
+          className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 flex items-center"
         >
           <Edit className="h-4 w-4 mr-2" />
-          Edit Profile
+          {isEditing ? 'Cancel' : 'Edit Profile'}
         </button>
       </div>
 
-      <ProfileCard user={user} profileData={profileData} />
-      
-      {showProfileEdit && (
-        <ProfileEditModal
-          profileData={profileData}
-          setProfileData={setProfileData}
-          onSave={handleProfileUpdate}
-          onClose={() => setShowProfileEdit(false)}
-          onLocationPick={() => setShowLocationPicker(true)}
-        />
-      )}
+      <div className="bg-white border rounded-lg p-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          {/* Personal Information */}
+          <div>
+            <h3 className="text-lg font-semibold text-gray-900 mb-4">Personal Information</h3>
+            <div className="space-y-4">
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">First Name</label>
+                  {isEditing ? (
+                    <input
+                      type="text"
+                      value={editData.firstName}
+                      onChange={(e) => setEditData({ ...editData, firstName: e.target.value })}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    />
+                  ) : (
+                    <p className="text-gray-900">{user?.firstName || 'Not provided'}</p>
+                  )}
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Last Name</label>
+                  {isEditing ? (
+                    <input
+                      type="text"
+                      value={editData.lastName}
+                      onChange={(e) => setEditData({ ...editData, lastName: e.target.value })}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    />
+                  ) : (
+                    <p className="text-gray-900">{user?.lastName || 'Not provided'}</p>
+                  )}
+                </div>
+              </div>
 
-      {showLocationPicker && (
-        <LocationPickerModal
-          onLocationSelect={(location) => {
-            setProfileData(prev => ({ ...prev, houseLocation: location }));
-            setShowLocationPicker(false);
-          }}
-          onClose={() => setShowLocationPicker(false)}
-        />
-      )}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Email</label>
+                <p className="text-gray-900">{user?.email}</p>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Phone Number</label>
+                {isEditing ? (
+                  <input
+                    type="tel"
+                    value={editData.phone}
+                    onChange={(e) => setEditData({ ...editData, phone: e.target.value })}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  />
+                ) : (
+                  <p className="text-gray-900">{user?.phone || 'Not provided'}</p>
+                )}
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Birth Date</label>
+                  {isEditing ? (
+                    <input
+                      type="date"
+                      value={editData.birthDate}
+                      onChange={(e) => setEditData({ ...editData, birthDate: e.target.value })}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    />
+                  ) : (
+                    <p className="text-gray-900">{user?.birthDate || 'Not provided'}</p>
+                  )}
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Gender</label>
+                  {isEditing ? (
+                    <select
+                      value={editData.gender}
+                      onChange={(e) => setEditData({ ...editData, gender: e.target.value })}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    >
+                      <option value="">Select gender</option>
+                      <option value="male">Male</option>
+                      <option value="female">Female</option>
+                    </select>
+                  ) : (
+                    <p className="text-gray-900 capitalize">{user?.gender || 'Not provided'}</p>
+                  )}
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Address Information */}
+          <div>
+            <h3 className="text-lg font-semibold text-gray-900 mb-4">Address Information</h3>
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">House Number/Street</label>
+                {isEditing ? (
+                  <input
+                    type="text"
+                    value={editData.houseNumber}
+                    onChange={(e) => setEditData({ ...editData, houseNumber: e.target.value })}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  />
+                ) : (
+                  <p className="text-gray-900">{user?.houseNumber || 'Not provided'}</p>
+                )}
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Purok/Sitio</label>
+                  {isEditing ? (
+                    <input
+                      type="text"
+                      value={editData.purok}
+                      onChange={(e) => setEditData({ ...editData, purok: e.target.value })}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    />
+                  ) : (
+                    <p className="text-gray-900">{user?.purok || 'Not provided'}</p>
+                  )}
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Barangay</label>
+                  {isEditing ? (
+                    <input
+                      type="text"
+                      value={editData.barangay}
+                      onChange={(e) => setEditData({ ...editData, barangay: e.target.value })}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    />
+                  ) : (
+                    <p className="text-gray-900">{user?.barangay || 'Not provided'}</p>
+                  )}
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">City</label>
+                  {isEditing ? (
+                    <input
+                      type="text"
+                      value={editData.city}
+                      onChange={(e) => setEditData({ ...editData, city: e.target.value })}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    />
+                  ) : (
+                    <p className="text-gray-900">{user?.city || 'Not provided'}</p>
+                  )}
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Province</label>
+                  {isEditing ? (
+                    <input
+                      type="text"
+                      value={editData.province}
+                      onChange={(e) => setEditData({ ...editData, province: e.target.value })}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    />
+                  ) : (
+                    <p className="text-gray-900">{user?.province || 'Not provided'}</p>
+                  )}
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {isEditing && (
+          <div className="mt-6 flex space-x-3">
+            <button
+              onClick={handleSaveProfile}
+              className="bg-green-600 text-white px-6 py-2 rounded-lg hover:bg-green-700 flex items-center"
+            >
+              <Save className="h-4 w-4 mr-2" />
+              Save Changes
+            </button>
+            <button
+              onClick={() => setIsEditing(false)}
+              className="bg-gray-600 text-white px-6 py-2 rounded-lg hover:bg-gray-700"
+            >
+              Cancel
+            </button>
+          </div>
+        )}
+      </div>
     </div>
   );
 
-  const tabs = [
-    { id: 'dashboard', label: 'Dashboard', icon: Home },
-    { id: 'profile', label: 'Profile', icon: User },
-    { id: 'verification', label: 'Verification', icon: Shield },
-    { id: 'qr-code', label: 'QR Code', icon: QrCode },
-    { id: 'family', label: 'Family Tree', icon: Users },
-    { id: 'documents', label: 'Documents', icon: FileText },
-    { id: 'announcements', label: 'Announcements', icon: Bell }
-  ];
+  const renderDocuments = () => (
+    <div className="space-y-6">
+      <div className="flex items-center justify-between">
+        <h2 className="text-2xl font-semibold text-gray-900">My Documents</h2>
+        <button
+          onClick={() => setShowDocumentRequest(true)}
+          className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 flex items-center"
+        >
+          <Plus className="h-4 w-4 mr-2" />
+          Request Document
+        </button>
+      </div>
+
+      {/* Document Statistics */}
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+        <div className="bg-white rounded-lg shadow-sm p-6">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm font-medium text-gray-600">Total Requests</p>
+              <p className="text-3xl font-bold text-blue-600">{userDocuments.length}</p>
+            </div>
+            <FileText className="h-12 w-12 text-blue-600" />
+          </div>
+        </div>
+
+        <div className="bg-white rounded-lg shadow-sm p-6">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm font-medium text-gray-600">Pending</p>
+              <p className="text-3xl font-bold text-yellow-600">
+                {userDocuments.filter(d => d.status === 'pending').length}
+              </p>
+            </div>
+            <Clock className="h-12 w-12 text-yellow-600" />
+          </div>
+        </div>
+
+        <div className="bg-white rounded-lg shadow-sm p-6">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm font-medium text-gray-600">Ready</p>
+              <p className="text-3xl font-bold text-green-600">
+                {userDocuments.filter(d => d.status === 'ready').length}
+              </p>
+            </div>
+            <CheckCircle className="h-12 w-12 text-green-600" />
+          </div>
+        </div>
+
+        <div className="bg-white rounded-lg shadow-sm p-6">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm font-medium text-gray-600">Released</p>
+              <p className="text-3xl font-bold text-purple-600">
+                {userDocuments.filter(d => d.status === 'released').length}
+              </p>
+            </div>
+            <Download className="h-12 w-12 text-purple-600" />
+          </div>
+        </div>
+      </div>
+
+      {/* Documents List */}
+      <div className="bg-white rounded-lg shadow-sm overflow-hidden">
+        <div className="p-6 border-b border-gray-200">
+          <h3 className="text-lg font-semibold text-gray-900">Document Requests</h3>
+        </div>
+        
+        {userDocuments.length > 0 ? (
+          <div className="overflow-x-auto">
+            <table className="min-w-full divide-y divide-gray-200">
+              <thead className="bg-gray-50">
+                <tr>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Document</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Fee</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date Requested</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                </tr>
+              </thead>
+              <tbody className="bg-white divide-y divide-gray-200">
+                {userDocuments.map((document) => (
+                  <tr key={document.id} className="hover:bg-gray-50">
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <div>
+                        <div className="text-sm font-medium text-gray-900">{document.documentType}</div>
+                        <div className="text-sm text-gray-500">{document.purpose}</div>
+                      </div>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <span className={`px-2 py-1 text-xs font-semibold rounded-full ${
+                        document.status === 'released' ? 'bg-purple-100 text-purple-800' :
+                        document.status === 'ready' ? 'bg-green-100 text-green-800' :
+                        document.status === 'processing' ? 'bg-blue-100 text-blue-800' :
+                        document.status === 'pending' ? 'bg-yellow-100 text-yellow-800' :
+                        'bg-red-100 text-red-800'
+                      }`}>
+                        {document.status.toUpperCase()}
+                      </span>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                      ₱{document.fee}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                      {document.requestedDate}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                      <button
+                        onClick={() => setSelectedDocument(document)}
+                        className="text-blue-600 hover:text-blue-900"
+                      >
+                        <Eye className="h-4 w-4" />
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        ) : (
+          <div className="text-center py-12">
+            <FileText className="h-24 w-24 text-gray-300 mx-auto mb-4" />
+            <h3 className="text-lg font-semibold text-gray-900 mb-2">No Document Requests</h3>
+            <p className="text-gray-600 mb-4">You haven't requested any documents yet.</p>
+            <button
+              onClick={() => setShowDocumentRequest(true)}
+              className="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700"
+            >
+              Request Your First Document
+            </button>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+
+  const renderComplaints = () => (
+    <div className="space-y-6">
+      <div className="flex items-center justify-between">
+        <h2 className="text-2xl font-semibold text-gray-900">Incident Reports & Complaints</h2>
+        <button
+          onClick={() => setShowIncidentReport(true)}
+          className="bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 flex items-center"
+        >
+          <Plus className="h-4 w-4 mr-2" />
+          File Report
+        </button>
+      </div>
+
+      {/* Complaint Statistics */}
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+        <div className="bg-white rounded-lg shadow-sm p-6">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm font-medium text-gray-600">Total Reports</p>
+              <p className="text-3xl font-bold text-blue-600">{userComplaints.length}</p>
+            </div>
+            <MessageSquare className="h-12 w-12 text-blue-600" />
+          </div>
+        </div>
+
+        <div className="bg-white rounded-lg shadow-sm p-6">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm font-medium text-gray-600">Pending</p>
+              <p className="text-3xl font-bold text-yellow-600">
+                {userComplaints.filter(c => c.status === 'pending').length}
+              </p>
+            </div>
+            <Clock className="h-12 w-12 text-yellow-600" />
+          </div>
+        </div>
+
+        <div className="bg-white rounded-lg shadow-sm p-6">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm font-medium text-gray-600">Under Investigation</p>
+              <p className="text-3xl font-bold text-blue-600">
+                {userComplaints.filter(c => c.status === 'investigating').length}
+              </p>
+            </div>
+            <Search className="h-12 w-12 text-blue-600" />
+          </div>
+        </div>
+
+        <div className="bg-white rounded-lg shadow-sm p-6">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm font-medium text-gray-600">Resolved</p>
+              <p className="text-3xl font-bold text-green-600">
+                {userComplaints.filter(c => c.status === 'resolved').length}
+              </p>
+            </div>
+            <CheckCircle className="h-12 w-12 text-green-600" />
+          </div>
+        </div>
+      </div>
+
+      {/* Complaints List */}
+      <div className="bg-white rounded-lg shadow-sm overflow-hidden">
+        <div className="p-6 border-b border-gray-200">
+          <h3 className="text-lg font-semibold text-gray-900">My Reports & Complaints</h3>
+        </div>
+        
+        {userComplaints.length > 0 ? (
+          <div className="space-y-4 p-6">
+            {userComplaints.map((complaint) => (
+              <div key={complaint.id} className="border border-gray-200 rounded-lg p-4 hover:shadow-sm transition-shadow">
+                <div className="flex items-start justify-between">
+                  <div className="flex-1">
+                    <div className="flex items-center space-x-2 mb-2">
+                      <span className={`px-2 py-1 text-xs font-semibold rounded-full ${
+                        complaint.type === 'noise' ? 'bg-red-100 text-red-800' :
+                        complaint.type === 'garbage' ? 'bg-yellow-100 text-yellow-800' :
+                        complaint.type === 'road' ? 'bg-blue-100 text-blue-800' :
+                        complaint.type === 'water' ? 'bg-cyan-100 text-cyan-800' :
+                        complaint.type === 'electricity' ? 'bg-orange-100 text-orange-800' :
+                        complaint.type === 'security' ? 'bg-purple-100 text-purple-800' :
+                        'bg-gray-100 text-gray-800'
+                      }`}>
+                        {complaint.type.toUpperCase()}
+                      </span>
+                      <span className={`px-2 py-1 text-xs font-semibold rounded-full ${
+                        complaint.priority === 'high' ? 'bg-red-100 text-red-800' :
+                        complaint.priority === 'medium' ? 'bg-yellow-100 text-yellow-800' :
+                        'bg-green-100 text-green-800'
+                      }`}>
+                        {complaint.priority.toUpperCase()} PRIORITY
+                      </span>
+                      <span className={`px-2 py-1 text-xs font-semibold rounded-full ${
+                        complaint.status === 'resolved' ? 'bg-green-100 text-green-800' :
+                        complaint.status === 'investigating' ? 'bg-blue-100 text-blue-800' :
+                        'bg-yellow-100 text-yellow-800'
+                      }`}>
+                        {complaint.status.toUpperCase()}
+                      </span>
+                    </div>
+                    <h4 className="text-lg font-semibold text-gray-900 mb-2">{complaint.subject}</h4>
+                    <p className="text-gray-600 mb-2">{complaint.description}</p>
+                    <div className="text-sm text-gray-500 space-y-1">
+                      <p><strong>Location:</strong> {complaint.location}</p>
+                      <p><strong>Date Submitted:</strong> {complaint.dateSubmitted}</p>
+                      {complaint.assignedTo && <p><strong>Assigned to:</strong> {complaint.assignedTo}</p>}
+                    </div>
+                  </div>
+                  <button
+                    onClick={() => setSelectedComplaint(complaint)}
+                    className="text-blue-600 hover:text-blue-800 ml-4"
+                  >
+                    <Eye className="h-5 w-5" />
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+        ) : (
+          <div className="text-center py-12">
+            <MessageSquare className="h-24 w-24 text-gray-300 mx-auto mb-4" />
+            <h3 className="text-lg font-semibold text-gray-900 mb-2">No Reports Filed</h3>
+            <p className="text-gray-600 mb-4">You haven't filed any incident reports or complaints yet.</p>
+            <button
+              onClick={() => setShowIncidentReport(true)}
+              className="bg-red-600 text-white px-6 py-2 rounded-lg hover:bg-red-700"
+            >
+              File Your First Report
+            </button>
+          </div>
+        )}
+      </div>
+    </div>
+  );
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      {/* Mobile-First Header */}
-      <div className="bg-white shadow-sm border-b sticky top-0 z-40">
+    <div className="min-h-screen bg-gradient-to-br from-purple-50 to-blue-50">
+      {/* Header */}
+      <div className="bg-gradient-to-r from-purple-600 to-purple-700 text-white shadow-lg">
         <div className="max-w-7xl mx-auto">
-          <div className="flex items-center justify-between p-4">
-            <div className="flex items-center space-x-3">
-              <Building2 className="h-6 w-6 sm:h-8 sm:w-8 text-purple-600" />
-              <div>
-                <h1 className="text-lg sm:text-xl font-bold text-gray-900">Resident Portal</h1>
-                <p className="text-xs sm:text-sm text-gray-600 hidden sm:block">
-                  {systemSettings.barangayName || 'Barangay Management System'}
-                </p>
-              </div>
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between p-6 space-y-4 sm:space-y-0">
+            <div>
+              <h1 className="text-2xl sm:text-3xl font-bold flex items-center">
+                <Building2 className="mr-3 h-8 w-8" />
+                Resident Portal
+              </h1>
+              <p className="text-purple-100 mt-2 text-sm sm:text-base">Welcome back, {user?.name}</p>
             </div>
-            
             <div className="flex items-center space-x-2 sm:space-x-4">
-              <div className="hidden sm:block text-right">
-                <p className="text-sm font-medium text-gray-900">{user?.name}</p>
-                <p className="text-xs text-gray-600">{user?.email}</p>
+              <div className="text-right hidden sm:block">
+                <p className="text-purple-100 text-sm">Verification Status</p>
+                <p className="text-xs text-purple-200 capitalize">{user?.verificationStatus?.replace('-', ' ')}</p>
               </div>
-              <div className="w-8 h-8 sm:w-10 sm:h-10 bg-purple-600 rounded-full flex items-center justify-center text-white font-semibold">
-                {user?.name?.charAt(0)}
+              <div className="w-10 h-10 bg-purple-500 rounded-full flex items-center justify-center">
+                <User className="h-5 w-5 text-white" />
               </div>
               <button
                 onClick={handleLogout}
-                className="flex items-center px-2 py-2 sm:px-3 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-colors"
+                className="flex items-center px-3 py-2 text-purple-200 hover:text-white hover:bg-purple-700 rounded-lg transition-colors"
                 title="Logout"
               >
-                <LogOut className="h-4 w-4 sm:h-5 sm:w-5" />
-                <span className="ml-2 hidden sm:inline">Logout</span>
+                <LogOut className="h-5 w-5" />
               </button>
             </div>
           </div>
         </div>
       </div>
 
-      {/* Mobile Navigation Tabs */}
-      <div className="bg-white border-b shadow-sm overflow-x-auto">
-        <div className="max-w-7xl mx-auto">
-          <nav className="flex space-x-1 px-4 py-2">
-            {tabs.map((tab) => (
+      {/* Navigation Tabs */}
+      <div className="bg-white border-b shadow-sm">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <nav className="flex space-x-8 overflow-x-auto">
+            {[
+              { id: 'profile', label: 'My Profile', icon: User },
+              { id: 'verification', label: 'Verification', icon: Shield },
+              { id: 'qr-code', label: 'QR Code', icon: QrCode },
+              { id: 'documents', label: 'Documents', icon: FileText },
+              { id: 'complaints', label: 'Reports & Complaints', icon: MessageSquare },
+              { id: 'family', label: 'Family Tree', icon: Users }
+            ].map((tab) => (
               <button
                 key={tab.id}
                 onClick={() => setActiveTab(tab.id)}
-                className={`flex items-center px-3 py-2 text-sm font-medium rounded-lg whitespace-nowrap transition-colors ${
+                className={`flex items-center px-3 py-4 text-sm font-medium border-b-2 whitespace-nowrap ${
                   activeTab === tab.id
-                    ? 'bg-purple-100 text-purple-700'
-                    : 'text-gray-500 hover:text-gray-700 hover:bg-gray-100'
+                    ? 'border-purple-500 text-purple-600'
+                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
                 }`}
               >
                 <tab.icon className="h-4 w-4 mr-2" />
-                <span className="hidden sm:inline">{tab.label}</span>
+                {tab.label}
               </button>
             ))}
           </nav>
@@ -404,976 +715,431 @@ export default function ResidentDashboard() {
       </div>
 
       {/* Main Content */}
-      <div className="max-w-7xl mx-auto px-4 py-4 sm:px-6 sm:py-8">
-        {activeTab === 'dashboard' && renderDashboard()}
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {activeTab === 'profile' && renderProfile()}
         {activeTab === 'verification' && <VerificationStatus />}
-        {activeTab === 'qr-code' && <QRCodeGenerator />}
+        {activeTab === 'qr-code' && <QRCodeDisplay />}
+        {activeTab === 'documents' && renderDocuments()}
+        {activeTab === 'complaints' && renderComplaints()}
         {activeTab === 'family' && <FamilyTreeView />}
-        {activeTab === 'documents' && <DocumentsSection />}
-        {activeTab === 'announcements' && <AnnouncementsSection />}
       </div>
-    </div>
-  );
-}
 
-// Verification Progress Bar Component
-function VerificationProgressBar({ status }: { status: string }) {
-  const steps = [
-    { id: 'registered', label: 'Registered', status: 'completed' },
-    { id: 'details', label: 'Details Updated', status: status === 'non-verified' ? 'pending' : 'completed' },
-    { id: 'semi', label: 'Semi-Verified', status: ['details-updated', 'semi-verified', 'verified'].includes(status) ? 'completed' : 'pending' },
-    { id: 'verified', label: 'Fully Verified', status: status === 'verified' ? 'completed' : 'pending' }
-  ];
-
-  return (
-    <div className="space-y-4">
-      <div className="flex items-center justify-between">
-        {steps.map((step, index) => (
-          <div key={step.id} className="flex items-center">
-            <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium ${
-              step.status === 'completed' ? 'bg-green-500 text-white' : 'bg-gray-300 text-gray-600'
-            }`}>
-              {step.status === 'completed' ? <CheckCircle className="h-5 w-5" /> : index + 1}
-            </div>
-            {index < steps.length - 1 && (
-              <div className={`w-12 sm:w-24 h-1 mx-2 ${
-                steps[index + 1].status === 'completed' ? 'bg-green-500' : 'bg-gray-300'
-              }`} />
-            )}
-          </div>
-        ))}
-      </div>
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-xs sm:text-sm text-center">
-        {steps.map((step) => (
-          <div key={step.id} className={step.status === 'completed' ? 'text-green-600 font-medium' : 'text-gray-500'}>
-            {step.label}
-          </div>
-        ))}
-      </div>
-    </div>
-  );
-}
-
-// Quick Action Card Component
-function QuickActionCard({ 
-  icon: Icon, 
-  title, 
-  description, 
-  onClick, 
-  disabled = false 
-}: {
-  icon: React.ComponentType<any>;
-  title: string;
-  description: string;
-  onClick: () => void;
-  disabled?: boolean;
-}) {
-  return (
-    <button
-      onClick={onClick}
-      disabled={disabled}
-      className={`p-4 rounded-lg text-left transition-all ${
-        disabled 
-          ? 'bg-gray-100 text-gray-400 cursor-not-allowed' 
-          : 'bg-white shadow-sm hover:shadow-md hover:scale-105 text-gray-900'
-      }`}
-    >
-      <Icon className={`h-8 w-8 mb-3 ${disabled ? 'text-gray-400' : 'text-purple-600'}`} />
-      <h3 className="font-semibold text-sm sm:text-base mb-1">{title}</h3>
-      <p className="text-xs sm:text-sm text-gray-600">{description}</p>
-      {disabled && (
-        <p className="text-xs text-red-500 mt-2">Verification required</p>
-      )}
-    </button>
-  );
-}
-
-// Profile Card Component
-function ProfileCard({ user, profileData }: { user: any; profileData: any }) {
-  return (
-    <div className="bg-white rounded-lg shadow-sm p-4 sm:p-6">
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
-        <div className="space-y-4">
-          <div>
-            <label className="block text-sm font-medium text-gray-700">Full Name</label>
-            <p className="text-gray-900 font-medium">{user?.name || 'Not provided'}</p>
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700">Email</label>
-            <p className="text-gray-900">{user?.email || 'Not provided'}</p>
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700">Phone Number</label>
-            <p className="text-gray-900">{profileData.phone || 'Not provided'}</p>
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700">Address</label>
-            <p className="text-gray-900">{profileData.address || 'Not provided'}</p>
-          </div>
-        </div>
-        
-        <div className="space-y-4">
-          <div>
-            <label className="block text-sm font-medium text-gray-700">Birth Date</label>
-            <p className="text-gray-900">{profileData.birthDate || 'Not provided'}</p>
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700">Gender</label>
-            <p className="text-gray-900 capitalize">{profileData.gender || 'Not provided'}</p>
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700">Civil Status</label>
-            <p className="text-gray-900 capitalize">{profileData.civilStatus || 'Not provided'}</p>
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700">Verification Status</label>
-            <div className="mt-1">
-              {user && getVerificationBadge(user.verificationStatus || 'non-verified')}
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-// Profile Edit Modal Component
-function ProfileEditModal({ 
-  profileData, 
-  setProfileData, 
-  onSave, 
-  onClose, 
-  onLocationPick 
-}: {
-  profileData: any;
-  setProfileData: (data: any) => void;
-  onSave: () => void;
-  onClose: () => void;
-  onLocationPick: () => void;
-}) {
-  const [governmentIds, setGovernmentIds] = useState({
-    sss: { number: '', file: null as File | null },
-    philhealth: { number: '', file: null as File | null },
-    pagibig: { number: '', file: null as File | null },
-    umid: { number: '', file: null as File | null },
-    driversLicense: { number: '', file: null as File | null },
-    passport: { number: '', file: null as File | null }
-  });
-
-  const handleFileUpload = (idType: string, file: File) => {
-    setGovernmentIds(prev => ({
-      ...prev,
-      [idType]: { ...prev[idType as keyof typeof prev], file }
-    }));
-  };
-
-  const handleIdNumberChange = (idType: string, number: string) => {
-    setGovernmentIds(prev => ({
-      ...prev,
-      [idType]: { ...prev[idType as keyof typeof prev], number }
-    }));
-  };
-  return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-lg max-w-2xl w-full max-h-[90vh] overflow-y-auto">
-        <div className="p-4 sm:p-6 border-b border-gray-200">
-          <div className="flex items-center justify-between">
-            <h3 className="text-lg font-semibold text-gray-900">Edit Profile</h3>
-            <button onClick={onClose} className="text-gray-400 hover:text-gray-600">
-              <X className="h-5 w-5" />
-            </button>
-          </div>
-        </div>
-        
-        <div className="p-4 sm:p-6 space-y-6">
-          {/* Personal Information Section */}
-          <div className="bg-blue-50 p-4 rounded-lg">
-            <h4 className="text-lg font-semibold text-blue-900 mb-4">Personal Information</h4>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">First Name *</label>
-                <input
-                  type="text"
-                  value={profileData.firstName || ''}
-                  onChange={(e) => setProfileData(prev => ({ ...prev, firstName: e.target.value }))}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
-                  placeholder="Enter first name"
-                />
-              </div>
-              
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Middle Name</label>
-                <input
-                  type="text"
-                  value={profileData.middleName || ''}
-                  onChange={(e) => setProfileData(prev => ({ ...prev, middleName: e.target.value }))}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
-                  placeholder="Enter middle name"
-                />
-              </div>
-              
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Last Name *</label>
-                <input
-                  type="text"
-                  value={profileData.lastName || ''}
-                  onChange={(e) => setProfileData(prev => ({ ...prev, lastName: e.target.value }))}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
-                  placeholder="Enter last name"
-                />
-              </div>
-              
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Suffix</label>
-                <select
-                  value={profileData.suffix || ''}
-                  onChange={(e) => setProfileData(prev => ({ ...prev, suffix: e.target.value }))}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
-                >
-                  <option value="">Select suffix</option>
-                  <option value="Jr.">Jr.</option>
-                  <option value="Sr.">Sr.</option>
-                  <option value="II">II</option>
-                  <option value="III">III</option>
-                  <option value="IV">IV</option>
-                </select>
-              </div>
-              
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Email *</label>
-                <input
-                  type="email"
-                  value={profileData.email}
-                  onChange={(e) => setProfileData(prev => ({ ...prev, email: e.target.value }))}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
-                />
-              </div>
-              
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Phone Number *</label>
-                <input
-                  type="tel"
-                  value={profileData.phone}
-                  onChange={(e) => setProfileData(prev => ({ ...prev, phone: e.target.value }))}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
-                  placeholder="+63 912 345 6789"
-                />
-              </div>
-              
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Birth Date *</label>
-                <input
-                  type="date"
-                  value={profileData.birthDate}
-                  onChange={(e) => setProfileData(prev => ({ ...prev, birthDate: e.target.value }))}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
-                />
-              </div>
-              
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Gender *</label>
-                <select
-                  value={profileData.gender}
-                  onChange={(e) => setProfileData(prev => ({ ...prev, gender: e.target.value }))}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
-                >
-                  <option value="">Select gender</option>
-                  <option value="male">Male</option>
-                  <option value="female">Female</option>
-                </select>
-              </div>
-              
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Civil Status *</label>
-                <select
-                  value={profileData.civilStatus}
-                  onChange={(e) => setProfileData(prev => ({ ...prev, civilStatus: e.target.value }))}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
-                >
-                  <option value="">Select status</option>
-                  <option value="single">Single</option>
-                  <option value="married">Married</option>
-                  <option value="widowed">Widowed</option>
-                  <option value="separated">Separated</option>
-                  <option value="divorced">Divorced</option>
-                </select>
-              </div>
-              
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Nationality</label>
-                <input
-                  type="text"
-                  value={profileData.nationality || 'Filipino'}
-                  onChange={(e) => setProfileData(prev => ({ ...prev, nationality: e.target.value }))}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
-                  placeholder="Filipino"
-                />
-              </div>
-              
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Occupation</label>
-                <input
-                  type="text"
-                  value={profileData.occupation || ''}
-                  onChange={(e) => setProfileData(prev => ({ ...prev, occupation: e.target.value }))}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
-                  placeholder="Enter occupation"
-                />
-              </div>
-              
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Monthly Income</label>
-                <select
-                  value={profileData.monthlyIncome || ''}
-                  onChange={(e) => setProfileData(prev => ({ ...prev, monthlyIncome: e.target.value }))}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
-                >
-                  <option value="">Select income range</option>
-                  <option value="below-10000">Below ₱10,000</option>
-                  <option value="10000-25000">₱10,000 - ₱25,000</option>
-                  <option value="25000-50000">₱25,000 - ₱50,000</option>
-                  <option value="50000-100000">₱50,000 - ₱100,000</option>
-                  <option value="above-100000">Above ₱100,000</option>
-                </select>
-              </div>
-            </div>
-          </div>
-          
-          {/* Address Information Section */}
-          <div className="bg-green-50 p-4 rounded-lg">
-            <h4 className="text-lg font-semibold text-green-900 mb-4">Address Information</h4>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div className="sm:col-span-2">
-                <label className="block text-sm font-medium text-gray-700 mb-2">House Number/Street *</label>
-                <input
-                  type="text"
-                  value={profileData.houseNumber || ''}
-                  onChange={(e) => setProfileData(prev => ({ ...prev, houseNumber: e.target.value }))}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
-                  placeholder="123 Main Street"
-                />
-              </div>
-              
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Purok/Sitio</label>
-                <input
-                  type="text"
-                  value={profileData.purok || ''}
-                  onChange={(e) => setProfileData(prev => ({ ...prev, purok: e.target.value }))}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
-                  placeholder="Purok 1"
-                />
-              </div>
-              
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Barangay</label>
-                <input
-                  type="text"
-                  value={profileData.barangay || 'San Miguel'}
-                  onChange={(e) => setProfileData(prev => ({ ...prev, barangay: e.target.value }))}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
-                />
-              </div>
-              
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">City/Municipality *</label>
-                <input
-                  type="text"
-                  value={profileData.city || ''}
-                  onChange={(e) => setProfileData(prev => ({ ...prev, city: e.target.value }))}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
-                  placeholder="Metro Manila"
-                />
-              </div>
-              
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Province *</label>
-                <input
-                  type="text"
-                  value={profileData.province || ''}
-                  onChange={(e) => setProfileData(prev => ({ ...prev, province: e.target.value }))}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
-                  placeholder="Metro Manila"
-                />
-              </div>
-              
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">ZIP Code</label>
-                <input
-                  type="text"
-                  value={profileData.zipCode || ''}
-                  onChange={(e) => setProfileData(prev => ({ ...prev, zipCode: e.target.value }))}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
-                  placeholder="1000"
-                />
-              </div>
-            </div>
-          </div>
-          
-          {/* Government ID Verification Section */}
-          <div className="bg-yellow-50 p-4 rounded-lg">
-            <h4 className="text-lg font-semibold text-yellow-900 mb-4">Government ID Verification</h4>
-            <p className="text-sm text-yellow-700 mb-4">Upload at least one government-issued ID for verification</p>
-            
-            <div className="space-y-4">
-              {/* SSS */}
-              <div className="bg-white p-4 rounded-lg border">
-                <h5 className="font-medium text-gray-900 mb-3">Social Security System (SSS)</h5>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">SSS Number</label>
-                    <input
-                      type="text"
-                      value={governmentIds.sss.number}
-                      onChange={(e) => handleIdNumberChange('sss', e.target.value)}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
-                      placeholder="XX-XXXXXXX-X"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">Upload SSS ID</label>
-                    <input
-                      type="file"
-                      accept="image/*,.pdf"
-                      onChange={(e) => e.target.files && handleFileUpload('sss', e.target.files[0])}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
-                    />
-                  </div>
-                </div>
-              </div>
-              
-              {/* PhilHealth */}
-              <div className="bg-white p-4 rounded-lg border">
-                <h5 className="font-medium text-gray-900 mb-3">Philippine Health Insurance Corporation (PhilHealth)</h5>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">PhilHealth Number</label>
-                    <input
-                      type="text"
-                      value={governmentIds.philhealth.number}
-                      onChange={(e) => handleIdNumberChange('philhealth', e.target.value)}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
-                      placeholder="XX-XXXXXXXXX-X"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">Upload PhilHealth ID</label>
-                    <input
-                      type="file"
-                      accept="image/*,.pdf"
-                      onChange={(e) => e.target.files && handleFileUpload('philhealth', e.target.files[0])}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
-                    />
-                  </div>
-                </div>
-              </div>
-              
-              {/* Pag-IBIG */}
-              <div className="bg-white p-4 rounded-lg border">
-                <h5 className="font-medium text-gray-900 mb-3">Home Development Mutual Fund (Pag-IBIG)</h5>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">Pag-IBIG Number</label>
-                    <input
-                      type="text"
-                      value={governmentIds.pagibig.number}
-                      onChange={(e) => handleIdNumberChange('pagibig', e.target.value)}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
-                      placeholder="XXXX-XXXX-XXXX"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">Upload Pag-IBIG ID</label>
-                    <input
-                      type="file"
-                      accept="image/*,.pdf"
-                      onChange={(e) => e.target.files && handleFileUpload('pagibig', e.target.files[0])}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
-                    />
-                  </div>
-                </div>
-              </div>
-              
-              {/* UMID */}
-              <div className="bg-white p-4 rounded-lg border">
-                <h5 className="font-medium text-gray-900 mb-3">Unified Multi-Purpose ID (UMID)</h5>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">UMID Number</label>
-                    <input
-                      type="text"
-                      value={governmentIds.umid.number}
-                      onChange={(e) => handleIdNumberChange('umid', e.target.value)}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
-                      placeholder="XXXX-XXXXXXX-X"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">Upload UMID</label>
-                    <input
-                      type="file"
-                      accept="image/*,.pdf"
-                      onChange={(e) => e.target.files && handleFileUpload('umid', e.target.files[0])}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
-                    />
-                  </div>
-                </div>
-              </div>
-              
-              {/* Driver's License */}
-              <div className="bg-white p-4 rounded-lg border">
-                <h5 className="font-medium text-gray-900 mb-3">Driver's License</h5>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">License Number</label>
-                    <input
-                      type="text"
-                      value={governmentIds.driversLicense.number}
-                      onChange={(e) => handleIdNumberChange('driversLicense', e.target.value)}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
-                      placeholder="XXX-XX-XXXXXX"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">Upload Driver's License</label>
-                    <input
-                      type="file"
-                      accept="image/*,.pdf"
-                      onChange={(e) => e.target.files && handleFileUpload('driversLicense', e.target.files[0])}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
-                    />
-                  </div>
-                </div>
-              </div>
-              
-              {/* Passport */}
-              <div className="bg-white p-4 rounded-lg border">
-                <h5 className="font-medium text-gray-900 mb-3">Philippine Passport</h5>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">Passport Number</label>
-                    <input
-                      type="text"
-                      value={governmentIds.passport.number}
-                      onChange={(e) => handleIdNumberChange('passport', e.target.value)}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
-                      placeholder="XXXXXXXXX"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">Upload Passport</label>
-                    <input
-                      type="file"
-                      accept="image/*,.pdf"
-                      onChange={(e) => e.target.files && handleFileUpload('passport', e.target.files[0])}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
-                    />
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-          
-          {/* House Location Section */}
-          <div className="bg-purple-50 p-4 rounded-lg">
-            <h4 className="text-lg font-semibold text-purple-900 mb-4">House Location Mapping</h4>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">House Location (Required for Semi-Verification) *</label>
+      {/* Document Request Modal */}
+      {showDocumentRequest && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-lg p-6 w-full max-w-2xl max-h-[90vh] overflow-y-auto">
+            <div className="flex items-center justify-between mb-6">
+              <h3 className="text-lg font-semibold">Request Document</h3>
               <button
-                onClick={onLocationPick}
-                className="w-full flex items-center justify-center px-4 py-3 border-2 border-dashed border-purple-300 rounded-lg hover:border-purple-500 hover:bg-purple-100 transition-colors"
+                onClick={() => setShowDocumentRequest(false)}
+                className="text-gray-400 hover:text-gray-600"
               >
-                <MapPin className="h-5 w-5 text-purple-600 mr-2" />
-                <span className="text-purple-600 font-medium">
-                  {profileData.houseLocation?.address ? 'Update Location' : 'Pin Your House Location'}
-                </span>
+                <X className="h-5 w-5" />
               </button>
-              {profileData.houseLocation?.address && (
-                <div className="mt-3 p-3 bg-green-50 border border-green-200 rounded-lg">
-                  <p className="text-sm text-green-800 font-medium">📍 Current Location:</p>
-                  <p className="text-sm text-green-700">{profileData.houseLocation.address}</p>
-                  <p className="text-xs text-green-600">
-                    Coordinates: {profileData.houseLocation.lat.toFixed(6)}, {profileData.houseLocation.lng.toFixed(6)}
-                  </p>
-                </div>
-              )}
             </div>
-          </div>
-          
-          {/* Emergency Contact Section */}
-          <div className="bg-red-50 p-4 rounded-lg">
-            <h4 className="text-lg font-semibold text-red-900 mb-4">Emergency Contact Information</h4>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            
+            <form onSubmit={handleDocumentRequest} className="space-y-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Contact Name *</label>
-                <input
-                  type="text"
-                  value={profileData.emergencyContactName || ''}
-                  onChange={(e) => setProfileData(prev => ({ ...prev, emergencyContactName: e.target.value }))}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
-                  placeholder="Full name of emergency contact"
-                />
-              </div>
-              
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Contact Number *</label>
-                <input
-                  type="tel"
-                  value={profileData.emergencyContactPhone || ''}
-                  onChange={(e) => setProfileData(prev => ({ ...prev, emergencyContactPhone: e.target.value }))}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
-                  placeholder="+63 912 345 6789"
-                />
-              </div>
-              
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Relationship *</label>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Document Type</label>
                 <select
-                  value={profileData.emergencyContactRelation || ''}
-                  onChange={(e) => setProfileData(prev => ({ ...prev, emergencyContactRelation: e.target.value }))}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
+                  value={documentRequest.documentType}
+                  onChange={(e) => setDocumentRequest({...documentRequest, documentType: e.target.value})}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  required
                 >
-                  <option value="">Select relationship</option>
-                  <option value="spouse">Spouse</option>
-                  <option value="parent">Parent</option>
-                  <option value="sibling">Sibling</option>
-                  <option value="child">Child</option>
-                  <option value="relative">Relative</option>
-                  <option value="friend">Friend</option>
+                  <option value="">Select document type</option>
+                  <option value="Barangay Clearance">Barangay Clearance (₱50)</option>
+                  <option value="Certificate of Residency">Certificate of Residency (₱30)</option>
+                  <option value="Certificate of Indigency">Certificate of Indigency (₱25)</option>
+                  <option value="Business Permit">Business Permit (₱200)</option>
+                  <option value="Building Permit">Building Permit (₱500)</option>
+                  <option value="Cedula">Cedula (₱35)</option>
+                  <option value="Community Tax Certificate">Community Tax Certificate (₱35)</option>
+                  <option value="Barangay ID">Barangay ID (₱100)</option>
                 </select>
               </div>
               
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Contact Address</label>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Purpose</label>
                 <input
                   type="text"
-                  value={profileData.emergencyContactAddress || ''}
-                  onChange={(e) => setProfileData(prev => ({ ...prev, emergencyContactAddress: e.target.value }))}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
-                  placeholder="Emergency contact address"
+                  value={documentRequest.purpose}
+                  onChange={(e) => setDocumentRequest({...documentRequest, purpose: e.target.value})}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  placeholder="e.g., Employment requirement, School enrollment"
+                  required
                 />
               </div>
-            </div>
-          </div>
-        </div>
-        
-        <div className="p-4 sm:p-6 border-t border-gray-200">
-          <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3 mb-4">
-            <div className="flex items-start space-x-2">
-              <AlertTriangle className="h-5 w-5 text-yellow-600 mt-0.5" />
+              
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Quantity</label>
+                  <input
+                    type="number"
+                    min="1"
+                    max="10"
+                    value={documentRequest.quantity}
+                    onChange={(e) => setDocumentRequest({...documentRequest, quantity: parseInt(e.target.value)})}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Urgency</label>
+                  <select
+                    value={documentRequest.urgency}
+                    onChange={(e) => setDocumentRequest({...documentRequest, urgency: e.target.value})}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  >
+                    <option value="regular">Regular (3-5 days)</option>
+                    <option value="rush">Rush (1-2 days) +₱20</option>
+                    <option value="express">Express (Same day) +₱50</option>
+                  </select>
+                </div>
+              </div>
+              
               <div>
-                <p className="text-sm font-medium text-yellow-800">Important Notice</p>
-                <p className="text-xs text-yellow-700">
-                  Any changes to your profile will revert your verification status to semi-verified and require re-approval by barangay officials.
-                </p>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Additional Notes</label>
+                <textarea
+                  value={documentRequest.notes}
+                  onChange={(e) => setDocumentRequest({...documentRequest, notes: e.target.value})}
+                  rows={3}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  placeholder="Any special instructions or requirements"
+                />
               </div>
-            </div>
-          </div>
-          
-          <div className="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-3">
-            <button
-              onClick={onClose}
-              className="flex-1 px-4 py-2 text-gray-700 border border-gray-300 rounded-lg hover:bg-gray-50"
-            >
-              Cancel
-            </button>
-            <button
-              onClick={onSave}
-              className="flex-1 px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700"
-            >
-              Save Profile Changes
-            </button>
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-// Location Picker Modal Component
-function LocationPickerModal({ 
-  onLocationSelect, 
-  onClose 
-}: {
-  onLocationSelect: (location: { lat: number; lng: number; address: string }) => void;
-  onClose: () => void;
-}) {
-  const [selectedLocation, setSelectedLocation] = useState<{ lat: number; lng: number; address: string } | null>(null);
-  const [mapClicks, setMapClicks] = useState<{ lat: number; lng: number }[]>([]);
-  const [isSelecting, setIsSelecting] = useState(false);
-
-  const handleMapClick = (event: React.MouseEvent<HTMLDivElement>) => {
-    const rect = event.currentTarget.getBoundingClientRect();
-    const x = event.clientX - rect.left;
-    const y = event.clientY - rect.top;
-    
-    // Convert click coordinates to lat/lng (simplified calculation)
-    const lat = 14.5995 + (y - rect.height / 2) * 0.001;
-    const lng = 120.9842 + (x - rect.width / 2) * 0.001;
-    
-    // Simulate reverse geocoding with more realistic address
-    const streetNames = ['Main St', 'Oak Ave', 'Pine Rd', 'Maple Dr', 'Cedar Ln'];
-    const randomStreet = streetNames[Math.floor(Math.random() * streetNames.length)];
-    const houseNumber = Math.floor(Math.random() * 999) + 1;
-    const address = `${houseNumber} ${randomStreet}, Barangay San Miguel, Metro Manila`;
-    
-    setSelectedLocation({ lat, lng, address });
-    setMapClicks([...mapClicks, { lat, lng }]);
-  };
-
-  return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-lg max-w-4xl w-full max-h-[90vh] overflow-y-auto">
-        <div className="p-4 sm:p-6 border-b border-gray-200">
-          <div className="flex items-center justify-between">
-            <h3 className="text-lg font-semibold text-gray-900">Pin Your House Location</h3>
-            <button onClick={onClose} className="text-gray-400 hover:text-gray-600">
-              <X className="h-5 w-5" />
-            </button>
-          </div>
-        </div>
-        
-        <div className="p-4 sm:p-6">
-          <div className="space-y-4">
-            <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-              <h4 className="font-semibold text-blue-800 mb-2">📍 How to Pin Your Location</h4>
-              <ol className="text-sm text-blue-700 space-y-1">
-                <li>1. Click anywhere on the map below to pin your house location</li>
-                <li>2. The pin will appear where you clicked</li>
-                <li>3. Review the generated address</li>
-                <li>4. Click "Confirm Location" to save</li>
-              </ol>
-            </div>
-            
-            <div 
-              className="bg-gradient-to-br from-green-100 to-blue-100 h-64 sm:h-96 rounded-lg border-2 border-dashed border-gray-300 cursor-crosshair relative overflow-hidden"
-              onClick={handleMapClick}
-              style={{
-                backgroundImage: `
-                  radial-gradient(circle at 20% 30%, rgba(34, 197, 94, 0.1) 0%, transparent 50%),
-                  radial-gradient(circle at 80% 70%, rgba(59, 130, 246, 0.1) 0%, transparent 50%),
-                  linear-gradient(45deg, rgba(168, 85, 247, 0.05) 0%, rgba(236, 72, 153, 0.05) 100%)
-                `
-              }}
-            >
-              {/* Map Grid Pattern */}
-              <div className="absolute inset-0 opacity-20">
-                <div className="grid grid-cols-12 h-full">
-                  {Array.from({ length: 144 }, (_, i) => (
-                    <div key={i} className="border border-gray-300"></div>
-                  ))}
+              
+              <div className="bg-blue-50 p-4 rounded-lg">
+                <h4 className="font-semibold text-blue-800 mb-2">Fee Summary</h4>
+                <div className="text-sm text-blue-700">
+                  <p>Document Fee: ₱{documentRequest.documentType ? getDocumentFee(documentRequest.documentType) : 0}</p>
+                  <p>Quantity: {documentRequest.quantity}</p>
+                  <p>Urgency Fee: ₱{documentRequest.urgency === 'rush' ? 20 : documentRequest.urgency === 'express' ? 50 : 0}</p>
+                  <hr className="my-2 border-blue-200" />
+                  <p className="font-semibold">Total: ₱{
+                    (documentRequest.documentType ? getDocumentFee(documentRequest.documentType) : 0) * documentRequest.quantity +
+                    (documentRequest.urgency === 'rush' ? 20 : documentRequest.urgency === 'express' ? 50 : 0)
+                  }</p>
                 </div>
               </div>
               
-              {/* Street Labels */}
-              <div className="absolute top-4 left-4 bg-white bg-opacity-90 px-2 py-1 rounded text-xs font-medium text-gray-700">
-                Main Street
-              </div>
-              <div className="absolute bottom-4 right-4 bg-white bg-opacity-90 px-2 py-1 rounded text-xs font-medium text-gray-700">
-                Oak Avenue
-              </div>
-              
-              {/* Click Instructions */}
-              {!selectedLocation && (
-                <div className="absolute inset-0 flex items-center justify-center">
-                  <div className="text-center bg-white bg-opacity-95 p-6 rounded-lg shadow-lg">
-                    <MapPin className="h-12 w-12 text-purple-600 mx-auto mb-3" />
-                    <p className="text-gray-800 font-medium mb-2">Click anywhere on this map</p>
-                    <p className="text-sm text-gray-600">to pin your house location</p>
-                  </div>
-                </div>
-              )}
-              
-              {/* Location Pins */}
-              {mapClicks.map((click, index) => (
-                <div
-                  key={index}
-                  className="absolute transform -translate-x-1/2 -translate-y-full"
-                  style={{
-                    left: `${((click.lng - 120.9842) / 0.001 + 50) * (100 / 100)}%`,
-                    top: `${((click.lat - 14.5995) / -0.001 + 50) * (100 / 100)}%`
-                  }}
+              <div className="flex justify-end space-x-3">
+                <button
+                  type="button"
+                  onClick={() => setShowDocumentRequest(false)}
+                  className="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50"
                 >
-                  <div className="bg-red-500 w-6 h-6 rounded-full border-2 border-white shadow-lg flex items-center justify-center">
-                    <div className="w-2 h-2 bg-white rounded-full"></div>
-                  </div>
-                  {index === mapClicks.length - 1 && (
-                    <div className="absolute top-8 left-1/2 transform -translate-x-1/2 bg-red-500 text-white px-2 py-1 rounded text-xs whitespace-nowrap">
-                      Your House
-                    </div>
-                  )}
-                </div>
-              ))}
-            </div>
-          </div>
-          
-          {selectedLocation && (
-            <div className="bg-green-50 border border-green-200 rounded-lg p-4 mb-4">
-              <h4 className="font-semibold text-green-800 mb-2">Selected Location</h4>
-              <p className="text-green-700">Coordinates: {selectedLocation.lat.toFixed(6)}, {selectedLocation.lng.toFixed(6)}</p>
-              <p className="text-green-700">Address: {selectedLocation.address}</p>
-            </div>
-          )}
-        </div>
-        
-        <div className="p-4 sm:p-6 border-t border-gray-200">
-          <div className="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-3">
-            <button
-              onClick={onClose}
-              className="flex-1 px-4 py-2 text-gray-700 border border-gray-300 rounded-lg hover:bg-gray-50"
-            >
-              Cancel
-            </button>
-            <button
-              onClick={() => selectedLocation && onLocationSelect(selectedLocation)}
-              disabled={!selectedLocation}
-              className="flex-1 px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              Confirm Location
-            </button>
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-// Documents Section Component
-function DocumentsSection() {
-  const [selectedDocument, setSelectedDocument] = useState(null);
-  const documents = [
-    { id: 1, type: 'Barangay Clearance', status: 'Ready for Pickup', date: '2024-03-15', fee: 50 },
-    { id: 2, type: 'Certificate of Residency', status: 'Processing', date: '2024-03-14', fee: 30 },
-    { id: 3, type: 'Business Permit', status: 'Pending', date: '2024-03-13', fee: 200 }
-  ];
-
-  return (
-    <div className="space-y-4 sm:space-y-6">
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between space-y-4 sm:space-y-0">
-        <h2 className="text-xl sm:text-2xl font-bold text-gray-900">Document Requests</h2>
-        <button className="bg-purple-600 text-white px-4 py-2 rounded-lg hover:bg-purple-700 text-sm sm:text-base">
-          New Request
-        </button>
-      </div>
-
-      <div className="space-y-4">
-        {documents.map((doc) => (
-          <div key={doc.id} className="bg-white rounded-lg shadow-sm p-4 sm:p-6">
-            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between space-y-4 sm:space-y-0">
-              <div className="flex-1">
-                <h3 className="font-semibold text-gray-900 text-sm sm:text-base">{doc.type}</h3>
-                <p className="text-gray-600 text-sm">Requested on {doc.date}</p>
-                <p className="text-gray-600 text-sm">Fee: ₱{doc.fee}</p>
-              </div>
-              <div className="flex items-center space-x-4">
-                <span className={`px-3 py-1 rounded-full text-xs font-medium ${
-                  doc.status === 'Ready for Pickup' ? 'bg-green-100 text-green-800' :
-                  doc.status === 'Processing' ? 'bg-yellow-100 text-yellow-800' :
-                  'bg-gray-100 text-gray-800'
-                }`}>
-                  {doc.status}
-                </span>
-                <button 
-                  onClick={() => setSelectedDocument(doc)}
-                  className="text-purple-600 hover:text-purple-800 text-sm"
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
                 >
-                  View Details
+                  Submit Request
                 </button>
               </div>
-            </div>
+            </form>
           </div>
-        ))}
-      </div>
-    </div>
-  );
-}
+        </div>
+      )}
 
-// Announcements Section Component
-function AnnouncementsSection() {
-  const announcements = [
-    {
-      id: 1,
-      title: 'Community Health Drive',
-      content: 'Free medical checkup and vaccination for all residents.',
-      type: 'health',
-      priority: 'high',
-      date: '2024-03-20'
-    },
-    {
-      id: 2,
-      title: 'Road Maintenance Schedule',
-      content: 'Main Street will undergo maintenance from March 25-27.',
-      type: 'notice',
-      priority: 'medium',
-      date: '2024-03-18'
-    }
-  ];
+      {/* Incident Report Modal */}
+      {showIncidentReport && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-lg p-6 w-full max-w-3xl max-h-[90vh] overflow-y-auto">
+            <div className="flex items-center justify-between mb-6">
+              <h3 className="text-lg font-semibold">File Incident Report</h3>
+              <button
+                onClick={() => setShowIncidentReport(false)}
+                className="text-gray-400 hover:text-gray-600"
+              >
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+            
+            <form onSubmit={handleIncidentReport} className="space-y-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Incident Type</label>
+                  <select
+                    value={incidentReport.type}
+                    onChange={(e) => setIncidentReport({...incidentReport, type: e.target.value})}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-red-500"
+                    required
+                  >
+                    <option value="">Select incident type</option>
+                    <option value="noise">Noise Complaint</option>
+                    <option value="garbage">Garbage/Sanitation</option>
+                    <option value="road">Road/Infrastructure</option>
+                    <option value="water">Water Issues</option>
+                    <option value="electricity">Electrical Problems</option>
+                    <option value="security">Security Concerns</option>
+                    <option value="dispute">Neighbor Dispute</option>
+                    <option value="vandalism">Vandalism</option>
+                    <option value="theft">Theft/Robbery</option>
+                    <option value="other">Other</option>
+                  </select>
+                </div>
+                
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Priority Level</label>
+                  <select
+                    value={incidentReport.priority}
+                    onChange={(e) => setIncidentReport({...incidentReport, priority: e.target.value})}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-red-500"
+                  >
+                    <option value="low">Low - Non-urgent</option>
+                    <option value="medium">Medium - Moderate concern</option>
+                    <option value="high">High - Urgent attention needed</option>
+                  </select>
+                </div>
+              </div>
+              
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Subject/Title</label>
+                <input
+                  type="text"
+                  value={incidentReport.subject}
+                  onChange={(e) => setIncidentReport({...incidentReport, subject: e.target.value})}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-red-500"
+                  placeholder="Brief description of the incident"
+                  required
+                />
+              </div>
+              
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Detailed Description</label>
+                <textarea
+                  value={incidentReport.description}
+                  onChange={(e) => setIncidentReport({...incidentReport, description: e.target.value})}
+                  rows={4}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-red-500"
+                  placeholder="Provide detailed information about the incident"
+                  required
+                />
+              </div>
+              
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Location</label>
+                <input
+                  type="text"
+                  value={incidentReport.location}
+                  onChange={(e) => setIncidentReport({...incidentReport, location: e.target.value})}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-red-500"
+                  placeholder="Exact location where incident occurred"
+                  required
+                />
+              </div>
+              
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Date Occurred</label>
+                  <input
+                    type="date"
+                    value={incidentReport.dateOccurred}
+                    onChange={(e) => setIncidentReport({...incidentReport, dateOccurred: e.target.value})}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-red-500"
+                    max={new Date().toISOString().split('T')[0]}
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Time Occurred</label>
+                  <input
+                    type="time"
+                    value={incidentReport.timeOccurred}
+                    onChange={(e) => setIncidentReport({...incidentReport, timeOccurred: e.target.value})}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-red-500"
+                  />
+                </div>
+              </div>
+              
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Witness Name (Optional)</label>
+                  <input
+                    type="text"
+                    value={incidentReport.witnessName}
+                    onChange={(e) => setIncidentReport({...incidentReport, witnessName: e.target.value})}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-red-500"
+                    placeholder="Name of witness"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Witness Contact (Optional)</label>
+                  <input
+                    type="tel"
+                    value={incidentReport.witnessContact}
+                    onChange={(e) => setIncidentReport({...incidentReport, witnessContact: e.target.value})}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-red-500"
+                    placeholder="Contact number of witness"
+                  />
+                </div>
+              </div>
+              
+              <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+                <h4 className="font-semibold text-yellow-800 mb-2">Important Notice</h4>
+                <ul className="text-sm text-yellow-700 space-y-1">
+                  <li>• All incident reports are reviewed by barangay officials</li>
+                  <li>• False reporting may result in legal consequences</li>
+                  <li>• You will be contacted for follow-up if needed</li>
+                  <li>• Emergency situations should be reported to authorities immediately</li>
+                </ul>
+              </div>
+              
+              <div className="flex justify-end space-x-3">
+                <button
+                  type="button"
+                  onClick={() => setShowIncidentReport(false)}
+                  className="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700"
+                >
+                  Submit Report
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
 
-  return (
-    <div className="space-y-4 sm:space-y-6">
-      <h2 className="text-xl sm:text-2xl font-bold text-gray-900">Announcements</h2>
-      
-      <div className="space-y-4">
-        {announcements.map((announcement) => (
-          <div key={announcement.id} className="bg-white rounded-lg shadow-sm p-4 sm:p-6">
-            <div className="flex flex-col sm:flex-row items-start justify-between space-y-2 sm:space-y-0 mb-3">
-              <div className="flex flex-wrap items-center gap-2">
-                <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-                  announcement.type === 'health' ? 'bg-red-100 text-red-800' :
-                  announcement.type === 'notice' ? 'bg-blue-100 text-blue-800' :
-                  'bg-gray-100 text-gray-800'
+      {/* Document Details Modal */}
+      {selectedDocument && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-lg p-6 w-full max-w-lg">
+            <div className="flex items-center justify-between mb-6">
+              <h3 className="text-lg font-semibold">Document Details</h3>
+              <button
+                onClick={() => setSelectedDocument(null)}
+                className="text-gray-400 hover:text-gray-600"
+              >
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+            
+            <div className="space-y-4">
+              <div>
+                <label className="text-sm font-medium text-gray-700">Document Type</label>
+                <p className="text-gray-900">{selectedDocument.documentType}</p>
+              </div>
+              <div>
+                <label className="text-sm font-medium text-gray-700">Purpose</label>
+                <p className="text-gray-900">{selectedDocument.purpose}</p>
+              </div>
+              <div>
+                <label className="text-sm font-medium text-gray-700">Status</label>
+                <span className={`px-2 py-1 text-xs font-semibold rounded-full ${
+                  selectedDocument.status === 'released' ? 'bg-purple-100 text-purple-800' :
+                  selectedDocument.status === 'ready' ? 'bg-green-100 text-green-800' :
+                  selectedDocument.status === 'processing' ? 'bg-blue-100 text-blue-800' :
+                  selectedDocument.status === 'pending' ? 'bg-yellow-100 text-yellow-800' :
+                  'bg-red-100 text-red-800'
                 }`}>
-                  {announcement.type.toUpperCase()}
-                </span>
-                <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-                  announcement.priority === 'high' ? 'bg-red-100 text-red-800' :
-                  announcement.priority === 'medium' ? 'bg-yellow-100 text-yellow-800' :
-                  'bg-green-100 text-green-800'
-                }`}>
-                  {announcement.priority.toUpperCase()}
+                  {selectedDocument.status.toUpperCase()}
                 </span>
               </div>
-              <span className="text-sm text-gray-500">{announcement.date}</span>
+              <div>
+                <label className="text-sm font-medium text-gray-700">Fee</label>
+                <p className="text-gray-900">₱{selectedDocument.fee}</p>
+              </div>
+              <div>
+                <label className="text-sm font-medium text-gray-700">Date Requested</label>
+                <p className="text-gray-900">{selectedDocument.requestedDate}</p>
+              </div>
+              {selectedDocument.notes && (
+                <div>
+                  <label className="text-sm font-medium text-gray-700">Notes</label>
+                  <p className="text-gray-900">{selectedDocument.notes}</p>
+                </div>
+              )}
             </div>
-            <h3 className="font-semibold text-gray-900 mb-2 text-sm sm:text-base">{announcement.title}</h3>
-            <p className="text-gray-600 text-sm sm:text-base">{announcement.content}</p>
           </div>
-        ))}
-      </div>
+        </div>
+      )}
+
+      {/* Complaint Details Modal */}
+      {selectedComplaint && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-lg p-6 w-full max-w-2xl">
+            <div className="flex items-center justify-between mb-6">
+              <h3 className="text-lg font-semibold">Incident Report Details</h3>
+              <button
+                onClick={() => setSelectedComplaint(null)}
+                className="text-gray-400 hover:text-gray-600"
+              >
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+            
+            <div className="space-y-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label className="text-sm font-medium text-gray-700">Type</label>
+                  <p className="text-gray-900 capitalize">{selectedComplaint.type}</p>
+                </div>
+                <div>
+                  <label className="text-sm font-medium text-gray-700">Priority</label>
+                  <span className={`px-2 py-1 text-xs font-semibold rounded-full ${
+                    selectedComplaint.priority === 'high' ? 'bg-red-100 text-red-800' :
+                    selectedComplaint.priority === 'medium' ? 'bg-yellow-100 text-yellow-800' :
+                    'bg-green-100 text-green-800'
+                  }`}>
+                    {selectedComplaint.priority.toUpperCase()}
+                  </span>
+                </div>
+              </div>
+              
+              <div>
+                <label className="text-sm font-medium text-gray-700">Subject</label>
+                <p className="text-gray-900">{selectedComplaint.subject}</p>
+              </div>
+              
+              <div>
+                <label className="text-sm font-medium text-gray-700">Description</label>
+                <p className="text-gray-900">{selectedComplaint.description}</p>
+              </div>
+              
+              <div>
+                <label className="text-sm font-medium text-gray-700">Location</label>
+                <p className="text-gray-900">{selectedComplaint.location}</p>
+              </div>
+              
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label className="text-sm font-medium text-gray-700">Date Submitted</label>
+                  <p className="text-gray-900">{selectedComplaint.dateSubmitted}</p>
+                </div>
+                <div>
+                  <label className="text-sm font-medium text-gray-700">Status</label>
+                  <span className={`px-2 py-1 text-xs font-semibold rounded-full ${
+                    selectedComplaint.status === 'resolved' ? 'bg-green-100 text-green-800' :
+                    selectedComplaint.status === 'investigating' ? 'bg-blue-100 text-blue-800' :
+                    'bg-yellow-100 text-yellow-800'
+                  }`}>
+                    {selectedComplaint.status.toUpperCase()}
+                  </span>
+                </div>
+              </div>
+              
+              {selectedComplaint.assignedTo && (
+                <div>
+                  <label className="text-sm font-medium text-gray-700">Assigned To</label>
+                  <p className="text-gray-900">{selectedComplaint.assignedTo}</p>
+                </div>
+              )}
+              
+              {selectedComplaint.resolution && (
+                <div className="bg-green-50 border border-green-200 rounded-lg p-4">
+                  <label className="text-sm font-medium text-green-800">Resolution</label>
+                  <p className="text-green-700 mt-1">{selectedComplaint.resolution}</p>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
-}
-
-function getVerificationBadge(status: string) {
-  switch (status) {
-    case 'verified':
-      return (
-        <div className="flex items-center bg-green-100 text-green-800 px-3 py-1 rounded-full text-sm font-medium">
-          <CheckCircle className="h-4 w-4 mr-1" />
-          Fully Verified
-        </div>
-      );
-    case 'semi-verified':
-      return (
-        <div className="flex items-center bg-yellow-100 text-yellow-800 px-3 py-1 rounded-full text-sm font-medium">
-          <Clock className="h-4 w-4 mr-1" />
-          Semi-Verified
-        </div>
-      );
-    case 'details-updated':
-      return (
-        <div className="flex items-center bg-blue-100 text-blue-800 px-3 py-1 rounded-full text-sm font-medium">
-          <Edit className="h-4 w-4 mr-1" />
-          Details Updated
-        </div>
-      );
-    default:
-      return (
-        <div className="flex items-center bg-red-100 text-red-800 px-3 py-1 rounded-full text-sm font-medium">
-          <AlertTriangle className="h-4 w-4 mr-1" />
-          Unverified
-        </div>
-      );
-  }
 }
