@@ -3,6 +3,10 @@ import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { useData } from '../contexts/DataContext';
 import { dataService } from '../services/dataService';
+import { useOfflineSync } from '../hooks/useOfflineSync';
+import OfflineIndicator from '../components/OfflineIndicator';
+import OfflineDocumentForm from '../components/OfflineDocumentForm';
+import OfflineIncidentForm from '../components/OfflineIncidentForm';
 import VerificationStatus from '../components/VerificationStatus';
 import QRCodeDisplay from '../components/QRCodeDisplay';
 import FamilyTreeView from '../components/FamilyTreeView';
@@ -42,6 +46,7 @@ import {
 export default function ResidentDashboard() {
   const { user, updateUser, logout } = useAuth();
   const { documents: contextDocuments, addDocument, complaints, addComplaint } = useData();
+  const { status: offlineStatus } = useOfflineSync();
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState('profile');
   const [isEditing, setIsEditing] = useState(false);
@@ -699,6 +704,8 @@ export default function ResidentDashboard() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-purple-50 to-blue-50">
+      <OfflineIndicator />
+      
       {/* Header */}
       <div className="bg-gradient-to-r from-purple-600 to-purple-700 text-white shadow-lg">
         <div className="max-w-7xl mx-auto">
@@ -764,7 +771,19 @@ export default function ResidentDashboard() {
         {activeTab === 'profile' && renderProfile()}
         {activeTab === 'verification' && <VerificationStatus />}
         {activeTab === 'qr-code' && <QRCodeDisplay />}
-        {activeTab === 'documents' && renderDocuments()}
+        {activeTab === 'documents' && (
+          <div className="space-y-6">
+            <h2 className="text-2xl font-semibold text-gray-900">Document Requests</h2>
+            <OfflineDocumentForm />
+          </div>
+        )}
+        
+        {activeTab === 'incidents' && (
+          <div className="space-y-6">
+            <h2 className="text-2xl font-semibold text-gray-900">Report Incident</h2>
+            <OfflineIncidentForm />
+          </div>
+        )}
         {activeTab === 'complaints' && renderComplaints()}
         {activeTab === 'family' && <FamilyTreeView />}
       </div>
