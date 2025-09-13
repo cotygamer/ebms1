@@ -47,6 +47,7 @@ export default function ResidentDashboard() {
   const [activeTab, setActiveTab] = useState('dashboard');
   const [showProfileEdit, setShowProfileEdit] = useState(false);
   const [showLocationPicker, setShowLocationPicker] = useState(false);
+  const [showDocumentRequest, setShowDocumentRequest] = useState(false);
   const [profileData, setProfileData] = useState({
     name: user?.name || '',
     email: user?.email || '',
