@@ -47,7 +47,6 @@ export default function ResidentDashboard() {
   const [activeTab, setActiveTab] = useState('dashboard');
   const [showProfileEdit, setShowProfileEdit] = useState(false);
   const [showLocationPicker, setShowLocationPicker] = useState(false);
-  const [showDocumentRequest, setShowDocumentRequest] = useState(false);
   const [profileData, setProfileData] = useState({
     name: user?.name || '',
     email: user?.email || '',
@@ -323,90 +322,6 @@ export default function ResidentDashboard() {
         />
       )}
 
-      {/* Document Request Modal */}
-      {showDocumentRequest && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-          <div className="bg-white rounded-lg max-w-md w-full p-6">
-            <div className="flex items-center justify-between mb-6">
-              <h3 className="text-lg font-semibold text-gray-900">Request Document</h3>
-              <button
-                onClick={() => setShowDocumentRequest(false)}
-                className="text-gray-400 hover:text-gray-600"
-              >
-                <X className="h-5 w-5" />
-              </button>
-            </div>
-            
-            <div className="space-y-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Document Type</label>
-                <select
-                  value={newDocumentRequest.documentType}
-                  onChange={(e) => setNewDocumentRequest({ ...newDocumentRequest, documentType: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  required
-                >
-                  <option value="">Select document type</option>
-                  <option value="Barangay Clearance">Barangay Clearance (₱50)</option>
-                  <option value="Certificate of Residency">Certificate of Residency (₱30)</option>
-                  <option value="Certificate of Indigency">Certificate of Indigency (₱25)</option>
-                  <option value="Business Permit">Business Permit (₱200)</option>
-                  <option value="Building Permit">Building Permit (₱500)</option>
-                  <option value="Barangay ID">Barangay ID (₱20)</option>
-                </select>
-              </div>
-              
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Purpose</label>
-                <input
-                  type="text"
-                  value={newDocumentRequest.purpose}
-                  onChange={(e) => setNewDocumentRequest({ ...newDocumentRequest, purpose: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  placeholder="e.g., Employment, School enrollment, etc."
-                  required
-                />
-              </div>
-              
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Additional Notes (Optional)</label>
-                <textarea
-                  value={newDocumentRequest.notes}
-                  onChange={(e) => setNewDocumentRequest({ ...newDocumentRequest, notes: e.target.value })}
-                  rows={3}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  placeholder="Any additional information or special requests"
-                />
-              </div>
-              
-              <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-                <h4 className="font-semibold text-blue-800 mb-2">Processing Information</h4>
-                <ul className="text-sm text-blue-700 space-y-1">
-                  <li>• Processing time: 1-3 business days</li>
-                  <li>• Payment required before document release</li>
-                  <li>• Valid ID required for pickup</li>
-                  <li>• Documents expire after 6 months</li>
-                </ul>
-              </div>
-            </div>
-            
-            <div className="flex space-x-3 mt-6">
-              <button
-                onClick={() => setShowDocumentRequest(false)}
-                className="flex-1 px-4 py-2 text-gray-700 border border-gray-300 rounded-lg hover:bg-gray-50"
-              >
-                Cancel
-              </button>
-              <button
-                onClick={handleDocumentRequest}
-                className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
-              >
-                Submit Request
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
       {showLocationPicker && (
         <LocationPickerModal
           onLocationSelect={(location) => {

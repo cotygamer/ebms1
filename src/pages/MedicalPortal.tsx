@@ -468,7 +468,7 @@ const MedicalPortal: React.FC = () => {
         <h3 className="text-lg font-semibold text-gray-900 mb-4">Low Stock Alert</h3>
         <div className="space-y-3">
           {inventory.filter(item => item.stock < item.minimum).map((item, index) => (
-            <div key={index} className="flex items-center justify-between p-3 bg-red-50 rounded-lg">
+            <div key={index} className="flex items-center justify-between p-3 bg-red-50 rounded-lg border border-red-200">
               <div className="flex items-center">
                 <AlertTriangle className="h-6 w-6 text-red-500 mr-3" />
                 <div>
