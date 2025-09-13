@@ -230,9 +230,13 @@ export class DataService {
       }
       return data || []
     } catch (error) {
+      // Check if it's a table not found error
+      if (error.code === 'PGRST205' || error.message?.includes('Could not find the table')) {
+        console.warn('Incidents table not found, returning empty array')
+        return []
+      }
       console.error('Error fetching incidents:', error)
-      // Return empty array instead of throwing to prevent app crashes
-      return []
+      throw error
     }
   }
 
