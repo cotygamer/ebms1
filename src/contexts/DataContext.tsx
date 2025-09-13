@@ -1,4 +1,6 @@
 import React, { createContext, useContext, useState, ReactNode } from 'react';
+import { dataService } from '../services/dataService';
+import { useUsers, useResidents, useDocuments, useIncidents, useAnnouncements, useTransactions } from '../hooks/useRealTimeData';
 
 interface Resident {
   id: string;
@@ -168,7 +170,15 @@ interface User {
 const DataContext = createContext<DataContextType | undefined>(undefined);
 
 export function DataProvider({ children }: { children: ReactNode }) {
-  // Initialize settings from localStorage
+  // Use real-time data hooks
+  const { data: users, refresh: refreshUsers } = useUsers();
+  const { data: residents, refresh: refreshResidents } = useResidents();
+  const { data: documents, refresh: refreshDocuments } = useDocuments();
+  const { data: incidents, refresh: refreshIncidents } = useIncidents();
+  const { data: announcements, refresh: refreshAnnouncements } = useAnnouncements();
+  const { data: transactions, refresh: refreshTransactions } = useTransactions();
+
+  // Initialize settings from localStorage with Supabase sync
   const [systemSettings, setSystemSettings] = useState<SystemSettings>(() => {
     const savedSettings = localStorage.getItem('systemSettings');
     if (savedSettings) {
@@ -195,157 +205,15 @@ export function DataProvider({ children }: { children: ReactNode }) {
     };
   });
 
-  const [residents, setResidents] = useState<Resident[]>([
-    {
-      id: '1',
-      name: 'Juan Dela Cruz',
-      email: 'juan@email.com',
-      verificationStatus: 'verified',
-      qrCode: 'QR123456789',
-      familyTree: [
-        { id: 1, name: 'Juan Dela Cruz', relation: 'self', age: 35, gender: 'male' },
-        { id: 2, name: 'Maria Dela Cruz', relation: 'spouse', age: 32, gender: 'female' },
-        { id: 3, name: 'Pedro Dela Cruz', relation: 'son', age: 10, gender: 'male' },
-        { id: 4, name: 'Ana Dela Cruz', relation: 'daughter', age: 8, gender: 'female' }
-      ],
-      address: '123 Main St, Barangay Center',
-      phoneNumber: '+63 912 345 6789',
-      dateRegistered: '2024-01-15',
-      documents: ['Birth Certificate', 'Valid ID', 'Proof of Address']
-    },
-    {
-      id: '2',
-      name: 'Maria Santos',
-      email: 'maria@email.com',
-      verificationStatus: 'semi-verified',
-      familyTree: [
-        { id: 1, name: 'Maria Santos', relation: 'self', age: 28, gender: 'female' }
-      ],
-      address: '456 Oak Ave, Barangay North',
-      phoneNumber: '+63 917 654 3210',
-      dateRegistered: '2024-02-20',
-      documents: ['Valid ID']
+  // Updated functions to use centralized data service
+  const updateResident = async (id: string, updates: Partial<Resident>) => {
+    try {
+      await dataService.updateResident(id, updates);
+      refreshResidents();
+    } catch (error) {
+      console.error('Failed to update resident:', error);
+      throw error;
     }
-  ]);
-
-  const [documents, setDocuments] = useState<Document[]>([
-    {
-      id: '1',
-      residentId: '1',
-      documentType: 'Barangay Clearance',
-      status: 'ready',
-      requestedDate: '2024-03-10',
-      processedDate: '2024-03-12',
-      fee: 50,
-      paymentStatus: 'paid',
-      paymentMethod: 'cash',
-      purpose: 'Employment requirement'
-    }
-  ]);
-
-  const [announcements, setAnnouncements] = useState<Announcement[]>([
-    {
-      id: '1',
-      title: 'Community Health Drive - Free Medical Checkup',
-      content: 'Free medical checkup and vaccination for all residents. Bring your barangay ID and health records.',
-      type: 'health',
-      priority: 'high',
-      status: 'published',
-      author: 'Barangay Health Center',
-      createdAt: '2024-03-20',
-      updatedAt: '2024-03-20'
-    }
-  ]);
-
-  const [transactions, setTransactions] = useState<Transaction[]>([
-    {
-      id: '1',
-      type: 'revenue',
-      description: 'Document fees collection',
-      amount: 1250,
-      category: 'Document Services',
-      paymentMethod: 'cash',
-      transactionDate: '2024-03-15',
-      createdAt: '2024-03-15',
-      updatedAt: '2024-03-15'
-    }
-  ]);
-
-  const [complaints, setComplaints] = useState<Complaint[]>([
-    {
-      id: '1',
-      residentName: 'Juan Dela Cruz',
-      residentEmail: 'juan@email.com',
-      type: 'noise',
-      subject: 'Loud music from neighbor',
-      description: 'Neighbor playing loud music past 10 PM',
-      status: 'pending',
-      priority: 'medium',
-      dateSubmitted: '2024-03-15',
-      assignedTo: 'Barangay Tanod',
-      location: '123 Main St',
-      createdAt: '2024-03-15',
-      updatedAt: '2024-03-15'
-    }
-  ]);
-
-  const [users, setUsers] = useState<User[]>([
-    {
-      id: '1',
-      name: 'Super Administrator',
-      email: 'superadmin@barangay.gov',
-      role: 'super-admin',
-      status: 'active',
-      dateCreated: '2024-01-01',
-      lastLogin: '2024-03-15 10:30 AM',
-      permissions: ['all']
-    },
-    {
-      id: '2',
-      name: 'Barangay Captain',
-      email: 'captain@barangay.gov',
-      role: 'barangay-official',
-      status: 'active',
-      dateCreated: '2024-01-02',
-      lastLogin: '2024-03-15 09:15 AM',
-      permissions: ['residents', 'documents', 'reports', 'medical', 'accounting', 'disaster']
-    },
-    {
-      id: '3',
-      name: 'Dr. Maria Santos',
-      email: 'medical@barangay.gov',
-      role: 'medical-portal',
-      status: 'active',
-      dateCreated: '2024-01-03',
-      lastLogin: '2024-03-15 08:45 AM',
-      permissions: ['health', 'medical-records', 'appointments']
-    },
-    {
-      id: '4',
-      name: 'Ana Cruz',
-      email: 'accounting@barangay.gov',
-      role: 'accounting-portal',
-      status: 'active',
-      dateCreated: '2024-01-04',
-      lastLogin: '2024-03-15 08:30 AM',
-      permissions: ['accounting', 'financial-reports', 'payments']
-    },
-    {
-      id: '5',
-      name: 'Pedro Martinez',
-      email: 'disaster@barangay.gov',
-      role: 'disaster-portal',
-      status: 'active',
-      dateCreated: '2024-01-05',
-      lastLogin: '2024-03-15 08:15 AM',
-      permissions: ['disaster-management', 'emergency-alerts', 'evacuation']
-    }
-  ]);
-
-  const updateResident = (id: string, updates: Partial<Resident>) => {
-    setResidents(prev => prev.map(resident => 
-      resident.id === id ? { ...resident, ...updates } : resident
-    ));
   };
 
   const updateSystemSettings = (updates: Partial<SystemSettings>) => {
@@ -370,90 +238,150 @@ export function DataProvider({ children }: { children: ReactNode }) {
     });
   };
 
-  const verifyResident = (id: string, status: 'semi-verified' | 'verified') => {
-    setResidents(prev => prev.map(resident => {
-      if (resident.id === id) {
-        const qrCode = status === 'verified' ? `QR${Date.now()}${Math.random().toString(36).substr(2, 9)}` : undefined;
-        return { ...resident, verificationStatus: status, qrCode };
-      }
-      return resident;
-    }));
+  const verifyResident = async (id: string, status: 'semi-verified' | 'verified') => {
+    try {
+      await dataService.verifyResident(id, status);
+      refreshResidents();
+    } catch (error) {
+      console.error('Failed to verify resident:', error);
+      throw error;
+    }
   };
 
-  const addUser = (userData: Omit<User, 'id'>) => {
-    const newUser = {
-      ...userData,
-      id: Date.now().toString(),
-      dateCreated: new Date().toISOString().split('T')[0],
-      lastLogin: 'Never'
-    };
-    setUsers(prev => [...prev, newUser]);
+  const addUser = async (userData: Omit<User, 'id'>) => {
+    try {
+      await dataService.createUser({
+        ...userData,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString()
+      });
+      refreshUsers();
+    } catch (error) {
+      console.error('Failed to add user:', error);
+      throw error;
+    }
   };
 
-  const updateUser = (id: string, updates: Partial<User>) => {
-    setUsers(prev => prev.map(user => 
-      user.id === id ? { ...user, ...updates } : user
-    ));
+  const updateUser = async (id: string, updates: Partial<User>) => {
+    try {
+      await dataService.updateUser(id, updates);
+      refreshUsers();
+    } catch (error) {
+      console.error('Failed to update user:', error);
+      throw error;
+    }
   };
 
-  const deleteUser = (id: string) => {
-    setUsers(prev => prev.filter(user => user.id !== id));
+  const deleteUser = async (id: string) => {
+    try {
+      await dataService.deleteUser(id);
+      refreshUsers();
+    } catch (error) {
+      console.error('Failed to delete user:', error);
+      throw error;
+    }
   };
 
-  const addDocument = (documentData: Omit<Document, 'id'>) => {
-    const newDocument = {
-      ...documentData,
-      id: Date.now().toString()
-    };
-    setDocuments(prev => [...prev, newDocument]);
+  const addDocument = async (documentData: Omit<Document, 'id'>) => {
+    try {
+      await dataService.createDocument(documentData);
+      refreshDocuments();
+    } catch (error) {
+      console.error('Failed to add document:', error);
+      throw error;
+    }
   };
 
-  const updateDocument = (id: string, updates: Partial<Document>) => {
-    setDocuments(prev => prev.map(doc => 
-      doc.id === id ? { ...doc, ...updates } : doc
-    ));
+  const updateDocument = async (id: string, updates: Partial<Document>) => {
+    try {
+      await dataService.updateDocument(id, updates);
+      refreshDocuments();
+    } catch (error) {
+      console.error('Failed to update document:', error);
+      throw error;
+    }
   };
 
-  const addAnnouncement = (announcementData: Omit<Announcement, 'id'>) => {
-    const newAnnouncement = {
-      ...announcementData,
-      id: Date.now().toString(),
-      createdAt: new Date().toISOString().split('T')[0],
-      updatedAt: new Date().toISOString().split('T')[0]
-    };
-    setAnnouncements(prev => [newAnnouncement, ...prev]);
+  const addAnnouncement = async (announcementData: Omit<Announcement, 'id'>) => {
+    try {
+      await dataService.createAnnouncement({
+        ...announcementData,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString()
+      });
+      refreshAnnouncements();
+    } catch (error) {
+      console.error('Failed to add announcement:', error);
+      throw error;
+    }
   };
 
-  const updateAnnouncement = (id: string, updates: Partial<Announcement>) => {
-    setAnnouncements(prev => prev.map(announcement => 
-      announcement.id === id ? { ...announcement, ...updates, updatedAt: new Date().toISOString().split('T')[0] } : announcement
-    ));
+  const updateAnnouncement = async (id: string, updates: Partial<Announcement>) => {
+    try {
+      await dataService.updateAnnouncement(id, {
+        ...updates,
+        updated_at: new Date().toISOString()
+      });
+      refreshAnnouncements();
+    } catch (error) {
+      console.error('Failed to update announcement:', error);
+      throw error;
+    }
   };
 
-  const addTransaction = (transactionData: Omit<Transaction, 'id'>) => {
-    const newTransaction = {
-      ...transactionData,
-      id: Date.now().toString(),
-      createdAt: new Date().toISOString().split('T')[0],
-      updatedAt: new Date().toISOString().split('T')[0]
-    };
-    setTransactions(prev => [newTransaction, ...prev]);
+  const addTransaction = async (transactionData: Omit<Transaction, 'id'>) => {
+    try {
+      await dataService.createTransaction({
+        ...transactionData,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString()
+      });
+      refreshTransactions();
+    } catch (error) {
+      console.error('Failed to add transaction:', error);
+      throw error;
+    }
   };
 
-  const addComplaint = (complaintData: Omit<Complaint, 'id'>) => {
-    const newComplaint = {
-      ...complaintData,
-      id: Date.now().toString(),
-      createdAt: new Date().toISOString().split('T')[0],
-      updatedAt: new Date().toISOString().split('T')[0]
-    };
-    setComplaints(prev => [newComplaint, ...prev]);
+  const addComplaint = async (complaintData: Omit<Complaint, 'id'>) => {
+    try {
+      await dataService.createIncident({
+        reporter_name: complaintData.residentName,
+        reporter_email: complaintData.residentEmail,
+        incident_type: complaintData.type,
+        subject: complaintData.subject,
+        description: complaintData.description,
+        status: complaintData.status,
+        priority: complaintData.priority,
+        location: complaintData.location,
+        date_occurred: complaintData.dateOccurred,
+        time_occurred: complaintData.timeOccurred,
+        witness_name: complaintData.witnessName,
+        witness_contact: complaintData.witnessContact,
+        assigned_to: complaintData.assignedTo,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString()
+      });
+      refreshIncidents();
+    } catch (error) {
+      console.error('Failed to add complaint:', error);
+      throw error;
+    }
   };
 
-  const updateComplaint = (id: string, updates: Partial<Complaint>) => {
-    setComplaints(prev => prev.map(complaint => 
-      complaint.id === id ? { ...complaint, ...updates, updatedAt: new Date().toISOString().split('T')[0] } : complaint
-    ));
+  const updateComplaint = async (id: string, updates: Partial<Complaint>) => {
+    try {
+      await dataService.updateIncident(id, {
+        status: updates.status,
+        assigned_to: updates.assignedTo,
+        resolution: updates.resolution,
+        updated_at: new Date().toISOString()
+      });
+      refreshIncidents();
+    } catch (error) {
+      console.error('Failed to update complaint:', error);
+      throw error;
+    }
   };
 
   return (
@@ -464,7 +392,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
       documents,
       announcements,
       transactions,
-      complaints,
+      complaints: incidents, // Map incidents to complaints for backward compatibility
       updateResident,
       updateSystemSettings,
       verifyResident,
