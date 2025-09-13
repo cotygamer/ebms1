@@ -99,15 +99,41 @@ export class DataService {
   static async createResident(residentData: any) {
     console.log('Creating resident with data:', residentData);
     
+    // Ensure all required fields are present and properly formatted
+    const cleanedData = {
+      name: residentData.name,
+      email: residentData.email,
+      phone_number: residentData.phone_number,
+      address: residentData.address,
+      verification_status: residentData.verification_status || 'non-verified',
+      birth_date: residentData.birth_date,
+      gender: residentData.gender,
+      civil_status: residentData.civil_status,
+      emergency_contact: residentData.emergency_contact,
+      date_registered: residentData.date_registered || new Date().toISOString().split('T')[0],
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString()
+    };
+
+    console.log('Cleaned resident data:', cleanedData);
+    
     const { data, error } = await supabase
       .from('residents')
-      .insert([residentData])
+      .insert([cleanedData])
       .select()
       .single()
     
     if (error) {
       console.error('Supabase error creating resident:', error);
-      throw error;
+      
+      // Provide more specific error messages
+      if (error.code === '42501') {
+        throw new Error('Registration is temporarily unavailable. Please contact the barangay office.');
+      } else if (error.code === '23505') {
+        throw new Error('An account with this email already exists.');
+      } else {
+        throw new Error(`Registration failed: ${error.message}`);
+      }
     }
     
     console.log('Resident created successfully:', data);
