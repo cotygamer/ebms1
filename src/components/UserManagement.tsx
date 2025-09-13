@@ -235,6 +235,9 @@ export default function UserManagement() {
                     <div className="ml-4">
                       <div className="text-sm font-medium text-gray-900">{user.name}</div>
                       <div className="text-sm text-gray-500">{user.email}</div>
+                      {user.phone_number && (
+                        <div className="text-xs text-gray-400">{user.phone_number}</div>
+                      )}
                     </div>
                   </div>
                 </td>
@@ -249,7 +252,7 @@ export default function UserManagement() {
                   </span>
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                  {user.lastLogin}
+                  {user.last_login ? new Date(user.last_login).toLocaleDateString() : 'Never'}
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm font-medium space-x-2">
                   <button
@@ -318,6 +321,14 @@ export default function UserManagement() {
                       <p className="text-sm text-gray-900">{selectedUser.email}</p>
                     </div>
                     <div>
+                      <label className="text-sm font-medium text-gray-700">Phone</label>
+                      <p className="text-sm text-gray-900">{selectedUser.phone_number || 'Not provided'}</p>
+                    </div>
+                    <div>
+                      <label className="text-sm font-medium text-gray-700">Address</label>
+                      <p className="text-sm text-gray-900">{selectedUser.address || 'Not provided'}</p>
+                    </div>
+                    <div>
                       <label className="text-sm font-medium text-gray-700">Role</label>
                       <p className="text-sm text-gray-900 capitalize">{selectedUser.role.replace('-', ' ')}</p>
                     </div>
@@ -333,11 +344,15 @@ export default function UserManagement() {
                   <div className="space-y-3">
                     <div>
                       <label className="text-sm font-medium text-gray-700">Date Created</label>
-                      <p className="text-sm text-gray-900">{selectedUser.dateCreated}</p>
+                      <p className="text-sm text-gray-900">{new Date(selectedUser.created_at).toLocaleDateString()}</p>
                     </div>
                     <div>
                       <label className="text-sm font-medium text-gray-700">Last Login</label>
-                      <p className="text-sm text-gray-900">{selectedUser.lastLogin}</p>
+                      <p className="text-sm text-gray-900">{selectedUser.last_login ? new Date(selectedUser.last_login).toLocaleDateString() : 'Never'}</p>
+                    </div>
+                    <div>
+                      <label className="text-sm font-medium text-gray-700">Last Updated</label>
+                      <p className="text-sm text-gray-900">{new Date(selectedUser.updated_at).toLocaleDateString()}</p>
                     </div>
                   </div>
                 </div>
@@ -367,7 +382,7 @@ export default function UserManagement() {
           <div className="bg-white rounded-lg max-w-2xl w-full max-h-[90vh] overflow-y-auto">
             <div className="p-6 border-b border-gray-200">
               <div className="flex items-center justify-between">
-                <h3 className="text-lg font-semibold text-gray-900">Edit User - Basic Info</h3>
+                <h3 className="text-lg font-semibold text-gray-900">Edit User - Complete Profile</h3>
                 <button
                   onClick={() => setEditingUser(null)}
                   className="text-gray-400 hover:text-gray-600"
@@ -402,6 +417,17 @@ export default function UserManagement() {
                 </div>
                 
                 <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Phone Number</label>
+                  <input
+                    type="tel"
+                    value={editUserData.phone_number}
+                    onChange={(e) => setEditUserData({ ...editUserData, phone_number: e.target.value })}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    placeholder="+63 912 345 6789"
+                  />
+                </div>
+                
+                <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">Role</label>
                   <select
                     value={editUserData.role}
@@ -432,22 +458,13 @@ export default function UserManagement() {
               </div>
               
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Phone Number</label>
-                <input
-                  type="tel"
-                  value={editUserData.phone_number}
-                  onChange={(e) => setEditUserData({ ...editUserData, phone_number: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                />
-              </div>
-              
-              <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">Address</label>
                 <textarea
                   value={editUserData.address}
                   onChange={(e) => setEditUserData({ ...editUserData, address: e.target.value })}
                   rows={2}
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  placeholder="Complete address"
                 />
               </div>
               
@@ -489,7 +506,7 @@ export default function UserManagement() {
           <div className="bg-white rounded-lg max-w-md w-full max-h-[90vh] overflow-y-auto">
             <div className="p-6 border-b border-gray-200">
               <div className="flex items-center justify-between">
-                <h3 className="text-lg font-semibold text-gray-900">Add New User - Basic Info</h3>
+                <h3 className="text-lg font-semibold text-gray-900">Add New User</h3>
                 <button
                   onClick={() => setShowAddUser(false)}
                   className="text-gray-400 hover:text-gray-600"
@@ -525,6 +542,17 @@ export default function UserManagement() {
               </div>
               
               <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Phone Number</label>
+                <input
+                  type="tel"
+                  value={newUser.phone_number || ''}
+                  onChange={(e) => setNewUser({ ...newUser, phone_number: e.target.value })}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  placeholder="+63 912 345 6789"
+                />
+              </div>
+              
+              <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">Role *</label>
                 <select
                   value={newUser.role}
@@ -553,24 +581,13 @@ export default function UserManagement() {
               </div>
               
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Phone Number</label>
-                <input
-                  type="tel"
-                  value={newUser.phone_number || ''}
-                  onChange={(e) => setNewUser({ ...newUser, phone_number: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  placeholder="Enter phone number"
-                />
-              </div>
-              
-              <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">Address</label>
                 <textarea
                   value={newUser.address || ''}
                   onChange={(e) => setNewUser({ ...newUser, address: e.target.value })}
                   rows={2}
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  placeholder="Enter address"
+                  placeholder="Complete address"
                 />
               </div>
               

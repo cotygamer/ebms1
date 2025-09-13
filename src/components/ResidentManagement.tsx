@@ -192,15 +192,15 @@ export default function ResidentManagement() {
                     <div className="ml-4">
                       <div className="text-sm font-medium text-gray-900">{resident.name}</div>
                       <div className="text-sm text-gray-500">{resident.email}</div>
-                      {resident.phone && (
-                        <div className="text-xs text-gray-400">{resident.phone}</div>
+                      {resident.phone_number && (
+                        <div className="text-xs text-gray-400">{resident.phone_number}</div>
                       )}
                     </div>
                   </div>
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap">
-                  <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getStatusColor(resident.verificationStatus)}`}>
-                    {(resident.verificationStatus || 'unknown').replace('-', ' ')}
+                  <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getStatusColor(resident.verification_status)}`}>
+                    {(resident.verification_status || 'unknown').replace('-', ' ')}
                   </span>
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap">
@@ -217,10 +217,10 @@ export default function ResidentManagement() {
                   )}
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                  {resident.dateRegistered}
+                  {resident.date_registered}
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                  {resident.qrCode ? (
+                  {resident.qr_code ? (
                     <QrCode className="h-5 w-5 text-green-600" />
                   ) : (
                     <span className="text-gray-400">No QR</span>
@@ -248,17 +248,19 @@ export default function ResidentManagement() {
                   >
                     <Key className="h-4 w-4" />
                   </button>
-                  {resident.verificationStatus !== 'verified' && (
+                  {resident.verification_status !== 'verified' && (
                     <>
                       <button
                         onClick={() => handleVerifyResident(resident.id, 'semi-verified')}
                         className="text-yellow-600 hover:text-yellow-900"
+                        title="Semi-verify"
                       >
                         <UserCheck className="h-4 w-4" />
                       </button>
                       <button
                         onClick={() => handleVerifyResident(resident.id, 'verified')}
                         className="text-green-600 hover:text-green-900"
+                        title="Fully verify"
                       >
                         <UserCheck className="h-4 w-4" />
                       </button>
@@ -297,7 +299,7 @@ export default function ResidentManagement() {
           <div className="bg-white rounded-lg max-w-4xl w-full max-h-[90vh] overflow-y-auto">
             <div className="p-6 border-b border-gray-200">
               <div className="flex items-center justify-between">
-                <h3 className="text-lg font-semibold text-gray-900">Edit Resident Information</h3>
+                <h3 className="text-lg font-semibold text-gray-900">Edit Complete Resident Profile</h3>
                 <button
                   onClick={() => setEditingResident(null)}
                   className="text-gray-400 hover:text-gray-600"
@@ -340,6 +342,39 @@ export default function ResidentManagement() {
                 </div>
                 
                 <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Nationality</label>
+                  <input
+                    type="text"
+                    value={editingResident.nationality || ''}
+                    onChange={(e) => setEditingResident({ ...editingResident, nationality: e.target.value })}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    placeholder="Filipino"
+                  />
+                </div>
+                
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Religion</label>
+                  <input
+                    type="text"
+                    value={editingResident.religion || ''}
+                    onChange={(e) => setEditingResident({ ...editingResident, religion: e.target.value })}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    placeholder="Roman Catholic"
+                  />
+                </div>
+                
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Occupation</label>
+                  <input
+                    type="text"
+                    value={editingResident.occupation || ''}
+                    onChange={(e) => setEditingResident({ ...editingResident, occupation: e.target.value })}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    placeholder="Teacher, Engineer, etc."
+                  />
+                </div>
+                
+                <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">Birth Date</label>
                   <input
                     type="date"
@@ -377,6 +412,22 @@ export default function ResidentManagement() {
                     <option value="divorced">Divorced</option>
                   </select>
                 </div>
+                
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Monthly Income</label>
+                  <select
+                    value={editingResident.monthly_income || ''}
+                    onChange={(e) => setEditingResident({ ...editingResident, monthly_income: e.target.value })}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  >
+                    <option value="">Select income range</option>
+                    <option value="below-10000">Below ₱10,000</option>
+                    <option value="10000-25000">₱10,000 - ₱25,000</option>
+                    <option value="25000-50000">₱25,000 - ₱50,000</option>
+                    <option value="50000-100000">₱50,000 - ₱100,000</option>
+                    <option value="above-100000">Above ₱100,000</option>
+                  </select>
+                </div>
               </div>
               
               <div>
@@ -408,9 +459,23 @@ export default function ResidentManagement() {
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                 >
                   <option value="non-verified">Non-verified</option>
+                  <option value="details-updated">Details Updated</option>
                   <option value="semi-verified">Semi-verified</option>
                   <option value="verified">Verified</option>
                 </select>
+              </div>
+              
+              <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+                <div className="flex items-center">
+                  <AlertTriangle className="h-5 w-5 text-yellow-600 mr-2" />
+                  <div>
+                    <h4 className="font-medium text-yellow-800">Important Note</h4>
+                    <p className="text-sm text-yellow-700">
+                      Changes to resident information may affect their verification status. 
+                      Major changes may require re-verification.
+                    </p>
+                  </div>
+                </div>
               </div>
               
               <div className="flex space-x-3">

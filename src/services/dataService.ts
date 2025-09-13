@@ -110,6 +110,10 @@ export class DataService {
       gender: residentData.gender,
       civil_status: residentData.civil_status,
       emergency_contact: residentData.emergency_contact,
+      nationality: residentData.nationality || 'Filipino',
+      religion: residentData.religion,
+      occupation: residentData.occupation,
+      monthly_income: residentData.monthly_income,
       date_registered: residentData.date_registered || new Date().toISOString().split('T')[0],
       created_at: new Date().toISOString(),
       updated_at: new Date().toISOString()
@@ -173,6 +177,357 @@ export class DataService {
     })
   }
 
+  // Appointments Management
+  static async getAppointments() {
+    const { data, error } = await supabase
+      .from('appointments')
+      .select(`
+        *,
+        residents (
+          name,
+          email,
+          phone_number
+        )
+      `)
+      .order('appointment_date', { ascending: true })
+    
+    if (error) throw error
+    return data
+  }
+
+  static async createAppointment(appointmentData: any) {
+    const { data, error } = await supabase
+      .from('appointments')
+      .insert([appointmentData])
+      .select()
+      .single()
+    
+    if (error) throw error
+    
+    // Log the action
+    await this.logAction('appointment.create', 'appointment', data.id, null, data)
+    
+    return data
+  }
+
+  static async updateAppointment(id: string, updates: any) {
+    const { data: oldData } = await supabase
+      .from('appointments')
+      .select('*')
+      .eq('id', id)
+      .single()
+
+    const { data, error } = await supabase
+      .from('appointments')
+      .update({ ...updates, updated_at: new Date().toISOString() })
+      .eq('id', id)
+      .select()
+      .single()
+    
+    if (error) throw error
+    
+    // Log the action
+    await this.logAction('appointment.update', 'appointment', id, oldData, data)
+    
+    return data
+  }
+
+  // Patients Management
+  static async getPatients() {
+    const { data, error } = await supabase
+      .from('patients')
+      .select(`
+        *,
+        residents (
+          name,
+          email,
+          phone_number
+        )
+      `)
+      .order('created_at', { ascending: false })
+    
+    if (error) throw error
+    return data
+  }
+
+  static async createPatient(patientData: any) {
+    const { data, error } = await supabase
+      .from('patients')
+      .insert([patientData])
+      .select()
+      .single()
+    
+    if (error) throw error
+    
+    // Log the action
+    await this.logAction('patient.create', 'patient', data.id, null, data)
+    
+    return data
+  }
+
+  static async updatePatient(id: string, updates: any) {
+    const { data: oldData } = await supabase
+      .from('patients')
+      .select('*')
+      .eq('id', id)
+      .single()
+
+    const { data, error } = await supabase
+      .from('patients')
+      .update({ ...updates, updated_at: new Date().toISOString() })
+      .eq('id', id)
+      .select()
+      .single()
+    
+    if (error) throw error
+    
+    // Log the action
+    await this.logAction('patient.update', 'patient', id, oldData, data)
+    
+    return data
+  }
+
+  // Medical Records Management
+  static async getMedicalRecords() {
+    const { data, error } = await supabase
+      .from('medical_records')
+      .select(`
+        *,
+        patients (
+          name,
+          age,
+          gender,
+          contact_number
+        )
+      `)
+      .order('visit_date', { ascending: false })
+    
+    if (error) throw error
+    return data
+  }
+
+  static async createMedicalRecord(recordData: any) {
+    const { data, error } = await supabase
+      .from('medical_records')
+      .insert([recordData])
+      .select()
+      .single()
+    
+    if (error) throw error
+    
+    // Log the action
+    await this.logAction('medical_record.create', 'medical_record', data.id, null, data)
+    
+    return data
+  }
+
+  // Inventory Management
+  static async getInventoryItems() {
+    const { data, error } = await supabase
+      .from('inventory_items')
+      .select('*')
+      .order('name', { ascending: true })
+    
+    if (error) throw error
+    return data
+  }
+
+  static async createInventoryItem(itemData: any) {
+    const { data, error } = await supabase
+      .from('inventory_items')
+      .insert([itemData])
+      .select()
+      .single()
+    
+    if (error) throw error
+    
+    // Log the action
+    await this.logAction('inventory.create', 'inventory_item', data.id, null, data)
+    
+    return data
+  }
+
+  static async updateInventoryItem(id: string, updates: any) {
+    const { data: oldData } = await supabase
+      .from('inventory_items')
+      .select('*')
+      .eq('id', id)
+      .single()
+
+    const { data, error } = await supabase
+      .from('inventory_items')
+      .update({ ...updates, updated_at: new Date().toISOString() })
+      .eq('id', id)
+      .select()
+      .single()
+    
+    if (error) throw error
+    
+    // Log the action
+    await this.logAction('inventory.update', 'inventory_item', id, oldData, data)
+    
+    return data
+  }
+
+  // Projects Management
+  static async getProjects() {
+    const { data, error } = await supabase
+      .from('projects')
+      .select(`
+        *,
+        project_achievements (
+          id,
+          achievement,
+          date_achieved,
+          description
+        )
+      `)
+      .order('created_at', { ascending: false })
+    
+    if (error) throw error
+    return data
+  }
+
+  static async createProject(projectData: any) {
+    const { data, error } = await supabase
+      .from('projects')
+      .insert([projectData])
+      .select()
+      .single()
+    
+    if (error) throw error
+    
+    // Log the action
+    await this.logAction('project.create', 'project', data.id, null, data)
+    
+    return data
+  }
+
+  static async updateProject(id: string, updates: any) {
+    const { data: oldData } = await supabase
+      .from('projects')
+      .select('*')
+      .eq('id', id)
+      .single()
+
+    const { data, error } = await supabase
+      .from('projects')
+      .update({ ...updates, updated_at: new Date().toISOString() })
+      .eq('id', id)
+      .select()
+      .single()
+    
+    if (error) throw error
+    
+    // Log the action
+    await this.logAction('project.update', 'project', id, oldData, data)
+    
+    return data
+  }
+
+  // Business Permits Management
+  static async getBusinessPermits() {
+    const { data, error } = await supabase
+      .from('business_permits')
+      .select('*')
+      .order('created_at', { ascending: false })
+    
+    if (error) throw error
+    return data
+  }
+
+  static async createBusinessPermit(permitData: any) {
+    const { data, error } = await supabase
+      .from('business_permits')
+      .insert([permitData])
+      .select()
+      .single()
+    
+    if (error) throw error
+    
+    // Log the action
+    await this.logAction('business_permit.create', 'business_permit', data.id, null, data)
+    
+    return data
+  }
+
+  static async updateBusinessPermit(id: string, updates: any) {
+    const { data: oldData } = await supabase
+      .from('business_permits')
+      .select('*')
+      .eq('id', id)
+      .single()
+
+    const { data, error } = await supabase
+      .from('business_permits')
+      .update({ ...updates, updated_at: new Date().toISOString() })
+      .eq('id', id)
+      .select()
+      .single()
+    
+    if (error) throw error
+    
+    // Log the action
+    await this.logAction('business_permit.update', 'business_permit', id, oldData, data)
+    
+    return data
+  }
+
+  // System Settings Management
+  static async getSystemSettings() {
+    const { data, error } = await supabase
+      .from('system_settings')
+      .select('*')
+    
+    if (error) throw error
+    
+    // Convert to key-value object
+    const settings: any = {}
+    data?.forEach(setting => {
+      settings[setting.key] = setting.value
+    })
+    
+    return settings
+  }
+
+  static async updateSystemSetting(key: string, value: any) {
+    const { data, error } = await supabase
+      .from('system_settings')
+      .upsert([{
+        key,
+        value,
+        updated_at: new Date().toISOString()
+      }])
+      .select()
+      .single()
+    
+    if (error) throw error
+    
+    // Log the action
+    await this.logAction('system_setting.update', 'system_setting', key, null, { key, value })
+    
+    return data
+  }
+
+  static async updateMultipleSystemSettings(settings: Record<string, any>) {
+    const updates = Object.entries(settings).map(([key, value]) => ({
+      key,
+      value,
+      updated_at: new Date().toISOString()
+    }))
+
+    const { data, error } = await supabase
+      .from('system_settings')
+      .upsert(updates)
+      .select()
+    
+    if (error) throw error
+    
+    // Log the action
+    await this.logAction('system_settings.bulk_update', 'system_settings', 'bulk', null, settings)
+    
+    return data
+  }
   // Documents Management
   static async getDocuments() {
     const { data, error } = await supabase

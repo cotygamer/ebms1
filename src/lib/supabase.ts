@@ -23,6 +23,7 @@ export interface Database {
           permissions: any[]
           phone_number?: string
           address?: string
+          password_hash?: string
           last_login?: string
           created_at: string
           updated_at: string
@@ -35,6 +36,7 @@ export interface Database {
           permissions?: any[]
           phone_number?: string
           address?: string
+          password_hash?: string
         }
         Update: {
           email?: string
@@ -44,6 +46,7 @@ export interface Database {
           permissions?: any[]
           phone_number?: string
           address?: string
+          password_hash?: string
           last_login?: string
         }
       }
@@ -62,6 +65,13 @@ export interface Database {
           birth_date?: string
           gender?: string
           civil_status?: string
+          nationality?: string
+          religion?: string
+          occupation?: string
+          monthly_income?: string
+          house_location?: any
+          government_ids?: any
+          profile_data?: any
           created_at: string
           updated_at: string
         }
@@ -78,6 +88,13 @@ export interface Database {
           birth_date?: string
           gender?: string
           civil_status?: string
+          nationality?: string
+          religion?: string
+          occupation?: string
+          monthly_income?: string
+          house_location?: any
+          government_ids?: any
+          profile_data?: any
         }
         Update: {
           user_id?: string
@@ -91,6 +108,13 @@ export interface Database {
           birth_date?: string
           gender?: string
           civil_status?: string
+          nationality?: string
+          religion?: string
+          occupation?: string
+          monthly_income?: string
+          house_location?: any
+          government_ids?: any
+          profile_data?: any
         }
       }
       documents: {
@@ -107,6 +131,7 @@ export interface Database {
           payment_method?: string
           notes?: string
           purpose?: string
+          tracking_number?: string
           created_at: string
           updated_at: string
         }
@@ -119,6 +144,7 @@ export interface Database {
           payment_method?: string
           notes?: string
           purpose?: string
+          tracking_number?: string
         }
         Update: {
           status?: string
@@ -127,6 +153,7 @@ export interface Database {
           payment_status?: string
           payment_method?: string
           notes?: string
+          tracking_number?: string
         }
       }
       incidents: {
@@ -148,6 +175,7 @@ export interface Database {
           assigned_to?: string
           resolution?: string
           date_submitted: string
+          evidence_files?: any[]
           created_at: string
           updated_at: string
         }
@@ -166,11 +194,13 @@ export interface Database {
           witness_name?: string
           witness_contact?: string
           assigned_to?: string
+          evidence_files?: any[]
         }
         Update: {
           status?: string
           assigned_to?: string
           resolution?: string
+          evidence_files?: any[]
         }
       }
       announcements: {
@@ -182,7 +212,9 @@ export interface Database {
           priority: string
           status: string
           author: string
+          target_audience?: string
           expires_at?: string
+          image_url?: string
           created_at: string
           updated_at: string
         }
@@ -193,7 +225,9 @@ export interface Database {
           priority?: string
           status?: string
           author: string
+          target_audience?: string
           expires_at?: string
+          image_url?: string
         }
         Update: {
           title?: string
@@ -201,7 +235,242 @@ export interface Database {
           type?: string
           priority?: string
           status?: string
+          target_audience?: string
           expires_at?: string
+          image_url?: string
+        }
+      }
+      appointments: {
+        Row: {
+          id: string
+          resident_id?: string
+          resident_name: string
+          resident_email?: string
+          resident_phone?: string
+          service: string
+          service_type: string
+          appointment_date: string
+          appointment_time: string
+          status: string
+          notes?: string
+          assigned_staff?: string
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          resident_id?: string
+          resident_name: string
+          resident_email?: string
+          resident_phone?: string
+          service: string
+          service_type: string
+          appointment_date: string
+          appointment_time: string
+          status?: string
+          notes?: string
+          assigned_staff?: string
+        }
+        Update: {
+          status?: string
+          notes?: string
+          assigned_staff?: string
+        }
+      }
+      patients: {
+        Row: {
+          id: string
+          resident_id?: string
+          name: string
+          age: number
+          gender: string
+          contact_number: string
+          address: string
+          medical_history?: string
+          allergies?: string
+          emergency_contact: string
+          blood_type?: string
+          height_cm?: number
+          weight_kg?: number
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          resident_id?: string
+          name: string
+          age: number
+          gender: string
+          contact_number: string
+          address: string
+          medical_history?: string
+          allergies?: string
+          emergency_contact: string
+          blood_type?: string
+          height_cm?: number
+          weight_kg?: number
+        }
+        Update: {
+          medical_history?: string
+          allergies?: string
+          emergency_contact?: string
+          blood_type?: string
+          height_cm?: number
+          weight_kg?: number
+        }
+      }
+      medical_records: {
+        Row: {
+          id: string
+          patient_id: string
+          visit_date: string
+          diagnosis: string
+          treatment: string
+          prescription?: string
+          doctor_notes?: string
+          vital_signs?: any
+          follow_up_date?: string
+          attending_physician?: string
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          patient_id: string
+          visit_date?: string
+          diagnosis: string
+          treatment: string
+          prescription?: string
+          doctor_notes?: string
+          vital_signs?: any
+          follow_up_date?: string
+          attending_physician?: string
+        }
+        Update: {
+          diagnosis?: string
+          treatment?: string
+          prescription?: string
+          doctor_notes?: string
+          vital_signs?: any
+          follow_up_date?: string
+        }
+      }
+      inventory_items: {
+        Row: {
+          id: string
+          name: string
+          category: string
+          current_stock: number
+          minimum_stock: number
+          unit: string
+          cost_per_unit: number
+          supplier?: string
+          expiry_date?: string
+          batch_number?: string
+          location?: string
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          name: string
+          category: string
+          current_stock?: number
+          minimum_stock?: number
+          unit: string
+          cost_per_unit?: number
+          supplier?: string
+          expiry_date?: string
+          batch_number?: string
+          location?: string
+        }
+        Update: {
+          current_stock?: number
+          minimum_stock?: number
+          cost_per_unit?: number
+          supplier?: string
+          expiry_date?: string
+          batch_number?: string
+          location?: string
+        }
+      }
+      projects: {
+        Row: {
+          id: string
+          title: string
+          description: string
+          category: string
+          status: string
+          start_date: string
+          end_date?: string
+          budget: number
+          location: string
+          beneficiaries: number
+          image_url?: string
+          project_manager?: string
+          completion_percentage?: number
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          title: string
+          description: string
+          category: string
+          status?: string
+          start_date: string
+          end_date?: string
+          budget: number
+          location: string
+          beneficiaries: number
+          image_url?: string
+          project_manager?: string
+          completion_percentage?: number
+        }
+        Update: {
+          status?: string
+          end_date?: string
+          completion_percentage?: number
+          project_manager?: string
+        }
+      }
+      business_permits: {
+        Row: {
+          id: string
+          business_name: string
+          owner_name: string
+          owner_email: string
+          business_type: string
+          address: string
+          contact_info?: any
+          permit_type: string
+          application_status: string
+          documents?: any[]
+          fees?: any
+          payment_status: string
+          approval_date?: string
+          expiry_date?: string
+          permit_number?: string
+          notes?: string
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          business_name: string
+          owner_name: string
+          owner_email: string
+          business_type: string
+          address: string
+          contact_info?: any
+          permit_type?: string
+          application_status?: string
+          documents?: any[]
+          fees?: any
+          payment_status?: string
+          notes?: string
+        }
+        Update: {
+          application_status?: string
+          payment_status?: string
+          approval_date?: string
+          expiry_date?: string
+          permit_number?: string
+          notes?: string
         }
       }
       transactions: {
@@ -214,6 +483,9 @@ export interface Database {
           payment_method: string
           reference_number?: string
           transaction_date: string
+          document_id?: string
+          processed_by?: string
+          approved_by?: string
           created_at: string
           updated_at: string
         }
@@ -225,6 +497,9 @@ export interface Database {
           payment_method: string
           reference_number?: string
           transaction_date?: string
+          document_id?: string
+          processed_by?: string
+          approved_by?: string
         }
         Update: {
           type?: string
@@ -233,6 +508,8 @@ export interface Database {
           category?: string
           payment_method?: string
           reference_number?: string
+          processed_by?: string
+          approved_by?: string
         }
       }
     }

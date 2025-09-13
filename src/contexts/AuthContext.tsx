@@ -153,20 +153,46 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           }
         ]
       },
-      // Additional test residents with same password
       {
         id: '7',
         email: 'test@resident.com',
         name: 'Test Resident',
         role: 'resident',
-        verificationStatus: 'non-verified'
+        verificationStatus: 'non-verified',
+        dateRegistered: '2024-03-01',
+        phone: '+63 912 345 6788',
+        address: '456 Test Street, San Miguel, Metro Manila'
       },
       {
         id: '8', 
         email: 'maria@resident.com',
         name: 'Maria Santos',
         role: 'resident',
-        verificationStatus: 'semi-verified'
+        verificationStatus: 'semi-verified',
+        dateRegistered: '2024-02-15',
+        phone: '+63 912 345 6787',
+        address: '789 Santos Avenue, San Miguel, Metro Manila'
+      },
+      {
+        id: '9',
+        email: 'carlos@resident.com',
+        name: 'Carlos Rivera',
+        role: 'resident',
+        verificationStatus: 'details-updated',
+        dateRegistered: '2024-03-10',
+        phone: '+63 912 345 6786',
+        address: '321 Rivera Street, San Miguel, Metro Manila'
+      },
+      {
+        id: '10',
+        email: 'ana@resident.com',
+        name: 'Ana Garcia',
+        role: 'resident',
+        verificationStatus: 'verified',
+        qrCode: 'QR987654321',
+        dateRegistered: '2024-01-20',
+        phone: '+63 912 345 6785',
+        address: '654 Garcia Avenue, San Miguel, Metro Manila'
       }
     ];
 
