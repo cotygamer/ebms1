@@ -1,7 +1,8 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { useData } from '../contexts/DataContext';
+import { dataService } from '../services/dataService';
 import VerificationStatus from '../components/VerificationStatus';
 import QRCodeDisplay from '../components/QRCodeDisplay';
 import FamilyTreeView from '../components/FamilyTreeView';
@@ -40,7 +41,7 @@ import {
 
 export default function ResidentDashboard() {
   const { user, updateUser, logout } = useAuth();
-  const { documents, addDocument, complaints, addComplaint } = useData();
+  const { documents: contextDocuments, addDocument, complaints, addComplaint } = useData();
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState('profile');
   const [isEditing, setIsEditing] = useState(false);
@@ -94,6 +95,32 @@ export default function ResidentDashboard() {
     timeOccurred: ''
   });
 
+  // Use real-time documents from context
+  const documents = contextDocuments.filter(doc => 
+    doc.residentId === user?.id || doc.resident_id === user?.id
+  );
+
+  // Get user's incident reports
+  const [incidentReports, setIncidentReports] = useState([]);
+  
+  useEffect(() => {
+    const fetchIncidents = async () => {
+      try {
+        const incidents = await dataService.getIncidents();
+        const userIncidents = incidents.filter(incident => 
+          incident.reporter_email === user?.email
+        );
+        setIncidentReports(userIncidents);
+      } catch (error) {
+        console.error('Failed to fetch incidents:', error);
+      }
+    };
+    
+    if (user?.email) {
+      fetchIncidents();
+    }
+  }, [user?.email]);
+
   const handleLogout = () => {
     logout();
     navigate('/');
@@ -104,61 +131,80 @@ export default function ResidentDashboard() {
     setIsEditing(false);
   };
 
-  const handleDocumentRequest = (e: React.FormEvent) => {
+  const handleDocumentRequest = async (e: React.FormEvent) => {
     e.preventDefault();
+    
     if (documentRequest.documentType && documentRequest.purpose) {
-      const newDocument = {
-        residentId: user?.id || '',
-        documentType: documentRequest.documentType,
-        status: 'pending' as const,
-        requestedDate: new Date().toISOString().split('T')[0],
-        fee: getDocumentFee(documentRequest.documentType),
-        paymentStatus: 'unpaid' as const,
-        purpose: documentRequest.purpose,
-        notes: documentRequest.notes
-      };
-      
-      addDocument(newDocument);
-      setDocumentRequest({ documentType: '', purpose: '', quantity: 1, urgency: 'regular', notes: '' });
-      setShowDocumentRequest(false);
-      alert('Document request submitted successfully!');
+      try {
+        await addDocument({
+          resident_id: user?.id,
+          document_type: documentRequest.documentType,
+          status: 'pending',
+          fee: getDocumentFee(documentRequest.documentType),
+          payment_status: 'unpaid',
+          purpose: documentRequest.purpose,
+          notes: `Urgency: ${documentRequest.urgency}`
+        });
+        
+        setDocumentRequest({ documentType: '', purpose: '', quantity: 1, urgency: 'regular', notes: '' });
+        setShowDocumentRequest(false);
+        alert('Document request submitted successfully!');
+      } catch (error) {
+        console.error('Failed to submit document request:', error);
+        alert('Failed to submit document request. Please try again.');
+      }
     }
   };
 
-  const handleIncidentReport = (e: React.FormEvent) => {
+  const handleIncidentReport = async (e: React.FormEvent) => {
     e.preventDefault();
+    
     if (incidentReport.type && incidentReport.subject && incidentReport.description) {
-      const newComplaint = {
-        residentName: user?.name || '',
-        residentEmail: user?.email || '',
-        type: incidentReport.type,
-        subject: incidentReport.subject,
-        description: incidentReport.description,
-        status: 'pending' as const,
-        priority: incidentReport.priority as 'low' | 'medium' | 'high',
-        dateSubmitted: new Date().toISOString().split('T')[0],
-        location: incidentReport.location,
-        dateOccurred: incidentReport.dateOccurred,
-        timeOccurred: incidentReport.timeOccurred,
-        witnessName: incidentReport.witnessName,
-        witnessContact: incidentReport.witnessContact
-      };
-      
-      addComplaint(newComplaint);
-      setIncidentReport({
-        type: '',
-        subject: '',
-        description: '',
-        location: '',
-        priority: 'medium',
-        evidence: [],
-        witnessName: '',
-        witnessContact: '',
-        dateOccurred: '',
-        timeOccurred: ''
-      });
-      setShowIncidentReport(false);
-      alert('Incident report submitted successfully!');
+      try {
+        await addComplaint({
+          residentName: user?.name || '',
+          residentEmail: user?.email || '',
+          type: incidentReport.type,
+          subject: incidentReport.subject,
+          description: incidentReport.description,
+          status: 'pending',
+          priority: incidentReport.priority,
+          dateSubmitted: new Date().toISOString().split('T')[0],
+          location: incidentReport.location,
+          dateOccurred: incidentReport.dateOccurred,
+          timeOccurred: incidentReport.timeOccurred,
+          witnessName: incidentReport.witnessName,
+          witnessContact: incidentReport.witnessContact,
+          assignedTo: '',
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString()
+        });
+        
+        setIncidentReport({
+          type: '',
+          subject: '',
+          description: '',
+          location: '',
+          priority: 'medium',
+          evidence: [],
+          witnessName: '',
+          witnessContact: '',
+          dateOccurred: '',
+          timeOccurred: ''
+        });
+        setShowIncidentReport(false);
+        alert('Incident report submitted successfully!');
+        
+        // Refresh incidents
+        const incidents = await dataService.getIncidents();
+        const userIncidents = incidents.filter(incident => 
+          incident.reporter_email === user?.email
+        );
+        setIncidentReports(userIncidents);
+      } catch (error) {
+        console.error('Failed to submit incident report:', error);
+        alert('Failed to submit incident report. Please try again.');
+      }
     }
   };
 
@@ -465,14 +511,13 @@ export default function ResidentDashboard() {
                   <tr key={document.id} className="hover:bg-gray-50">
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div>
-                        <div className="text-sm font-medium text-gray-900">{document.documentType}</div>
+                        <div className="text-sm font-medium text-gray-900">{document.document_type || document.documentType}</div>
                         <div className="text-sm text-gray-500">{document.purpose}</div>
                       </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <span className={`px-2 py-1 text-xs font-semibold rounded-full ${
-                        document.status === 'released' ? 'bg-purple-100 text-purple-800' :
-                        document.status === 'ready' ? 'bg-green-100 text-green-800' :
+                        document.status === 'ready' || document.status === 'released' ? 'bg-green-100 text-green-800' :
                         document.status === 'processing' ? 'bg-blue-100 text-blue-800' :
                         document.status === 'pending' ? 'bg-yellow-100 text-yellow-800' :
                         'bg-red-100 text-red-800'
@@ -484,7 +529,7 @@ export default function ResidentDashboard() {
                       ₱{document.fee}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                      {document.requestedDate}
+                      {document.requested_date || document.requestedDate}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
                       <button
