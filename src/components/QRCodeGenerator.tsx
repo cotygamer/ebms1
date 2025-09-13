@@ -1,15 +1,11 @@
 import React, { useState } from 'react';
 import { useAuth } from '../contexts/AuthContext';
-import { QrCode, Download, Share2, Copy, Check, Upload, Smartphone, Monitor, Tablet, Wifi, WifiOff, Sun, Moon, User, Shield, Clock, XCircle, Camera } from 'lucide-react';
+import { QrCode, Download, Share2, Copy, Check, Upload, Smartphone, Monitor, Tablet, Wifi, WifiOff, Sun, Moon, User, Shield, Clock, XCircle } from 'lucide-react';
 
 export default function QRCodeGenerator() {
   const { user } = useAuth();
   const [showQR, setShowQR] = useState(false);
   const [copied, setCopied] = useState(false);
-  const [testMode, setTestMode] = useState('normal');
-  const [deviceTest, setDeviceTest] = useState('mobile');
-  const [showScanner, setShowScanner] = useState(false);
-  const [scannedData, setScannedData] = useState(null);
 
   const generateQRData = () => {
     return JSON.stringify({
@@ -21,25 +17,15 @@ export default function QRCodeGenerator() {
       verificationStatus: user?.verificationStatus,
       qrCode: user?.qrCode,
       dateRegistered: user?.dateRegistered || new Date().toISOString().split('T')[0],
-      timestamp: new Date().toISOString()
+      dateGenerated: user?.qrCode ? user?.dateRegistered : new Date().toISOString().split('T')[0]
     });
   };
 
-  const simulateQRScan = (qrData: string) => {
-    try {
-      const data = JSON.parse(qrData);
-      setScannedData(data);
-      setShowScanner(true);
-    } catch (error) {
-      alert('Invalid QR code data');
-    }
+  // Generate permanent QR code based on user ID - never changes
+  const getPermanentQRCode = () => {
+    return user?.qrCode || `BRG_${user?.id}_${user?.dateRegistered?.replace(/-/g, '')}`;
   };
 
-  const getQRCodeForStatus = (status: string) => {
-    // Generate QR code for any verification status
-    const qrCode = status === 'verified' ? user?.qrCode : `TEMP_${user?.id}_${Date.now()}`;
-    return qrCode;
-  };
   const handleCopyQRCode = () => {
     const qrData = generateQRData();
     navigator.clipboard.writeText(qrData).then(() => {
@@ -153,7 +139,7 @@ export default function QRCodeGenerator() {
                     <div className="bg-blue-100 p-2 rounded">
                       <QrCode className="h-6 w-6 sm:h-8 sm:w-8 text-blue-600 mx-auto mb-1" />
                       <p className="text-xs font-mono text-blue-800 break-all">
-                        {getQRCodeForStatus(user?.verificationStatus || 'non-verified')}
+                        {getPermanentQRCode()}
                       </p>
                     </div>
                   </div>
@@ -178,7 +164,8 @@ export default function QRCodeGenerator() {
                       </span>
                     </p>
                     <p><strong>QR Code:</strong> <span className="font-mono">{getQRCodeForStatus(user?.verificationStatus || 'non-verified')}</span></p>
-                    <p><strong>Generated:</strong> {new Date().toLocaleDateString()}</p>
+                    <p><strong>QR Code:</strong> <span className="font-mono">{getPermanentQRCode()}</span></p>
+                    <p><strong>Generated:</strong> {user?.dateRegistered || new Date().toLocaleDateString()}</p>
                   </div>
                 </div>
               </div>
@@ -213,13 +200,6 @@ export default function QRCodeGenerator() {
                 >
                   {copied ? <Check className="h-3 w-3 sm:h-4 sm:w-4 mr-2" /> : <Copy className="h-3 w-3 sm:h-4 sm:w-4 mr-2" />}
                   {copied ? 'Copied!' : 'Copy Data'}
-                </button>
-                <button 
-                  onClick={() => simulateQRScan(generateQRData())}
-                  className="bg-purple-600 text-white px-4 py-2 sm:px-6 sm:py-3 rounded-lg hover:bg-purple-700 transition-colors flex items-center justify-center text-sm sm:text-base"
-                >
-                  <Camera className="h-3 w-3 sm:h-4 sm:w-4 mr-2" />
-                  Test Scan
                 </button>
               </>
             )}
@@ -281,59 +261,6 @@ export default function QRCodeGenerator() {
         </div>
       </div>
 
-      {/* QR Scanner Modal */}
-      {showScanner && scannedData && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-          <div className="bg-white rounded-lg max-w-md w-full p-6">
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="text-lg font-semibold text-gray-900">QR Code Scan Result</h3>
-              <button
-                onClick={() => setShowScanner(false)}
-                className="text-gray-400 hover:text-gray-600"
-              >
-                ✕
-              </button>
-            </div>
-            
-            <div className="space-y-4">
-              <div className="text-center">
-                {getStatusIcon(scannedData.verificationStatus)}
-                <h4 className="text-lg font-semibold mt-2 capitalize">
-                  {scannedData.verificationStatus?.replace('-', ' ') || 'Non Verified'}
-                </h4>
-              </div>
-              
-              <div className="bg-gray-50 p-4 rounded-lg">
-                <h5 className="font-semibold text-gray-900 mb-2">Resident Information</h5>
-                <div className="space-y-1 text-sm">
-                  <p><strong>Name:</strong> {scannedData.name}</p>
-                  <p><strong>Email:</strong> {scannedData.email}</p>
-                  {scannedData.phone && <p><strong>Phone:</strong> {scannedData.phone}</p>}
-                  {scannedData.address && <p><strong>Address:</strong> {scannedData.address}</p>}
-                  <p><strong>Registered:</strong> {scannedData.dateRegistered}</p>
-                  <p><strong>QR Code:</strong> <span className="font-mono text-xs">{scannedData.qrCode}</span></p>
-                </div>
-              </div>
-              
-              <div className={`p-3 rounded-lg ${
-                scannedData.verificationStatus === 'verified' ? 'bg-green-50 border border-green-200' :
-                scannedData.verificationStatus === 'semi-verified' ? 'bg-yellow-50 border border-yellow-200' :
-                'bg-red-50 border border-red-200'
-              }`}>
-                <p className="text-sm font-medium">
-                  {scannedData.verificationStatus === 'verified' 
-                    ? '✅ Fully verified resident - Full service access'
-                    : scannedData.verificationStatus === 'semi-verified'
-                    ? '⏳ Semi-verified - Limited service access'
-                    : '❌ Unverified - Basic services only'
-                  }
-                </p>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
-
       {/* Security and Usage Information */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
@@ -350,11 +277,12 @@ export default function QRCodeGenerator() {
         <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
           <h4 className="font-semibold text-blue-800 mb-2">How to Use Your QR Code</h4>
           <ul className="text-xs sm:text-sm text-blue-700 space-y-1 text-left">
-            <li>• Present this QR code when visiting barangay offices</li>
-            <li>• Use for quick identification and verification</li>
-            <li>• Required for certain barangay services and transactions</li>
-            <li>• Works on all devices - mobile, tablet, and desktop</li>
-            <li>• Available at all verification levels</li>
+            <li>• Can be scanned by barangay officials using any QR scanner</li>
+            <li>• Compatible with mobile devices, tablets, and desktop scanners</li>
+            <li>• Works with standard QR code reading applications</li>
+            <li>• Optimized for printing on official barangay IDs</li>
+            <li>• Print and attach to your barangay ID for permanent use</li>
+            <li>• QR code is permanent and will not change</li>
           </ul>
         </div>
       </div>

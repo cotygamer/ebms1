@@ -115,6 +115,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         barangay: 'San Miguel',
         city: 'Metro Manila',
         province: 'Metro Manila',
+        dateRegistered: '2024-01-15',
         houseLocation: { lat: 14.5995, lng: 120.9842, address: '123 Main Street, San Miguel, Metro Manila' },
         familyTree: [
           { id: 1, name: 'Juan Dela Cruz', relation: 'self', age: 35, gender: 'male' },
