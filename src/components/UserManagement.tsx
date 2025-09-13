@@ -19,7 +19,10 @@ export default function UserManagement() {
     email: '',
     role: 'resident' as 'super-admin' | 'barangay-official' | 'resident',
     status: 'active' as 'active' | 'inactive' | 'suspended',
-    permissions: [] as string[]
+    permissions: [] as string[],
+    phone_number: '',
+    address: '',
+    password: ''
   });
 
   const [editUserData, setEditUserData] = useState({
@@ -28,7 +31,8 @@ export default function UserManagement() {
     role: 'resident' as 'super-admin' | 'barangay-official' | 'resident',
     status: 'active' as 'active' | 'inactive' | 'suspended',
     phone_number: '',
-    address: ''
+    address: '',
+    password: ''
   });
 
   // Filter users based on current user role
@@ -87,7 +91,8 @@ export default function UserManagement() {
       email: user.email,
       role: user.role,
       status: user.status,
-      phone_number: user.phone_number || '',
+        address: user.address || '',
+        password: ''
       address: user.address || ''
     });
   };
@@ -103,7 +108,8 @@ export default function UserManagement() {
           email: '',
           role: 'resident',
           status: 'active',
-          phone_number: '',
+            address: '',
+            password: ''
           address: ''
         });
       } catch (error) {
@@ -116,7 +122,7 @@ export default function UserManagement() {
     e.preventDefault();
     if (newUser.name && newUser.email) {
       addUser({ ...newUser, permissions: getDefaultPermissions(newUser.role) });
-      setNewUser({ name: '', email: '', role: 'resident', status: 'active', permissions: [] });
+      setNewUser({ name: '', email: '', role: 'resident', status: 'active', permissions: [], phone_number: '', address: '', password: '' });
       setShowAddUser(false);
     }
   };
@@ -512,6 +518,41 @@ export default function UserManagement() {
                   <option value="active">Active</option>
                   <option value="inactive">Inactive</option>
                 </select>
+              </div>
+              
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Phone Number</label>
+                <input
+                  type="tel"
+                  value={newUser.phone_number || ''}
+                  onChange={(e) => setNewUser({ ...newUser, phone_number: e.target.value })}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  placeholder="Enter phone number"
+                />
+              </div>
+              
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Address</label>
+                <textarea
+                  value={newUser.address || ''}
+                  onChange={(e) => setNewUser({ ...newUser, address: e.target.value })}
+                  rows={2}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  placeholder="Enter address"
+                />
+              </div>
+              
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Temporary Password *</label>
+                <input
+                  type="password"
+                  value={newUser.password || ''}
+                  onChange={(e) => setNewUser({ ...newUser, password: e.target.value })}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  placeholder="Set temporary password"
+                  required
+                />
+                <p className="text-xs text-gray-500 mt-1">User will be prompted to change this on first login</p>
               </div>
               
               <div className="flex space-x-3 pt-4">

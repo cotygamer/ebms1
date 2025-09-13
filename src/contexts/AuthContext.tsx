@@ -152,6 +152,21 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             approvedBy: 'Barangay Official - Maria Santos'
           }
         ]
+      },
+      // Additional test residents with same password
+      {
+        id: '7',
+        email: 'test@resident.com',
+        name: 'Test Resident',
+        role: 'resident',
+        verificationStatus: 'non-verified'
+      },
+      {
+        id: '8', 
+        email: 'maria@resident.com',
+        name: 'Maria Santos',
+        role: 'resident',
+        verificationStatus: 'semi-verified'
       }
     ];
 
