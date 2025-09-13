@@ -37,7 +37,8 @@ import {
   Heart,
   Smartphone,
   Monitor,
-  Tablet
+  Tablet,
+  Plus
 } from 'lucide-react';
 
 export default function ResidentDashboard() {
@@ -47,6 +48,28 @@ export default function ResidentDashboard() {
   const [activeTab, setActiveTab] = useState('dashboard');
   const [showProfileEdit, setShowProfileEdit] = useState(false);
   const [showLocationPicker, setShowLocationPicker] = useState(false);
+  const [showDocumentRequest, setShowDocumentRequest] = useState(false);
+  const [showComplaintForm, setShowComplaintForm] = useState(false);
+  const [selectedDocument, setSelectedDocument] = useState(null);
+  const [complaints, setComplaints] = useState([
+    {
+      id: '1',
+      type: 'noise',
+      subject: 'Loud music from neighbor',
+      description: 'Neighbor playing loud music past 10 PM',
+      status: 'pending',
+      priority: 'medium',
+      dateSubmitted: '2024-03-15',
+      assignedTo: 'Barangay Tanod',
+      resolution: null
+    }
+  ]);
+  const [newComplaint, setNewComplaint] = useState({
+    type: 'noise',
+    subject: '',
+    description: '',
+    priority: 'medium'
+  });
   const [profileData, setProfileData] = useState({
     name: user?.name || '',
     email: user?.email || '',
@@ -59,6 +82,55 @@ export default function ResidentDashboard() {
     emergencyContact: '',
     houseLocation: { lat: 0, lng: 0, address: '' }
   });
+
+  const documentRequests = [
+    {
+      id: '1',
+      type: 'Barangay Clearance',
+      purpose: 'Employment',
+      status: 'ready',
+      fee: 50,
+      paymentStatus: 'paid',
+      dateRequested: '2024-03-10',
+      notes: 'Ready for pickup at barangay hall'
+    },
+    {
+      id: '2',
+      type: 'Certificate of Residency',
+      purpose: 'School Enrollment',
+      status: 'processing',
+      fee: 30,
+      paymentStatus: 'pending',
+      dateRequested: '2024-03-12',
+      notes: 'Processing - estimated completion in 2 days'
+    },
+    {
+      id: '3',
+      type: 'Business Permit',
+      purpose: 'New Business',
+      status: 'pending',
+      fee: 200,
+      paymentStatus: 'unpaid',
+      dateRequested: '2024-03-14',
+      notes: 'Waiting for document review'
+    }
+  ];
+
+  const handleSubmitComplaint = () => {
+    if (newComplaint.subject && newComplaint.description) {
+      const complaint = {
+        id: Date.now().toString(),
+        ...newComplaint,
+        status: 'pending',
+        dateSubmitted: new Date().toISOString().split('T')[0],
+        assignedTo: 'Pending Assignment',
+        resolution: null
+      };
+      setComplaints(prev => [complaint, ...prev]);
+      setNewComplaint({ type: 'noise', subject: '', description: '', priority: 'medium' });
+      setShowComplaintForm(false);
+    }
+  };
 
   const handleLogout = () => {
     try {
@@ -80,6 +152,22 @@ export default function ResidentDashboard() {
       console.error('Error during logout:', error);
       // Force navigation even if logout fails
       navigate('/');
+    }
+  };
+
+  const handleDocumentRequest = () => {
+    if (newDocumentRequest.type && newDocumentRequest.purpose) {
+      const request = {
+        id: Date.now().toString(),
+        ...newDocumentRequest,
+        status: 'pending',
+        paymentStatus: 'unpaid',
+        dateRequested: new Date().toISOString().split('T')[0],
+        notes: 'Request submitted - awaiting review'
+      };
+      setDocumentRequests(prev => [request, ...prev]);
+      setNewDocumentRequest({ type: 'Barangay Clearance', purpose: '', urgency: 'regular' });
+      setShowDocumentRequest(false);
     }
   };
 
@@ -334,6 +422,106 @@ export default function ResidentDashboard() {
     </div>
   );
 
+  const renderComplaints = () => (
+    <div className="space-y-6">
+      <div className="flex items-center justify-between">
+        <h2 className="text-2xl font-semibold text-gray-900">Complaints & Reports</h2>
+        <button
+          onClick={() => setShowComplaintForm(true)}
+          className="bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 flex items-center"
+        >
+          <Plus className="h-4 w-4 mr-2" />
+          File Complaint
+        </button>
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div className="bg-white rounded-lg shadow-sm p-6">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm font-medium text-gray-600">Total Complaints</p>
+              <p className="text-3xl font-bold text-blue-600">{complaints.length}</p>
+            </div>
+            <AlertTriangle className="h-12 w-12 text-blue-600" />
+          </div>
+        </div>
+        
+        <div className="bg-white rounded-lg shadow-sm p-6">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm font-medium text-gray-600">Pending</p>
+              <p className="text-3xl font-bold text-yellow-600">
+                {complaints.filter(c => c.status === 'pending').length}
+              </p>
+            </div>
+            <Clock className="h-12 w-12 text-yellow-600" />
+          </div>
+        </div>
+        
+        <div className="bg-white rounded-lg shadow-sm p-6">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm font-medium text-gray-600">Resolved</p>
+              <p className="text-3xl font-bold text-green-600">
+                {complaints.filter(c => c.status === 'resolved').length}
+              </p>
+            </div>
+            <CheckCircle className="h-12 w-12 text-green-600" />
+          </div>
+        </div>
+      </div>
+
+      <div className="bg-white rounded-lg shadow-sm p-6">
+        <h3 className="text-lg font-semibold text-gray-900 mb-4">My Complaints</h3>
+        <div className="space-y-4">
+          {complaints.map((complaint) => (
+            <div key={complaint.id} className="border border-gray-200 rounded-lg p-4">
+              <div className="flex items-start justify-between">
+                <div className="flex-1">
+                  <div className="flex items-center space-x-2 mb-2">
+                    <span className={`px-2 py-1 text-xs font-semibold rounded-full ${
+                      complaint.type === 'noise' ? 'bg-red-100 text-red-800' :
+                      complaint.type === 'garbage' ? 'bg-yellow-100 text-yellow-800' :
+                      complaint.type === 'road' ? 'bg-blue-100 text-blue-800' :
+                      complaint.type === 'water' ? 'bg-cyan-100 text-cyan-800' :
+                      complaint.type === 'electricity' ? 'bg-orange-100 text-orange-800' :
+                      'bg-gray-100 text-gray-800'
+                    }`}>
+                      {complaint.type.toUpperCase()}
+                    </span>
+                    <span className={`px-2 py-1 text-xs font-semibold rounded-full ${
+                      complaint.priority === 'high' ? 'bg-red-100 text-red-800' :
+                      complaint.priority === 'medium' ? 'bg-yellow-100 text-yellow-800' :
+                      'bg-green-100 text-green-800'
+                    }`}>
+                      {complaint.priority.toUpperCase()}
+                    </span>
+                  </div>
+                  <h4 className="font-semibold text-gray-900 mb-1">{complaint.subject}</h4>
+                  <p className="text-gray-600 text-sm mb-2">{complaint.description}</p>
+                  <div className="text-xs text-gray-500">
+                    <p>Submitted: {complaint.dateSubmitted}</p>
+                    <p>Assigned to: {complaint.assignedTo}</p>
+                  </div>
+                </div>
+                <div className="ml-4">
+                  <span className={`px-2 py-1 text-xs font-semibold rounded-full ${
+                    complaint.status === 'resolved' ? 'bg-green-100 text-green-800' :
+                    complaint.status === 'investigating' ? 'bg-blue-100 text-blue-800' :
+                    complaint.status === 'pending' ? 'bg-yellow-100 text-yellow-800' :
+                    'bg-gray-100 text-gray-800'
+                  }`}>
+                    {complaint.status.toUpperCase()}
+                  </span>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+
   const tabs = [
     { id: 'dashboard', label: 'Dashboard', icon: Home },
     { id: 'profile', label: 'Profile', icon: User },
@@ -341,6 +529,7 @@ export default function ResidentDashboard() {
     { id: 'qr-code', label: 'QR Code', icon: QrCode },
     { id: 'family', label: 'Family Tree', icon: Users },
     { id: 'documents', label: 'Documents', icon: FileText },
+    { id: 'complaints', label: 'Complaints', icon: AlertTriangle },
     { id: 'announcements', label: 'Announcements', icon: Bell }
   ];
 
@@ -411,8 +600,157 @@ export default function ResidentDashboard() {
         {activeTab === 'qr-code' && <QRCodeGenerator />}
         {activeTab === 'family' && <FamilyTreeView />}
         {activeTab === 'documents' && <DocumentsSection />}
+        {activeTab === 'complaints' && renderComplaints()}
         {activeTab === 'announcements' && <AnnouncementsSection />}
       </div>
+
+      {/* Complaint Form Modal */}
+      {showComplaintForm && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+          <div className="bg-white rounded-lg max-w-md w-full p-6">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-lg font-semibold text-gray-900">File a Complaint</h3>
+              <button
+                onClick={() => setShowComplaintForm(false)}
+                className="text-gray-400 hover:text-gray-600"
+              >
+                ✕
+              </button>
+            </div>
+            
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Complaint Type</label>
+                <select
+                  value={newComplaint.type}
+                  onChange={(e) => setNewComplaint({...newComplaint, type: e.target.value})}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-red-500"
+                >
+                  <option value="noise">Noise Complaint</option>
+                  <option value="garbage">Garbage/Sanitation</option>
+                  <option value="road">Road/Infrastructure</option>
+                  <option value="water">Water Issues</option>
+                  <option value="electricity">Electrical Issues</option>
+                  <option value="security">Security Concern</option>
+                  <option value="other">Other</option>
+                </select>
+              </div>
+              
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Subject</label>
+                <input
+                  type="text"
+                  value={newComplaint.subject}
+                  onChange={(e) => setNewComplaint({...newComplaint, subject: e.target.value})}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-red-500"
+                  placeholder="Brief description of the issue"
+                />
+              </div>
+              
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Description</label>
+                <textarea
+                  value={newComplaint.description}
+                  onChange={(e) => setNewComplaint({...newComplaint, description: e.target.value})}
+                  rows={4}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-red-500"
+                  placeholder="Detailed description of the complaint"
+                />
+              </div>
+              
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Priority</label>
+                <select
+                  value={newComplaint.priority}
+                  onChange={(e) => setNewComplaint({...newComplaint, priority: e.target.value})}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-red-500"
+                >
+                  <option value="low">Low</option>
+                  <option value="medium">Medium</option>
+                  <option value="high">High</option>
+                </select>
+              </div>
+              
+              <div className="flex justify-end space-x-3">
+                <button
+                  onClick={() => setShowComplaintForm(false)}
+                  className="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={handleSubmitComplaint}
+                  className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700"
+                >
+                  Submit Complaint
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Document Details Modal */}
+      {selectedDocument && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+          <div className="bg-white rounded-lg max-w-md w-full p-6">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-lg font-semibold text-gray-900">Document Details</h3>
+              <button
+                onClick={() => setSelectedDocument(null)}
+                className="text-gray-400 hover:text-gray-600"
+              >
+                ✕
+              </button>
+            </div>
+            
+            <div className="space-y-4">
+              <div>
+                <label className="text-sm font-medium text-gray-700">Document Type</label>
+                <p className="text-sm text-gray-900">{selectedDocument.type}</p>
+              </div>
+              <div>
+                <label className="text-sm font-medium text-gray-700">Purpose</label>
+                <p className="text-sm text-gray-900">{selectedDocument.purpose}</p>
+              </div>
+              <div>
+                <label className="text-sm font-medium text-gray-700">Status</label>
+                <span className={`inline-block px-2 py-1 text-xs font-semibold rounded-full ${
+                  selectedDocument.status === 'ready' ? 'bg-green-100 text-green-800' :
+                  selectedDocument.status === 'processing' ? 'bg-blue-100 text-blue-800' :
+                  selectedDocument.status === 'pending' ? 'bg-yellow-100 text-yellow-800' :
+                  'bg-gray-100 text-gray-800'
+                }`}>
+                  {selectedDocument.status.toUpperCase()}
+                </span>
+              </div>
+              <div>
+                <label className="text-sm font-medium text-gray-700">Fee</label>
+                <p className="text-sm text-gray-900">₱{selectedDocument.fee}</p>
+              </div>
+              <div>
+                <label className="text-sm font-medium text-gray-700">Payment Status</label>
+                <span className={`inline-block px-2 py-1 text-xs font-semibold rounded-full ${
+                  selectedDocument.paymentStatus === 'paid' ? 'bg-green-100 text-green-800' :
+                  'bg-red-100 text-red-800'
+                }`}>
+                  {selectedDocument.paymentStatus.toUpperCase()}
+                </span>
+              </div>
+              <div>
+                <label className="text-sm font-medium text-gray-700">Date Requested</label>
+                <p className="text-sm text-gray-900">{selectedDocument.dateRequested}</p>
+              </div>
+              {selectedDocument.notes && (
+                <div>
+                  <label className="text-sm font-medium text-gray-700">Notes</label>
+                  <p className="text-sm text-gray-900">{selectedDocument.notes}</p>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

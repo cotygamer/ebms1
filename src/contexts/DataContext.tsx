@@ -73,12 +73,81 @@ interface DataContextType {
   residents: Resident[];
   systemSettings: SystemSettings;
   users: User[];
+  documents: Document[];
+  announcements: Announcement[];
+  transactions: Transaction[];
+  complaints: Complaint[];
   updateResident: (id: string, updates: Partial<Resident>) => void;
   updateSystemSettings: (updates: Partial<SystemSettings>) => void;
   verifyResident: (id: string, status: 'semi-verified' | 'verified') => void;
   addUser: (user: Omit<User, 'id'>) => void;
   updateUser: (id: string, updates: Partial<User>) => void;
   deleteUser: (id: string) => void;
+  addDocument: (document: Omit<Document, 'id'>) => void;
+  updateDocument: (id: string, updates: Partial<Document>) => void;
+  addAnnouncement: (announcement: Omit<Announcement, 'id'>) => void;
+  updateAnnouncement: (id: string, updates: Partial<Announcement>) => void;
+  addTransaction: (transaction: Omit<Transaction, 'id'>) => void;
+  addComplaint: (complaint: Omit<Complaint, 'id'>) => void;
+  updateComplaint: (id: string, updates: Partial<Complaint>) => void;
+}
+
+interface Document {
+  id: string;
+  residentId: string;
+  documentType: string;
+  status: 'pending' | 'processing' | 'ready' | 'released' | 'rejected';
+  requestedDate: string;
+  processedDate?: string;
+  releasedDate?: string;
+  fee: number;
+  paymentStatus: 'unpaid' | 'paid' | 'refunded';
+  paymentMethod?: string;
+  notes?: string;
+  purpose?: string;
+}
+
+interface Announcement {
+  id: string;
+  title: string;
+  content: string;
+  type: 'important' | 'event' | 'notice' | 'emergency' | 'health' | 'weather' | 'evacuation' | 'update';
+  priority: 'low' | 'medium' | 'high';
+  status: 'published' | 'draft';
+  author: string;
+  expiresAt?: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+interface Transaction {
+  id: string;
+  type: 'revenue' | 'expense';
+  description: string;
+  amount: number;
+  category: string;
+  paymentMethod: string;
+  referenceNumber?: string;
+  transactionDate: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+interface Complaint {
+  id: string;
+  residentName: string;
+  residentEmail: string;
+  type: string;
+  subject: string;
+  description: string;
+  status: 'pending' | 'investigating' | 'resolved' | 'dismissed';
+  priority: 'low' | 'medium' | 'high';
+  dateSubmitted: string;
+  assignedTo?: string;
+  resolution?: string;
+  location?: string;
+  createdAt: string;
+  updatedAt: string;
 }
 
 interface User {
@@ -155,6 +224,66 @@ export function DataProvider({ children }: { children: ReactNode }) {
     }
   ]);
 
+  const [documents, setDocuments] = useState<Document[]>([
+    {
+      id: '1',
+      residentId: '1',
+      documentType: 'Barangay Clearance',
+      status: 'ready',
+      requestedDate: '2024-03-10',
+      processedDate: '2024-03-12',
+      fee: 50,
+      paymentStatus: 'paid',
+      paymentMethod: 'cash',
+      purpose: 'Employment requirement'
+    }
+  ]);
+
+  const [announcements, setAnnouncements] = useState<Announcement[]>([
+    {
+      id: '1',
+      title: 'Community Health Drive - Free Medical Checkup',
+      content: 'Free medical checkup and vaccination for all residents. Bring your barangay ID and health records.',
+      type: 'health',
+      priority: 'high',
+      status: 'published',
+      author: 'Barangay Health Center',
+      createdAt: '2024-03-20',
+      updatedAt: '2024-03-20'
+    }
+  ]);
+
+  const [transactions, setTransactions] = useState<Transaction[]>([
+    {
+      id: '1',
+      type: 'revenue',
+      description: 'Document fees collection',
+      amount: 1250,
+      category: 'Document Services',
+      paymentMethod: 'cash',
+      transactionDate: '2024-03-15',
+      createdAt: '2024-03-15',
+      updatedAt: '2024-03-15'
+    }
+  ]);
+
+  const [complaints, setComplaints] = useState<Complaint[]>([
+    {
+      id: '1',
+      residentName: 'Juan Dela Cruz',
+      residentEmail: 'juan@email.com',
+      type: 'noise',
+      subject: 'Loud music from neighbor',
+      description: 'Neighbor playing loud music past 10 PM',
+      status: 'pending',
+      priority: 'medium',
+      dateSubmitted: '2024-03-15',
+      assignedTo: 'Barangay Tanod',
+      location: '123 Main St',
+      createdAt: '2024-03-15',
+      updatedAt: '2024-03-15'
+    }
+  ]);
 
   const [users, setUsers] = useState<User[]>([
     {
@@ -267,17 +396,84 @@ export function DataProvider({ children }: { children: ReactNode }) {
     setUsers(prev => prev.filter(user => user.id !== id));
   };
 
+  const addDocument = (documentData: Omit<Document, 'id'>) => {
+    const newDocument = {
+      ...documentData,
+      id: Date.now().toString()
+    };
+    setDocuments(prev => [...prev, newDocument]);
+  };
+
+  const updateDocument = (id: string, updates: Partial<Document>) => {
+    setDocuments(prev => prev.map(doc => 
+      doc.id === id ? { ...doc, ...updates } : doc
+    ));
+  };
+
+  const addAnnouncement = (announcementData: Omit<Announcement, 'id'>) => {
+    const newAnnouncement = {
+      ...announcementData,
+      id: Date.now().toString(),
+      createdAt: new Date().toISOString().split('T')[0],
+      updatedAt: new Date().toISOString().split('T')[0]
+    };
+    setAnnouncements(prev => [newAnnouncement, ...prev]);
+  };
+
+  const updateAnnouncement = (id: string, updates: Partial<Announcement>) => {
+    setAnnouncements(prev => prev.map(announcement => 
+      announcement.id === id ? { ...announcement, ...updates, updatedAt: new Date().toISOString().split('T')[0] } : announcement
+    ));
+  };
+
+  const addTransaction = (transactionData: Omit<Transaction, 'id'>) => {
+    const newTransaction = {
+      ...transactionData,
+      id: Date.now().toString(),
+      createdAt: new Date().toISOString().split('T')[0],
+      updatedAt: new Date().toISOString().split('T')[0]
+    };
+    setTransactions(prev => [newTransaction, ...prev]);
+  };
+
+  const addComplaint = (complaintData: Omit<Complaint, 'id'>) => {
+    const newComplaint = {
+      ...complaintData,
+      id: Date.now().toString(),
+      createdAt: new Date().toISOString().split('T')[0],
+      updatedAt: new Date().toISOString().split('T')[0]
+    };
+    setComplaints(prev => [newComplaint, ...prev]);
+  };
+
+  const updateComplaint = (id: string, updates: Partial<Complaint>) => {
+    setComplaints(prev => prev.map(complaint => 
+      complaint.id === id ? { ...complaint, ...updates, updatedAt: new Date().toISOString().split('T')[0] } : complaint
+    ));
+  };
+
   return (
     <DataContext.Provider value={{
       residents,
       systemSettings,
       users,
+      documents,
+      announcements,
+      transactions,
+      complaints,
       updateResident,
       updateSystemSettings,
       verifyResident,
       addUser,
       updateUser,
-      deleteUser
+      deleteUser,
+      addDocument,
+      updateDocument,
+      addAnnouncement,
+      updateAnnouncement,
+      addTransaction,
+      addComplaint,
+      updateComplaint
     }}>
       {children}
     </DataContext.Provider>
