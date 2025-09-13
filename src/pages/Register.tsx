@@ -113,22 +113,11 @@ export default function Register() {
     setIsLoading(true);
 
     try {
-      // Create user account in the centralized database
-      const userData = {
-        name: `${formData.firstName} ${formData.middleName ? formData.middleName + ' ' : ''}${formData.lastName}${formData.suffix ? ' ' + formData.suffix : ''}`,
-        email: formData.email,
-        role: 'resident' as const,
-        status: 'active' as const,
-        phone_number: formData.phoneNumber,
-        address: formData.address
-      };
-
-      // Add user to the system
-      await addUser(userData);
-
-      // Create resident profile in the centralized database
+      // Create resident profile directly in the database
+      const fullName = `${formData.firstName} ${formData.middleName ? formData.middleName + ' ' : ''}${formData.lastName}${formData.suffix ? ' ' + formData.suffix : ''}`;
+      
       const residentData = {
-        name: userData.name,
+        name: fullName,
         email: formData.email,
         phone_number: formData.phoneNumber,
         address: formData.address,
@@ -139,13 +128,30 @@ export default function Register() {
         emergency_contact: `${formData.emergencyContactName} - ${formData.emergencyContactPhone} (${formData.emergencyContactRelation})`
       };
 
-      await dataService.createResident(residentData);
+      // Create resident record
+      const newResident = await dataService.createResident(residentData);
+      
+      // Create corresponding user account
+      const userData = {
+        name: fullName,
+        email: formData.email,
+        role: 'resident' as const,
+        status: 'active' as const,
+        phone_number: formData.phoneNumber,
+        address: formData.address
+      };
+
+      await dataService.createUser(userData);
 
       alert('Registration successful! You can now login and your profile will be visible to barangay officials for verification.');
       navigate('/login');
     } catch (err) {
       console.error('Registration error:', err);
-      setError('Registration failed. Please try again.');
+      if (err.message) {
+        setError(`Registration failed: ${err.message}`);
+      } else {
+        setError('Registration failed. Please check your information and try again.');
+      }
     } finally {
       setIsLoading(false);
     }

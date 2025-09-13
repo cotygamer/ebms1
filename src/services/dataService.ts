@@ -17,17 +17,23 @@ export class DataService {
   }
 
   static async createUser(userData: any) {
+    console.log('Creating user with data:', userData);
+    
     const { data, error } = await supabase
       .from('users')
       .insert([userData])
       .select()
       .single()
     
-    if (error) throw error
+    if (error) {
+      console.error('Supabase error creating user:', error);
+      throw new Error(`Failed to create user: ${error.message}`);
+    }
     
     // Log the action
     await this.logAction('user.create', 'user', data.id, null, data)
     
+    console.log('User created successfully:', data);
     return data
   }
 
@@ -91,6 +97,8 @@ export class DataService {
   }
 
   static async createResident(residentData: any) {
+    console.log('Creating resident with data:', residentData);
+    
     const { data, error } = await supabase
       .from('residents')
       .insert([{
@@ -100,11 +108,15 @@ export class DataService {
       .select()
       .single()
     
-    if (error) throw error
+    if (error) {
+      console.error('Supabase error creating resident:', error);
+      throw new Error(`Failed to create resident: ${error.message}`);
+    }
     
     // Log the action
     await this.logAction('resident.create', 'resident', data.id, null, data)
     
+    console.log('Resident created successfully:', data);
     return data
   }
 

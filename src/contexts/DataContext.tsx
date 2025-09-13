@@ -258,13 +258,16 @@ export function DataProvider({ children }: { children: ReactNode }) {
 
   const addUser = async (userData: Omit<User, 'id'>) => {
     try {
+      console.log('DataContext - Adding user:', userData);
       await dataService.createUser({
         ...userData,
         permissions: getDefaultPermissions(userData.role),
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString()
       });
+      console.log('DataContext - User created, refreshing users...');
       refreshUsers();
+      console.log('DataContext - Users refreshed');
     } catch (error) {
       console.error('Failed to add user:', error);
       throw error;
