@@ -7,11 +7,11 @@ export default function ResidentManagement() {
   const [selectedResident, setSelectedResident] = useState<any>(null);
   const [searchTerm, setSearchTerm] = useState('');
 
-  // Refresh data when component mounts to ensure latest data
+  // Debug logging to check residents data
   React.useEffect(() => {
-    // Force refresh of residents data
-    window.location.reload();
-  }, []);
+    console.log('ResidentManagement - Residents data:', residents);
+    console.log('ResidentManagement - Residents count:', residents.length);
+  }, [residents]);
 
   const filteredResidents = residents.filter(resident =>
     resident.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -62,6 +62,7 @@ export default function ResidentManagement() {
             <div>
               <p className="text-sm font-medium text-gray-600">Total Residents</p>
               <p className="text-3xl font-bold text-blue-600">{residents.length}</p>
+              <p className="text-xs text-gray-500">Data loaded: {residents.length > 0 ? 'Yes' : 'No'}</p>
             </div>
             <Users className="h-12 w-12 text-blue-600" />
           </div>
@@ -103,6 +104,27 @@ export default function ResidentManagement() {
           </div>
         </div>
       </div>
+      
+      {/* Debug Information */}
+      {residents.length === 0 && (
+        <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+          <div className="flex items-center">
+            <AlertTriangle className="h-5 w-5 text-yellow-600 mr-2" />
+            <div>
+              <h4 className="font-medium text-yellow-800">No Residents Found</h4>
+              <p className="text-sm text-yellow-700">
+                No residents are currently loaded. This could be due to:
+              </p>
+              <ul className="text-sm text-yellow-700 mt-2 list-disc list-inside">
+                <li>Database connection issues</li>
+                <li>No residents have registered yet</li>
+                <li>Permission issues with the residents table</li>
+              </ul>
+            </div>
+          </div>
+        </div>
+      )}
+      
       <div className="bg-white rounded-lg shadow-sm overflow-hidden">
         <table className="min-w-full divide-y divide-gray-200">
           <thead className="bg-gray-50">
@@ -204,6 +226,19 @@ export default function ResidentManagement() {
             ))}
           </tbody>
         </table>
+        
+        {filteredResidents.length === 0 && residents.length > 0 && (
+          <div className="text-center py-8">
+            <Users className="h-12 w-12 text-gray-300 mx-auto mb-4" />
+            <p className="text-gray-500">No residents match your search criteria</p>
+            <button 
+              onClick={() => setSearchTerm('')}
+              className="text-blue-600 hover:text-blue-800 text-sm mt-2"
+            >
+              Clear search
+            </button>
+          </div>
+        )}
       </div>
 
       {selectedResident && (

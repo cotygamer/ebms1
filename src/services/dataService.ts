@@ -75,12 +75,18 @@ export class DataService {
 
   // Residents Management
   static async getResidents() {
+    console.log('DataService - Fetching residents from Supabase...')
     const { data, error } = await supabase
       .from('residents')
       .select('*')
       .order('created_at', { ascending: false })
     
-    if (error) throw error
+    if (error) {
+      console.error('DataService - Error fetching residents:', error)
+      throw error
+    }
+    
+    console.log('DataService - Residents fetched:', data?.length || 0)
     return data
   }
 

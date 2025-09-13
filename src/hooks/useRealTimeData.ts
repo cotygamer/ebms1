@@ -29,8 +29,12 @@ export function useRealTimeData<T>(
     // Initial data fetch
     fetchData()
 
+    // Debug logging
+    console.log(`Setting up real-time data for ${tableName}`)
+
     // Listen for manual refresh events
     const handleRefresh = () => {
+      console.log(`Manual refresh triggered for ${tableName}`)
       fetchData()
     }
     

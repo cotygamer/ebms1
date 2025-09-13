@@ -43,18 +43,16 @@ import {
 
 export default function BarangayOfficialDashboard() {
   const { user, logout } = useAuth();
-  const { residents, documents, complaints } = useData();
+  const { residents, documents, complaints, users } = useData();
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState('dashboard');
 
-  // Force refresh data when component mounts
+  // Debug logging to check data
   React.useEffect(() => {
-    // Trigger data refresh to ensure latest data is shown
-    const refreshData = () => {
-      window.dispatchEvent(new CustomEvent('refreshAllData'));
-    };
-    refreshData();
-  }, []);
+    console.log('Barangay Official Dashboard - Residents data:', residents);
+    console.log('Barangay Official Dashboard - Users data:', users);
+    console.log('Barangay Official Dashboard - Documents data:', documents);
+  }, [residents, users, documents]);
 
   const handleLogout = () => {
     logout();

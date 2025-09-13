@@ -178,6 +178,14 @@ export function DataProvider({ children }: { children: ReactNode }) {
   const { data: announcements, refresh: refreshAnnouncements } = useAnnouncements();
   const { data: transactions, refresh: refreshTransactions } = useTransactions();
 
+  // Debug logging to check data loading
+  React.useEffect(() => {
+    console.log('DataProvider - Users loaded:', users.length);
+    console.log('DataProvider - Residents loaded:', residents.length);
+    console.log('DataProvider - Documents loaded:', documents.length);
+    console.log('DataProvider - Incidents loaded:', incidents.length);
+  }, [users, residents, documents, incidents]);
+
   // Initialize settings from localStorage with Supabase sync
   const [systemSettings, setSystemSettings] = useState<SystemSettings>(() => {
     const savedSettings = localStorage.getItem('systemSettings');
