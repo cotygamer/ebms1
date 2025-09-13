@@ -99,12 +99,17 @@ export class DataService {
   static async createResident(residentData: any) {
     console.log('Creating resident with data:', residentData);
     
+    // Ensure date_registered is properly formatted
+    const formattedData = {
+      ...residentData,
+      date_registered: residentData.date_registered || new Date().toISOString().split('T')[0],
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString()
+    };
+    
     const { data, error } = await supabase
       .from('residents')
-      .insert([{
-        ...residentData,
-        date_registered: new Date().toISOString().split('T')[0]
-      }])
+      .insert([formattedData])
       .select()
       .single()
     
@@ -113,8 +118,12 @@ export class DataService {
       throw new Error(`Failed to create resident: ${error.message}`);
     }
     
-    // Log the action
-    await this.logAction('resident.create', 'resident', data.id, null, data)
+    // Log the action (only if audit_logs table exists)
+    try {
+      await this.logAction('resident.create', 'resident', data.id, null, data)
+    } catch (logError) {
+      console.warn('Failed to log action (audit_logs table may not exist):', logError)
+    }
     
     console.log('Resident created successfully:', data);
     return data
