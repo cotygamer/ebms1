@@ -4,6 +4,7 @@ import { useAuth } from '../contexts/AuthContext';
 import { useData } from '../contexts/DataContext';
 import KYCVerificationCenter from '../components/KYCVerificationCenter';
 import ResidentManagement from '../components/ResidentManagement';
+import DataSyncMonitor from '../components/DataSyncMonitor';
 import { 
   Building2, 
   Users, 
@@ -36,44 +37,15 @@ import {
   UserCheck,
   Home,
   Phone,
-  Mail
+  Mail,
+  Database
 } from 'lucide-react';
 
 export default function BarangayOfficialDashboard() {
   const { user, logout } = useAuth();
-  const { residents } = useData();
+  const { residents, documents, complaints } = useData();
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState('dashboard');
-  const [complaints, setComplaints] = useState([
-    {
-      id: '1',
-      residentName: 'Juan Dela Cruz',
-      residentEmail: 'juan@email.com',
-      type: 'noise',
-      subject: 'Loud music from neighbor',
-      description: 'Neighbor playing loud music past 10 PM',
-      status: 'pending',
-      priority: 'medium',
-      dateSubmitted: '2024-03-15',
-      assignedTo: 'Barangay Tanod',
-      resolution: null,
-      location: '123 Main St'
-    },
-    {
-      id: '2',
-      residentName: 'Maria Santos',
-      residentEmail: 'maria@email.com',
-      type: 'garbage',
-      subject: 'Uncollected garbage',
-      description: 'Garbage has not been collected for 3 days',
-      status: 'investigating',
-      priority: 'high',
-      dateSubmitted: '2024-03-14',
-      assignedTo: 'Sanitation Team',
-      resolution: null,
-      location: '456 Oak Ave'
-    }
-  ]);
 
   const handleLogout = () => {
     logout();
@@ -104,7 +76,7 @@ export default function BarangayOfficialDashboard() {
     },
     { 
       label: 'Documents Processed', 
-      value: '2,341', 
+      value: documents.length.toString(), 
       icon: FileText, 
       color: 'bg-purple-500',
       trend: '+156 this month'
@@ -377,6 +349,8 @@ export default function BarangayOfficialDashboard() {
         return <ResidentManagement />;
       case 'kyc-verification':
         return <KYCVerificationCenter />;
+      case 'data-sync':
+        return <DataSyncMonitor />;
       case 'complaints':
         return renderComplaints();
       case 'documents':
@@ -433,6 +407,7 @@ export default function BarangayOfficialDashboard() {
               { id: 'dashboard', label: 'Dashboard', icon: Activity },
               { id: 'residents', label: 'Residents', icon: Users },
               { id: 'kyc-verification', label: 'KYC Verification', icon: UserCheck },
+              { id: 'data-sync', label: 'Data Sync', icon: Database },
               { id: 'complaints', label: 'Complaints & Blotter', icon: AlertTriangle },
               { id: 'documents', label: 'Documents', icon: FileText },
               { id: 'announcements', label: 'Announcements', icon: Bell },
