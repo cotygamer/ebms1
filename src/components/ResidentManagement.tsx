@@ -7,6 +7,12 @@ export default function ResidentManagement() {
   const [selectedResident, setSelectedResident] = useState<any>(null);
   const [searchTerm, setSearchTerm] = useState('');
 
+  // Refresh data when component mounts to ensure latest data
+  React.useEffect(() => {
+    // Force refresh of residents data
+    window.location.reload();
+  }, []);
+
   const filteredResidents = residents.filter(resident =>
     resident.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
     resident.email.toLowerCase().includes(searchTerm.toLowerCase())

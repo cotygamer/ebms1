@@ -252,6 +252,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
     try {
       await dataService.createUser({
         ...userData,
+        permissions: getDefaultPermissions(userData.role),
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString()
       });
@@ -418,4 +419,21 @@ export function useData() {
     throw new Error('useData must be used within a DataProvider');
   }
   return context;
+}
+
+function getDefaultPermissions(role: string): string[] {
+  switch (role) {
+    case 'super-admin':
+      return ['all'];
+    case 'barangay-official':
+      return ['residents', 'documents', 'reports', 'announcements'];
+    case 'medical-portal':
+      return ['health', 'medical-records', 'appointments'];
+    case 'accounting-portal':
+      return ['accounting', 'financial-reports', 'payments'];
+    case 'disaster-portal':
+      return ['disaster-management', 'emergency-alerts', 'evacuation'];
+    default:
+      return ['basic'];
+  }
 }

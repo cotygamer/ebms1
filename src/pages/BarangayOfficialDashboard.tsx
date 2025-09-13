@@ -47,6 +47,15 @@ export default function BarangayOfficialDashboard() {
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState('dashboard');
 
+  // Force refresh data when component mounts
+  React.useEffect(() => {
+    // Trigger data refresh to ensure latest data is shown
+    const refreshData = () => {
+      window.dispatchEvent(new CustomEvent('refreshAllData'));
+    };
+    refreshData();
+  }, []);
+
   const handleLogout = () => {
     logout();
     navigate('/');

@@ -29,6 +29,13 @@ export function useRealTimeData<T>(
     // Initial data fetch
     fetchData()
 
+    // Listen for manual refresh events
+    const handleRefresh = () => {
+      fetchData()
+    }
+    
+    window.addEventListener('refreshAllData', handleRefresh)
+
     // Set up real-time subscription only if initial fetch succeeds
     let subscription: any = null
     
@@ -60,6 +67,7 @@ export function useRealTimeData<T>(
 
     // Cleanup subscription on unmount
     return () => {
+      window.removeEventListener('refreshAllData', handleRefresh)
       if (subscription) {
         dataService.unsubscribeFromTable(tableName)
       }

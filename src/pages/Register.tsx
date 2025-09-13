@@ -1,8 +1,11 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
+import { useData } from '../contexts/DataContext';
+import { dataService } from '../services/dataService';
 import { Building2, ArrowLeft, User, MapPin, Plane, Home, Eye, EyeOff, CheckCircle, AlertTriangle, Phone, Mail, Calendar, Users, Shield, Star, Sparkles } from 'lucide-react';
 
 export default function Register() {
+  const { addUser } = useData();
   const [currentStep, setCurrentStep] = useState(1);
   const [formData, setFormData] = useState({
     // Personal Information
@@ -110,12 +113,38 @@ export default function Register() {
     setIsLoading(true);
 
     try {
-      // Simulate registration process
-      setTimeout(() => {
-        alert('Registration successful! Please wait for verification.');
-        navigate('/login');
-      }, 2000);
+      // Create user account in the centralized database
+      const userData = {
+        name: `${formData.firstName} ${formData.middleName ? formData.middleName + ' ' : ''}${formData.lastName}${formData.suffix ? ' ' + formData.suffix : ''}`,
+        email: formData.email,
+        role: 'resident' as const,
+        status: 'active' as const,
+        phone_number: formData.phoneNumber,
+        address: formData.address
+      };
+
+      // Add user to the system
+      await addUser(userData);
+
+      // Create resident profile in the centralized database
+      const residentData = {
+        name: userData.name,
+        email: formData.email,
+        phone_number: formData.phoneNumber,
+        address: formData.address,
+        verification_status: 'non-verified',
+        birth_date: formData.birthDate,
+        gender: formData.gender,
+        civil_status: formData.civilStatus,
+        emergency_contact: `${formData.emergencyContactName} - ${formData.emergencyContactPhone} (${formData.emergencyContactRelation})`
+      };
+
+      await dataService.createResident(residentData);
+
+      alert('Registration successful! You can now login and your profile will be visible to barangay officials for verification.');
+      navigate('/login');
     } catch (err) {
+      console.error('Registration error:', err);
       setError('Registration failed. Please try again.');
     } finally {
       setIsLoading(false);

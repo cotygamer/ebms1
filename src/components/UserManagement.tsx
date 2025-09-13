@@ -8,6 +8,12 @@ export default function UserManagement() {
   const { user: currentUser } = useAuth();
   const { users, addUser, updateUser, deleteUser } = useData();
 
+  // Refresh data when component mounts to ensure latest data
+  React.useEffect(() => {
+    // Force refresh of users data
+    window.location.reload();
+  }, []);
+
   const [searchTerm, setSearchTerm] = useState('');
   const [filterRole, setFilterRole] = useState('all');
   const [filterStatus, setFilterStatus] = useState('all');
