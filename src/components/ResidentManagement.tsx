@@ -200,7 +200,7 @@ export default function ResidentManagement() {
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap">
                   <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getStatusColor(resident.verificationStatus)}`}>
-                    {resident.verificationStatus.replace('-', ' ')}
+                    {(resident.verificationStatus || 'unknown').replace('-', ' ')}
                   </span>
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap">
