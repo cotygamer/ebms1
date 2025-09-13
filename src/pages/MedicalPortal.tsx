@@ -448,15 +448,15 @@ const MedicalPortal: React.FC = () => {
           <div className="flex items-center">
             <Stethoscope className="h-8 w-8 text-green-500" />
             <div className="ml-4">
-              <p className="text-sm font-medium text-gray-600">Equipment</p>
+          {healthAnnouncements.map((announcement) => (
               <p className="text-2xl font-bold text-gray-900">{inventory.filter(i => i.category === 'Equipment').length}</p>
             </div>
           </div>
         </div>
         <div className="bg-white rounded-lg shadow-md p-6 border-l-4 border-orange-500">
-          <div className="flex items-center">
+                      announcement.type === 'health' ? 'bg-red-100 text-red-800 border-red-200' : 'bg-blue-100 text-blue-800 border-blue-200'
             <Package className="h-8 w-8 text-orange-500" />
-            <div className="ml-4">
+                      {announcement.type.toUpperCase()}
               <p className="text-sm font-medium text-gray-600">Supplies</p>
               <p className="text-2xl font-bold text-gray-900">{inventory.filter(i => i.category === 'Supply').length}</p>
             </div>
@@ -468,20 +468,35 @@ const MedicalPortal: React.FC = () => {
         <h3 className="text-lg font-semibold text-gray-900 mb-4">Low Stock Alert</h3>
         <div className="space-y-3">
           {inventory.filter(item => item.stock < item.minimum).map((item, index) => (
-            <div key={index} className="flex items-center justify-between p-3 bg-red-50 rounded-lg border border-red-200">
+                    <p>By {announcement.author} • {new Date(announcement.createdAt).toLocaleDateString()}</p>
               <div className="flex items-center">
                 <AlertTriangle className="h-6 w-6 text-red-500 mr-3" />
                 <div>
                   <p className="font-medium text-gray-900">{item.name}</p>
                   <p className="text-sm text-gray-600">{item.category}</p>
                 </div>
-              </div>
+                  <button 
+                    onClick={() => deleteAnnouncement(announcement.id)}
+                    className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                  >
               <div className="text-right">
                 <p className="text-sm font-medium text-red-600">Stock: {item.stock} {item.unit}</p>
                 <p className="text-xs text-gray-500">Min: {item.minimum} {item.unit}</p>
               </div>
             </div>
           ))}
+          {healthAnnouncements.length === 0 && (
+            <div className="text-center py-8">
+              <Bell className="h-12 w-12 text-gray-300 mx-auto mb-2" />
+              <p className="text-gray-500">No health announcements yet</p>
+              <button
+                onClick={() => setShowAnnouncementForm(true)}
+                className="mt-2 text-red-600 hover:text-red-800 text-sm font-medium"
+              >
+                Create your first health announcement
+              </button>
+            </div>
+          )}
         </div>
       </div>
 
