@@ -558,6 +558,7 @@ export default function UserManagement() {
                   Create User
                 </button>
               </div>
+            </form>
             </div>
           </div>
         </div>
