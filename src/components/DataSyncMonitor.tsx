@@ -42,6 +42,7 @@ export default function DataSyncMonitor() {
   const [consistency, setConsistency] = useState<DataConsistency | null>(null);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [lastCheck, setLastCheck] = useState<Date | null>(null);
+  const [missingTables, setMissingTables] = useState<string[]>([]);
 
   const checkSyncStatus = async () => {
     try {
@@ -49,6 +50,13 @@ export default function DataSyncMonitor() {
       const status = await dataService.getSyncStatus();
       setSyncStatus(status);
       setLastCheck(new Date());
+      
+      // Check for missing tables
+      const missing: string[] = [];
+      if (status.error && status.error.includes('incidents')) {
+        missing.push('incidents');
+      }
+      setMissingTables(missing);
     } catch (error) {
       console.error('Failed to check sync status:', error);
       setSyncStatus({
@@ -161,6 +169,23 @@ export default function DataSyncMonitor() {
               <span className="text-red-700 font-medium">Sync Error:</span>
             </div>
             <p className="text-red-600 text-sm mt-1">{syncStatus.error}</p>
+          </div>
+        )}
+        
+        {missingTables.length > 0 && (
+          <div className="mt-4 p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
+            <div className="flex items-center">
+              <AlertTriangle className="w-5 h-5 text-yellow-600 mr-2" />
+              <div>
+                <h4 className="text-sm font-medium text-yellow-800">Database Setup Required</h4>
+                <p className="text-sm text-yellow-700 mt-1">
+                  Missing tables: {missingTables.join(', ')}. Please run the database migration.
+                </p>
+                <p className="text-xs text-yellow-600 mt-2">
+                  Click "Connect to Supabase" button and run the migration script.
+                </p>
+              </div>
+            </div>
           </div>
         )}
       </div>
