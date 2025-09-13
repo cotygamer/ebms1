@@ -136,7 +136,8 @@ export default function BarangayOfficialDashboard() {
           </button>
           
           <button className="flex items-center p-4 bg-red-50 rounded-lg hover:bg-red-100 transition-colors">
-            <Bell className="h-8 w-8 text-red-600 mr-3" />
+            onClick={() => setShowAnnouncementForm(true)}
+            className="flex items-center p-4 bg-red-50 rounded-lg hover:bg-red-100 transition-colors"
             <div className="text-left">
               <h4 className="font-semibold text-gray-900">Send Announcements</h4>
               <p className="text-sm text-gray-600">Notify residents</p>
@@ -175,6 +176,45 @@ export default function BarangayOfficialDashboard() {
                 >
                   Review
                 </button>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Recent Document Requests */}
+      <div className="bg-white rounded-lg shadow-md p-6">
+        <div className="flex items-center justify-between mb-4">
+          <h3 className="text-lg font-semibold text-gray-900">Recent Document Requests</h3>
+          <button 
+            onClick={() => setActiveTab('documents')}
+            className="text-blue-600 hover:text-blue-800 text-sm font-medium"
+          >
+            View All
+          </button>
+        </div>
+        <div className="space-y-3">
+          {documents.filter(d => d.status === 'pending' || d.status === 'processing').slice(0, 5).map((doc) => (
+            <div key={doc.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+              <div className="flex items-center space-x-3">
+                <div className={`w-10 h-10 rounded-full flex items-center justify-center ${
+                  doc.status === 'processing' ? 'bg-blue-100' : 'bg-yellow-100'
+                }`}>
+                  <FileText className={`h-5 w-5 ${
+                    doc.status === 'processing' ? 'text-blue-600' : 'text-yellow-600'
+                  }`} />
+                </div>
+                <div>
+                  <p className="font-medium text-gray-900">{doc.documentType}</p>
+                  <p className="text-sm text-gray-600">{doc.residentName} • ₱{doc.fee}</p>
+                </div>
+              </div>
+              <div className="flex items-center space-x-2">
+                <span className={`px-2 py-1 text-xs font-semibold rounded-full ${
+                  doc.status === 'processing' ? 'bg-blue-100 text-blue-800' : 'bg-yellow-100 text-yellow-800'
+                }`}>
+                  {doc.status}
+                </span>
               </div>
             </div>
           ))}
