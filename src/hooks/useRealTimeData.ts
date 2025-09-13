@@ -29,29 +29,40 @@ export function useRealTimeData<T>(
     // Initial data fetch
     fetchData()
 
-    // Set up real-time subscription
-    const subscription = dataService.subscribeToTable(tableName, (payload) => {
-      console.log(`Real-time update for ${tableName}:`, payload)
-      
-      // Update local state based on the change
-      if (payload.eventType === 'INSERT') {
-        setData(prev => [payload.new, ...prev])
-      } else if (payload.eventType === 'UPDATE') {
-        setData(prev => prev.map(item => 
-          (item as any).id === payload.new.id ? payload.new : item
-        ))
-      } else if (payload.eventType === 'DELETE') {
-        setData(prev => prev.filter(item => 
-          (item as any).id !== payload.old.id
-        ))
+    // Set up real-time subscription only if initial fetch succeeds
+    let subscription: any = null
+    
+    fetchData().then(() => {
+      // Only set up subscription if table exists and data was fetched successfully
+      if (!error) {
+        subscription = dataService.subscribeToTable(tableName, (payload) => {
+          console.log(`Real-time update for ${tableName}:`, payload)
+          
+          // Update local state based on the change
+          if (payload.eventType === 'INSERT') {
+            setData(prev => [payload.new, ...prev])
+          } else if (payload.eventType === 'UPDATE') {
+            setData(prev => prev.map(item => 
+              (item as any).id === payload.new.id ? payload.new : item
+            ))
+          } else if (payload.eventType === 'DELETE') {
+            setData(prev => prev.filter(item => 
+              (item as any).id !== payload.old.id
+            ))
+          }
+          
+          setLastSync(new Date())
+        })
       }
-      
-      setLastSync(new Date())
+    }).catch(() => {
+      // Error already handled in fetchData
     })
 
     // Cleanup subscription on unmount
     return () => {
-      dataService.unsubscribeFromTable(tableName)
+      if (subscription) {
+        dataService.unsubscribeFromTable(tableName)
+      }
     }
   }, [tableName, fetchData])
 
