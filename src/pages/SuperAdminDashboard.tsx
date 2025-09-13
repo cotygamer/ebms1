@@ -10,8 +10,8 @@ import SystemSettings from '../components/SystemSettings';
 import Analytics from '../components/Analytics';
 import ProjectGallery from '../components/ProjectGallery';
 import KYCVerificationCenter from '../components/KYCVerificationCenter';
-import DataSyncMonitor from '../components/DataSyncMonitor';
 import { 
+import SyncTestPanel from '../components/SyncTestPanel';
   Users, 
   Shield, 
   Settings, 
@@ -41,8 +41,8 @@ export default function SuperAdminDashboard() {
 
   const menuItems = [
     { id: 'overview', label: 'Overview', icon: Activity },
-    { id: 'data-sync', label: 'Data Sync Monitor', icon: Database },
     { id: 'users', label: 'User Management', icon: Users },
+    { id: 'sync-tests', label: 'Sync Tests', icon: Settings },
     { id: 'residents', label: 'Resident Management', icon: Users },
     { id: 'kyc-verification', label: 'KYC Verification Center', icon: UserCheck },
     { id: 'modules', label: 'Module Control', icon: Database },
@@ -56,10 +56,10 @@ export default function SuperAdminDashboard() {
     switch (activeTab) {
       case 'overview':
         return <SuperAdminOverview />;
-      case 'data-sync':
-        return <DataSyncMonitor />;
       case 'users':
         return <UserManagement />;
+      case 'sync-tests':
+        return <SyncTestPanel />;
       case 'residents':
         return <ResidentManagement />;
       case 'kyc-verification':
