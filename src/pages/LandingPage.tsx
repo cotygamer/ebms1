@@ -194,7 +194,7 @@ export default function LandingPage() {
             <div className="hidden lg:flex items-center space-x-8">
               <a href="#home" className="text-gray-700 hover:text-blue-600 transition-colors font-medium">Home</a>
               <a href="#services" className="text-gray-700 hover:text-blue-600 transition-colors font-medium">Services</a>
-              <Link to="/about" className="text-gray-700 hover:text-blue-600 transition-colors font-medium">About</a>
+              <Link to="/about" className="text-gray-700 hover:text-blue-600 transition-colors font-medium">About</Link>
               <a href="#announcements" className="text-gray-700 hover:text-blue-600 transition-colors font-medium">News</a>
               <a href="#contact" className="text-gray-700 hover:text-blue-600 transition-colors font-medium">Contact</a>
               <div className="flex items-center space-x-3">
