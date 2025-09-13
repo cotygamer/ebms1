@@ -91,9 +91,9 @@ export default function UserManagement() {
       email: user.email,
       role: user.role,
       status: user.status,
-        address: user.address || '',
-        password: ''
-      address: user.address || ''
+      phone_number: user.phone_number || '',
+      address: user.address || '',
+      password: ''
     });
   };
 
@@ -108,9 +108,9 @@ export default function UserManagement() {
           email: '',
           role: 'resident',
           status: 'active',
-            address: '',
-            password: ''
-          address: ''
+          phone_number: '',
+          address: '',
+          password: ''
         });
       } catch (error) {
         console.error('Failed to update user:', error);
@@ -429,6 +429,38 @@ export default function UserManagement() {
                     <option value="suspended">Suspended</option>
                   </select>
                 </div>
+              </div>
+              
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Phone Number</label>
+                <input
+                  type="tel"
+                  value={editUserData.phone_number}
+                  onChange={(e) => setEditUserData({ ...editUserData, phone_number: e.target.value })}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                />
+              </div>
+              
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Address</label>
+                <textarea
+                  value={editUserData.address}
+                  onChange={(e) => setEditUserData({ ...editUserData, address: e.target.value })}
+                  rows={2}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                />
+              </div>
+              
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">New Password (Optional)</label>
+                <input
+                  type="password"
+                  value={editUserData.password}
+                  onChange={(e) => setEditUserData({ ...editUserData, password: e.target.value })}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  placeholder="Leave blank to keep current password"
+                />
+                <p className="text-xs text-gray-500 mt-1">Only enter if you want to change the password</p>
               </div>
               
               <div className="flex space-x-3">
