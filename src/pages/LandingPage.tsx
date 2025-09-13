@@ -32,38 +32,20 @@ import {
 } from 'lucide-react';
 
 export default function LandingPage() {
-  const { systemSettings, residents } = useData();
+  const { systemSettings, residents, announcements: dataAnnouncements } = useData();
   
-  // Mock data for announcements (in real app, this would come from API)
-  const [announcements] = useState([
-    {
-      id: 1,
-      title: 'Community Health Drive - Free Medical Checkup',
-      content: 'Free medical checkup and vaccination for all residents. Bring your barangay ID and health records.',
-      type: 'health',
-      priority: 'high',
-      date: '2024-03-20',
-      author: 'Barangay Health Center'
-    },
-    {
-      id: 2,
-      title: 'Road Maintenance Schedule',
-      content: 'Main Street will undergo maintenance from March 25-27. Please use alternative routes.',
-      type: 'notice',
-      priority: 'medium',
-      date: '2024-03-18',
-      author: 'Public Works'
-    },
-    {
-      id: 3,
-      title: 'Barangay Assembly Meeting',
-      content: 'Monthly barangay assembly meeting on March 30, 2024 at 7:00 PM. All residents are invited.',
-      type: 'event',
-      priority: 'medium',
-      date: '2024-03-15',
-      author: 'Barangay Council'
-    }
-  ]);
+  // Get published announcements from data context
+  const announcements = dataAnnouncements
+    .filter(announcement => announcement.status === 'published')
+    .map(announcement => ({
+      id: parseInt(announcement.id),
+      title: announcement.title,
+      content: announcement.content,
+      type: announcement.type,
+      priority: announcement.priority,
+      date: new Date(announcement.createdAt).toISOString().split('T')[0],
+      author: announcement.author
+    }));
 
   // Mock data for projects (in real app, this would come from API)
   const [projects] = useState([

@@ -30,6 +30,50 @@ interface Resident {
   }[];
 }
 
+interface Document {
+  id: string;
+  residentId?: string;
+  residentName: string;
+  residentEmail?: string;
+  residentPhone?: string;
+  documentType: string;
+  status: 'pending' | 'processing' | 'ready' | 'released' | 'rejected';
+  requestedDate: string;
+  processedDate?: string;
+  releasedDate?: string;
+  fee: number;
+  paymentStatus: 'unpaid' | 'paid' | 'refunded';
+  paymentMethod?: string;
+  notes?: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+interface Announcement {
+  id: string;
+  title: string;
+  content: string;
+  type: 'important' | 'event' | 'notice' | 'emergency' | 'health' | 'weather' | 'evacuation' | 'update';
+  priority: 'low' | 'medium' | 'high';
+  status: 'published' | 'draft';
+  author: string;
+  expiresAt?: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+interface Transaction {
+  id: string;
+  type: 'revenue' | 'expense';
+  description: string;
+  amount: number;
+  category: string;
+  paymentMethod: string;
+  referenceNumber?: string;
+  transactionDate: string;
+  createdAt: string;
+  updatedAt: string;
+}
 interface SystemSettings {
   googleMapsApiKey: string;
   paymentGateway: {
@@ -73,12 +117,23 @@ interface DataContextType {
   residents: Resident[];
   systemSettings: SystemSettings;
   users: User[];
+  documents: Document[];
+  announcements: Announcement[];
+  transactions: Transaction[];
   updateResident: (id: string, updates: Partial<Resident>) => void;
   updateSystemSettings: (updates: Partial<SystemSettings>) => void;
   verifyResident: (id: string, status: 'semi-verified' | 'verified') => void;
   addUser: (user: Omit<User, 'id'>) => void;
   updateUser: (id: string, updates: Partial<User>) => void;
   deleteUser: (id: string) => void;
+  addDocument: (document: Omit<Document, 'id' | 'createdAt' | 'updatedAt'>) => void;
+  updateDocument: (id: string, updates: Partial<Document>) => void;
+  addAnnouncement: (announcement: Omit<Announcement, 'id' | 'createdAt' | 'updatedAt'>) => void;
+  updateAnnouncement: (id: string, updates: Partial<Announcement>) => void;
+  deleteAnnouncement: (id: string) => void;
+  addTransaction: (transaction: Omit<Transaction, 'id' | 'createdAt' | 'updatedAt'>) => void;
+  updateTransaction: (id: string, updates: Partial<Transaction>) => void;
+  deleteTransaction: (id: string) => void;
 }
 
 interface User {
@@ -155,6 +210,139 @@ export function DataProvider({ children }: { children: ReactNode }) {
     }
   ]);
 
+  const [documents, setDocuments] = useState<Document[]>([
+    {
+      id: '1',
+      residentId: '1',
+      residentName: 'Juan Dela Cruz',
+      residentEmail: 'juan@email.com',
+      residentPhone: '+63 912 345 6789',
+      documentType: 'Barangay Clearance',
+      status: 'ready',
+      requestedDate: '2024-03-10',
+      processedDate: '2024-03-12',
+      fee: 50,
+      paymentStatus: 'paid',
+      paymentMethod: 'GCash',
+      notes: 'For employment purposes',
+      createdAt: '2024-03-10T08:00:00Z',
+      updatedAt: '2024-03-12T14:30:00Z'
+    },
+    {
+      id: '2',
+      residentName: 'Maria Santos',
+      residentEmail: 'maria@email.com',
+      residentPhone: '+63 917 654 3210',
+      documentType: 'Certificate of Residency',
+      status: 'processing',
+      requestedDate: '2024-03-15',
+      fee: 30,
+      paymentStatus: 'unpaid',
+      notes: 'For school enrollment',
+      createdAt: '2024-03-15T10:15:00Z',
+      updatedAt: '2024-03-15T10:15:00Z'
+    },
+    {
+      id: '3',
+      residentName: 'Pedro Martinez',
+      residentEmail: 'pedro@email.com',
+      documentType: 'Business Permit',
+      status: 'pending',
+      requestedDate: '2024-03-18',
+      fee: 200,
+      paymentStatus: 'unpaid',
+      notes: 'Small sari-sari store',
+      createdAt: '2024-03-18T09:30:00Z',
+      updatedAt: '2024-03-18T09:30:00Z'
+    }
+  ]);
+
+  const [announcements, setAnnouncements] = useState<Announcement[]>([
+    {
+      id: '1',
+      title: 'Community Health Drive - Free Medical Checkup',
+      content: 'Free medical checkup and vaccination for all residents. Bring your barangay ID and health records. Schedule: March 25-27, 2024 at the Barangay Health Center.',
+      type: 'health',
+      priority: 'high',
+      status: 'published',
+      author: 'Dr. Maria Santos',
+      expiresAt: '2024-03-30T23:59:59Z',
+      createdAt: '2024-03-20T08:00:00Z',
+      updatedAt: '2024-03-20T08:00:00Z'
+    },
+    {
+      id: '2',
+      title: 'Road Maintenance Schedule',
+      content: 'Main Street will undergo maintenance from March 25-27. Please use alternative routes during construction hours (8 AM - 5 PM).',
+      type: 'notice',
+      priority: 'medium',
+      status: 'published',
+      author: 'Public Works Department',
+      expiresAt: '2024-03-28T23:59:59Z',
+      createdAt: '2024-03-18T14:00:00Z',
+      updatedAt: '2024-03-18T14:00:00Z'
+    },
+    {
+      id: '3',
+      title: 'Barangay Assembly Meeting',
+      content: 'Monthly barangay assembly meeting on March 30, 2024 at 7:00 PM at the Barangay Hall. All residents are invited to participate.',
+      type: 'event',
+      priority: 'medium',
+      status: 'published',
+      author: 'Barangay Council',
+      createdAt: '2024-03-15T16:00:00Z',
+      updatedAt: '2024-03-15T16:00:00Z'
+    }
+  ]);
+
+  const [transactions, setTransactions] = useState<Transaction[]>([
+    {
+      id: '1',
+      type: 'revenue',
+      description: 'Barangay Clearance Fees',
+      amount: 1500,
+      category: 'Document Fees',
+      paymentMethod: 'GCash',
+      referenceNumber: 'GC20240315001',
+      transactionDate: '2024-03-15',
+      createdAt: '2024-03-15T10:00:00Z',
+      updatedAt: '2024-03-15T10:00:00Z'
+    },
+    {
+      id: '2',
+      type: 'expense',
+      description: 'Office Supplies Purchase',
+      amount: 2500,
+      category: 'Office Supplies',
+      paymentMethod: 'Cash',
+      transactionDate: '2024-03-14',
+      createdAt: '2024-03-14T14:30:00Z',
+      updatedAt: '2024-03-14T14:30:00Z'
+    },
+    {
+      id: '3',
+      type: 'revenue',
+      description: 'Business Permit Fees',
+      amount: 800,
+      category: 'Permit Fees',
+      paymentMethod: 'Maya',
+      referenceNumber: 'MY20240313001',
+      transactionDate: '2024-03-13',
+      createdAt: '2024-03-13T11:15:00Z',
+      updatedAt: '2024-03-13T11:15:00Z'
+    },
+    {
+      id: '4',
+      type: 'expense',
+      description: 'Utility Bills Payment',
+      amount: 3200,
+      category: 'Utilities',
+      paymentMethod: 'Bank Transfer',
+      transactionDate: '2024-03-12',
+      createdAt: '2024-03-12T16:45:00Z',
+      updatedAt: '2024-03-12T16:45:00Z'
+    }
+  ]);
 
   const [users, setUsers] = useState<User[]>([
     {
@@ -267,17 +455,86 @@ export function DataProvider({ children }: { children: ReactNode }) {
     setUsers(prev => prev.filter(user => user.id !== id));
   };
 
+  // Document Management Functions
+  const addDocument = (documentData: Omit<Document, 'id' | 'createdAt' | 'updatedAt'>) => {
+    const newDocument = {
+      ...documentData,
+      id: Date.now().toString(),
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString()
+    };
+    setDocuments(prev => [newDocument, ...prev]);
+  };
+
+  const updateDocument = (id: string, updates: Partial<Document>) => {
+    setDocuments(prev => prev.map(doc => 
+      doc.id === id ? { ...doc, ...updates, updatedAt: new Date().toISOString() } : doc
+    ));
+  };
+
+  // Announcement Management Functions
+  const addAnnouncement = (announcementData: Omit<Announcement, 'id' | 'createdAt' | 'updatedAt'>) => {
+    const newAnnouncement = {
+      ...announcementData,
+      id: Date.now().toString(),
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString()
+    };
+    setAnnouncements(prev => [newAnnouncement, ...prev]);
+  };
+
+  const updateAnnouncement = (id: string, updates: Partial<Announcement>) => {
+    setAnnouncements(prev => prev.map(announcement => 
+      announcement.id === id ? { ...announcement, ...updates, updatedAt: new Date().toISOString() } : announcement
+    ));
+  };
+
+  const deleteAnnouncement = (id: string) => {
+    setAnnouncements(prev => prev.filter(announcement => announcement.id !== id));
+  };
+
+  // Transaction Management Functions
+  const addTransaction = (transactionData: Omit<Transaction, 'id' | 'createdAt' | 'updatedAt'>) => {
+    const newTransaction = {
+      ...transactionData,
+      id: Date.now().toString(),
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString()
+    };
+    setTransactions(prev => [newTransaction, ...prev]);
+  };
+
+  const updateTransaction = (id: string, updates: Partial<Transaction>) => {
+    setTransactions(prev => prev.map(transaction => 
+      transaction.id === id ? { ...transaction, ...updates, updatedAt: new Date().toISOString() } : transaction
+    ));
+  };
+
+  const deleteTransaction = (id: string) => {
+    setTransactions(prev => prev.filter(transaction => transaction.id !== id));
+  };
   return (
     <DataContext.Provider value={{
       residents,
       systemSettings,
       users,
+      documents,
+      announcements,
+      transactions,
       updateResident,
       updateSystemSettings,
       verifyResident,
       addUser,
       updateUser,
-      deleteUser
+      deleteUser,
+      addDocument,
+      updateDocument,
+      addAnnouncement,
+      updateAnnouncement,
+      deleteAnnouncement,
+      addTransaction,
+      updateTransaction,
+      deleteTransaction
     }}>
       {children}
     </DataContext.Provider>

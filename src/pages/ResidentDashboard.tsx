@@ -340,6 +340,7 @@ export default function ResidentDashboard() {
     { id: 'verification', label: 'Verification', icon: Shield },
     { id: 'qr-code', label: 'QR Code', icon: QrCode },
     { id: 'family', label: 'Family Tree', icon: Users },
+    { id: 'documents', label: 'Document Requests', icon: FileText },
     { id: 'documents', label: 'Documents', icon: FileText },
     { id: 'announcements', label: 'Announcements', icon: Bell }
   ];
