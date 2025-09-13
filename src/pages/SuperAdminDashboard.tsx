@@ -10,8 +10,8 @@ import SystemSettings from '../components/SystemSettings';
 import Analytics from '../components/Analytics';
 import ProjectGallery from '../components/ProjectGallery';
 import KYCVerificationCenter from '../components/KYCVerificationCenter';
-import { 
 import SyncTestPanel from '../components/SyncTestPanel';
+import { 
   Users, 
   Shield, 
   Settings, 
