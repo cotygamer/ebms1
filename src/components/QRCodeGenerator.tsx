@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useAuth } from '../contexts/AuthContext';
-import { QrCode, Download, Share2, Copy, Check, Upload, Smartphone, Monitor, Tablet, Wifi, WifiOff, Sun, Moon, User, Shield, Clock, XCircle } from 'lucide-react';
+import { QrCode, Download, Share2, Copy, Check, Upload, Smartphone, Monitor, Tablet, Wifi, WifiOff, Sun, Moon, User, Shield, Clock, XCircle, Camera } from 'lucide-react';
 
 export default function QRCodeGenerator() {
   const { user } = useAuth();
