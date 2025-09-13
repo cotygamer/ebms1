@@ -214,25 +214,13 @@ export class DataService {
 
   // Incidents Management
   static async getIncidents() {
-    try {
-      const { data, error } = await supabase
-        .from('incidents')
-        .select('*')
-        .order('created_at', { ascending: false })
-
-      if (error) {
-        // Handle missing table gracefully
-        if (error.code === 'PGRST205') {
-          console.warn('Incidents table not found. Please run database migrations.')
-          return []
-        }
-        throw error
-      }
-      return data || []
-    } catch (error) {
-      console.error('Error fetching incidents:', error)
-      return []
-    }
+    const { data, error } = await supabase
+      .from('incidents')
+      .select('*')
+      .order('created_at', { ascending: false })
+    
+    if (error) throw error
+    return data
   }
 
   static async createIncident(incidentData: any) {

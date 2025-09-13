@@ -113,7 +113,9 @@ export default function Register() {
     setIsLoading(true);
 
     try {
-      // Create resident profile directly in the database
+      console.log('Starting registration process...');
+      
+      // Create resident profile first
       const fullName = `${formData.firstName} ${formData.middleName ? formData.middleName + ' ' : ''}${formData.lastName}${formData.suffix ? ' ' + formData.suffix : ''}`;
       
       const residentData = {
@@ -128,10 +130,11 @@ export default function Register() {
         emergency_contact: `${formData.emergencyContactName} - ${formData.emergencyContactPhone} (${formData.emergencyContactRelation})`
       };
 
-      // Create resident record
+      console.log('Creating resident with data:', residentData);
       const newResident = await dataService.createResident(residentData);
+      console.log('Resident created successfully:', newResident);
       
-      // Create corresponding user account
+      // Create corresponding user account (optional - for login purposes)
       const userData = {
         name: fullName,
         email: formData.email,
@@ -141,17 +144,15 @@ export default function Register() {
         address: formData.address
       };
 
+      console.log('Creating user account with data:', userData);
       await dataService.createUser(userData);
+      console.log('User account created successfully');
 
       alert('Registration successful! You can now login and your profile will be visible to barangay officials for verification.');
       navigate('/login');
     } catch (err) {
       console.error('Registration error:', err);
-      if (err.message) {
-        setError(`Registration failed: ${err.message}`);
-      } else {
-        setError('Registration failed. Please check your information and try again.');
-      }
+      setError(`Registration failed: ${err.message || 'Please check your information and try again.'}`);
     } finally {
       setIsLoading(false);
     }
