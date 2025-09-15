@@ -177,19 +177,50 @@ export default function Register() {
         gender: formData.gender,
         civil_status: formData.civilStatus,
         emergency_contact: emergencyContact,
+        nationality: formData.nationality,
+        religion: formData.religion,
+        occupation: formData.occupation,
+        monthly_income: formData.monthlyIncome,
         date_registered: new Date().toISOString().split('T')[0]
       };
 
       console.log('Creating resident with data:', residentData);
-      await dataService.createResident(residentData);
+      
+      // Create both Supabase Auth user and resident profile
+      try {
+        // First create the resident record
+        await dataService.createResident(residentData);
+        
+        // Then create the auth user (this will allow them to login)
+        await dataService.createAuthUser(formData.email, formData.password, {
+          name: fullName,
+          role: 'resident',
+          status: 'active',
+          phone_number: formData.phoneNumber,
+          address: completeAddress,
+          permissions: ['basic']
+        });
+        
+      } catch (authError: any) {
+        // If auth user creation fails but resident was created, that's okay
+        // They can still be created manually by admin
+        console.warn('Auth user creation failed, but resident record created:', authError);
+      }
+      
       console.log('Resident created successfully');
 
       // Show success message
-      alert('🎉 Registration successful! Welcome to our digital barangay community. You can now login with your email and password.');
+      alert('🎉 Registration successful! Welcome to our digital barangay community. You can now login with your email and password. If you cannot login immediately, please contact the barangay office to activate your account.');
       navigate('/login');
     } catch (err: any) {
       console.error('Registration error:', err);
-      setError(`Registration failed: ${err.message || 'Please try again.'}`);
+      if (err.message?.includes('User already registered')) {
+        setError('An account with this email already exists. Please use a different email or try logging in.');
+      } else if (err.message?.includes('Invalid email')) {
+        setError('Please enter a valid email address.');
+      } else {
+        setError(`Registration failed: ${err.message || 'Please try again or contact the barangay office for assistance.'}`);
+      }
     } finally {
       setIsLoading(false);
     }

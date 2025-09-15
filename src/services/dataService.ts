@@ -16,6 +16,46 @@ export class DataService {
     return data
   }
 
+  static async getUserByEmail(email: string) {
+    const { data, error } = await supabase
+      .from('users')
+      .select('*')
+      .eq('email', email)
+      .single()
+    
+    if (error) throw error
+    return data
+  }
+
+  static async createAuthUser(email: string, password: string, userData: any) {
+    // First create the auth user in Supabase Auth
+    const { data: authData, error: authError } = await supabase.auth.signUp({
+      email,
+      password
+    })
+    
+    if (authError) throw authError
+    
+    // Then create the user profile in the users table
+    const { data, error } = await supabase
+      .from('users')
+      .insert([{
+        ...userData,
+        email,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString()
+      }])
+      .select()
+      .single()
+    
+    if (error) throw error
+    
+    // Log the action
+    await this.logAction('user.create', 'user', data.id, null, data)
+    
+    return { authUser: authData.user, userProfile: data }
+  }
+
   static async createUser(userData: any) {
     console.log('Creating user with data:', userData);
     
