@@ -650,10 +650,10 @@ export function DataProvider({ children }: { children: ReactNode }) {
     try {
       await dataService.updateIncident(id, {
         status: updates.status,
-        assigned_to: updates.assignedTo,
+        assigned_to: updates.assigned_to || updates.assignedTo,
         resolution: updates.resolution,
         priority: updates.priority,
-        evidence_files: updates.evidenceFiles,
+        evidence_files: updates.evidenceFiles || updates.evidence_files,
         updated_at: new Date().toISOString()
       });
       refreshIncidents();
