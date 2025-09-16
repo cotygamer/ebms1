@@ -1,11 +1,18 @@
 import React, { useState } from 'react';
 import { useAuth } from '../contexts/AuthContext';
-import { QrCode, Download, Share2, Copy, Check, Upload, Smartphone, Monitor, Tablet, Wifi, WifiOff, Sun, Moon, User, Shield, Clock, XCircle } from 'lucide-react';
+import { QrCode, Download, Copy, Check, Shield, User, Clock, XCircle, CheckCircle } from 'lucide-react';
 
-export default function QRCodeGenerator() {
+export default function QRCodeDisplay() {
   const { user } = useAuth();
   const [showQR, setShowQR] = useState(false);
   const [copied, setCopied] = useState(false);
+
+  // Generate permanent QR code based on user ID and registration date
+  const getPermanentQRCode = () => {
+    if (!user?.id) return 'BRG_UNKNOWN';
+    const dateCode = user?.dateRegistered?.replace(/-/g, '') || new Date().toISOString().split('T')[0].replace(/-/g, '');
+    return `BRG_${user.id}_${dateCode}`;
+  };
 
   const generateQRData = () => {
     return JSON.stringify({
@@ -13,55 +20,12 @@ export default function QRCodeGenerator() {
       name: user?.name,
       email: user?.email,
       phone: user?.phone,
-      address: user?.address,
+      address: user?.houseNumber ? `${user.houseNumber}, ${user.barangay}, ${user.city}` : user?.address,
       verificationStatus: user?.verificationStatus,
-      qrCode: user?.qrCode,
+      qrCode: getPermanentQRCode(),
       dateRegistered: user?.dateRegistered || new Date().toISOString().split('T')[0],
-      dateGenerated: user?.qrCode ? user?.dateRegistered : new Date().toISOString().split('T')[0]
+      dateGenerated: user?.dateRegistered || new Date().toISOString().split('T')[0]
     });
-  };
-
-  // Generate permanent QR code based on user ID - never changes
-  const getPermanentQRCode = () => {
-    return user?.qrCode || `BRG_${user?.id}_${user?.dateRegistered?.replace(/-/g, '')}`;
-  };
-
-  const handleCopyQRCode = () => {
-    const qrData = generateQRData();
-    navigator.clipboard.writeText(qrData).then(() => {
-      setCopied(true);
-      setTimeout(() => setCopied(false), 2000);
-    });
-  };
-
-  const handleDownloadQR = () => {
-    const qrData = generateQRData();
-    const canvas = document.createElement('canvas');
-    const ctx = canvas.getContext('2d');
-    canvas.width = 300;
-    canvas.height = 300;
-    
-    // Fill white background
-    if (ctx) {
-      ctx.fillStyle = 'white';
-    ctx.fillRect(0, 0, 300, 300);
-    
-    // Draw QR pattern simulation
-    ctx.fillStyle = 'black';
-    for (let i = 0; i < 15; i++) {
-      for (let j = 0; j < 15; j++) {
-        if (Math.random() > 0.5) {
-          ctx.fillRect(i * 20, j * 20, 20, 20);
-        }
-      }
-    }
-    }
-    
-    // Download the canvas as image
-    const link = document.createElement('a');
-    link.download = `qr-code-${user?.name?.replace(/\s+/g, '-')}.png`;
-    link.href = canvas.toDataURL();
-    link.click();
   };
 
   const getStatusIcon = (status: string) => {
@@ -94,11 +58,47 @@ export default function QRCodeGenerator() {
     }
   };
 
+  const handleCopyQRCode = () => {
+    const qrData = generateQRData();
+    navigator.clipboard.writeText(qrData).then(() => {
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    });
+  };
+
+  const handleDownloadQR = () => {
+    const canvas = document.createElement('canvas');
+    const ctx = canvas.getContext('2d');
+    canvas.width = 300;
+    canvas.height = 300;
+    
+    if (ctx) {
+      // Fill white background
+      ctx.fillStyle = 'white';
+      ctx.fillRect(0, 0, 300, 300);
+      
+      // Draw QR pattern simulation
+      ctx.fillStyle = 'black';
+      for (let i = 0; i < 15; i++) {
+        for (let j = 0; j < 15; j++) {
+          if (Math.random() > 0.5) {
+            ctx.fillRect(i * 20, j * 20, 20, 20);
+          }
+        }
+      }
+    }
+    
+    // Download the canvas as image
+    const link = document.createElement('a');
+    link.download = `qr-code-${user?.name?.replace(/\s+/g, '-')}.png`;
+    link.href = canvas.toDataURL();
+    link.click();
+  };
+
   return (
     <div className="space-y-6">
       <h2 className="text-2xl font-semibold text-gray-900">My QR Code</h2>
       
-      {/* QR Code Available for All Verification Levels */}
       <div className={`border-2 rounded-lg p-6 ${getStatusColor(user?.verificationStatus || 'non-verified')}`}>
         <div className="text-center space-y-4">
           <div className="flex items-center justify-center mb-4">
@@ -122,10 +122,8 @@ export default function QRCodeGenerator() {
           <div className="bg-white rounded-lg p-6 mb-4 border-2 border-dashed border-gray-300">
             {showQR ? (
               <div className="space-y-4">
-                {/* Enhanced QR Code Display */}
                 <div className="w-48 h-48 sm:w-64 sm:h-64 mx-auto bg-white border-4 border-blue-500 rounded-lg flex items-center justify-center shadow-lg">
                   <div className="text-center">
-                    {/* Simulated QR Code Pattern */}
                     <div className="grid grid-cols-8 gap-0.5 sm:gap-1 mb-4">
                       {Array.from({ length: 64 }, (_, i) => (
                         <div
@@ -145,7 +143,6 @@ export default function QRCodeGenerator() {
                   </div>
                 </div>
                 
-                {/* QR Code Information */}
                 <div className="bg-gray-50 p-4 rounded-lg">
                   <h4 className="font-semibold text-gray-900 mb-2">QR Code Information</h4>
                   <div className="text-sm text-gray-600 space-y-1 text-left">
@@ -163,7 +160,6 @@ export default function QRCodeGenerator() {
                         {user?.verificationStatus === 'verified' && ' ✓'}
                       </span>
                     </p>
-                    <p><strong>QR Code:</strong> <span className="font-mono">{getQRCodeForStatus(user?.verificationStatus || 'non-verified')}</span></p>
                     <p><strong>QR Code:</strong> <span className="font-mono">{getPermanentQRCode()}</span></p>
                     <p><strong>Generated:</strong> {user?.dateRegistered || new Date().toLocaleDateString()}</p>
                   </div>
@@ -207,83 +203,18 @@ export default function QRCodeGenerator() {
         </div>
       </div>
 
-      {/* Cross-Platform Compatibility Status */}
-      <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 sm:p-6">
-        <h3 className="text-lg font-semibold text-blue-900 mb-4 flex items-center">
-          <Smartphone className="h-5 w-5 mr-2" />
-          Cross-Platform Compatibility
+      {/* Security Information */}
+      <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+        <h3 className="text-lg font-semibold text-yellow-800 mb-2 flex items-center">
+          <Shield className="h-5 w-5 mr-2" />
+          QR Code Security
         </h3>
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-          <div className="bg-white rounded-lg p-4">
-            <div className="flex items-center justify-between mb-2">
-              <div className="flex items-center">
-                <Smartphone className="h-5 w-5 text-green-600 mr-2" />
-                <span className="font-medium">Mobile</span>
-              </div>
-              <Check className="h-5 w-5 text-green-600" />
-            </div>
-            <div className="text-sm text-gray-600 space-y-1">
-              <p>✓ iOS Camera App</p>
-              <p>✓ Android Camera</p>
-              <p>✓ QR Scanner Apps</p>
-            </div>
-          </div>
-          
-          <div className="bg-white rounded-lg p-4">
-            <div className="flex items-center justify-between mb-2">
-              <div className="flex items-center">
-                <Tablet className="h-5 w-5 text-green-600 mr-2" />
-                <span className="font-medium">Tablet</span>
-              </div>
-              <Check className="h-5 w-5 text-green-600" />
-            </div>
-            <div className="text-sm text-gray-600 space-y-1">
-              <p>✓ iPad Camera</p>
-              <p>✓ Android Tablets</p>
-              <p>✓ Touch Optimized</p>
-            </div>
-          </div>
-          
-          <div className="bg-white rounded-lg p-4">
-            <div className="flex items-center justify-between mb-2">
-              <div className="flex items-center">
-                <Monitor className="h-5 w-5 text-green-600 mr-2" />
-                <span className="font-medium">Desktop</span>
-              </div>
-              <Check className="h-5 w-5 text-green-600" />
-            </div>
-            <div className="text-sm text-gray-600 space-y-1">
-              <p>✓ Webcam Support</p>
-              <p>✓ All Browsers</p>
-              <p>✓ High Resolution</p>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* Security and Usage Information */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
-          <h4 className="font-semibold text-yellow-800 mb-2">🔒 Security Notice</h4>
-          <ul className="text-xs sm:text-sm text-yellow-700 space-y-1 text-left">
-            <li>• Your QR code contains encrypted personal information</li>
-            <li>• Only authorized barangay personnel can scan and verify your QR code</li>
-            <li>• Do not share your QR code with unauthorized individuals</li>
-            <li>• Report any suspicious QR code scanning attempts immediately</li>
-            <li>• This QR code is valid only for official barangay transactions</li>
-          </ul>
-        </div>
-        
-        <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-          <h4 className="font-semibold text-blue-800 mb-2">How to Use Your QR Code</h4>
-          <ul className="text-xs sm:text-sm text-blue-700 space-y-1 text-left">
-            <li>• Can be scanned by barangay officials using any QR scanner</li>
-            <li>• Compatible with mobile devices, tablets, and desktop scanners</li>
-            <li>• Works with standard QR code reading applications</li>
-            <li>• Optimized for printing on official barangay IDs</li>
-            <li>• Print and attach to your barangay ID for permanent use</li>
-            <li>• QR code is permanent and will not change</li>
-          </ul>
+        <div className="text-sm text-yellow-700 space-y-1">
+          <p>• This QR code is permanent and will never change</p>
+          <p>• Safe to print on your official barangay ID</p>
+          <p>• Only authorized barangay personnel can scan and verify</p>
+          <p>• Contains encrypted personal information for verification</p>
+          <p>• Do not share with unauthorized individuals</p>
         </div>
       </div>
     </div>

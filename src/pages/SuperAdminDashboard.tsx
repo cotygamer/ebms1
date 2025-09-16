@@ -2,6 +2,9 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { useData } from '../contexts/DataContext';
+import { useOfflineSync } from '../hooks/useOfflineSync';
+import OfflineIndicator from '../components/OfflineIndicator';
+import OfflineSyncStatus from '../components/OfflineSyncStatus';
 import Sidebar from '../components/Sidebar';
 import UserManagement from '../components/UserManagement';
 import ResidentManagement from '../components/ResidentManagement';
@@ -10,6 +13,7 @@ import SystemSettings from '../components/SystemSettings';
 import Analytics from '../components/Analytics';
 import ProjectGallery from '../components/ProjectGallery';
 import KYCVerificationCenter from '../components/KYCVerificationCenter';
+import SyncTestPanel from '../components/SyncTestPanel';
 import { 
   Users, 
   Shield, 
@@ -31,6 +35,7 @@ import {
 export default function SuperAdminDashboard() {
   const [activeTab, setActiveTab] = useState('overview');
   const { user, logout } = useAuth();
+  const { status: offlineStatus } = useOfflineSync();
   const navigate = useNavigate();
 
   const handleLogout = () => {
@@ -40,7 +45,9 @@ export default function SuperAdminDashboard() {
 
   const menuItems = [
     { id: 'overview', label: 'Overview', icon: Activity },
+    { id: 'offline-sync', label: 'Offline Sync', icon: Database },
     { id: 'users', label: 'User Management', icon: Users },
+    { id: 'sync-tests', label: 'Sync Tests', icon: Settings },
     { id: 'residents', label: 'Resident Management', icon: Users },
     { id: 'kyc-verification', label: 'KYC Verification Center', icon: UserCheck },
     { id: 'modules', label: 'Module Control', icon: Database },
@@ -54,8 +61,12 @@ export default function SuperAdminDashboard() {
     switch (activeTab) {
       case 'overview':
         return <SuperAdminOverview />;
+      case 'offline-sync':
+        return <OfflineSyncStatus />;
       case 'users':
         return <UserManagement />;
+      case 'sync-tests':
+        return <SyncTestPanel />;
       case 'residents':
         return <ResidentManagement />;
       case 'kyc-verification':
@@ -77,6 +88,8 @@ export default function SuperAdminDashboard() {
 
   return (
     <div className="flex h-screen bg-gray-100">
+      <OfflineIndicator />
+      
       <Sidebar
         menuItems={menuItems}
         activeTab={activeTab}
