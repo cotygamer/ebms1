@@ -76,11 +76,18 @@ export default function BarangayOfficialDashboard() {
 
   const handleUpdateComplaintStatus = async (complaintId: string, newStatus: string, assignedTo?: string) => {
     try {
-      await updateComplaint(complaintId, { 
+      const updateData: any = { 
         status: newStatus,
-        assignedTo: assignedTo || user?.name,
-        updatedAt: new Date().toISOString()
-      });
+        updated_at: new Date().toISOString()
+      };
+      
+      if (assignedTo) {
+        updateData.assigned_to = assignedTo;
+      } else if (newStatus === 'investigating' && !assignedTo) {
+        updateData.assigned_to = user?.name;
+      }
+      
+      await updateComplaint(complaintId, updateData);
     } catch (error) {
       console.error('Failed to update complaint:', error);
       alert('Failed to update complaint status');
@@ -90,9 +97,9 @@ export default function BarangayOfficialDashboard() {
   const handleAssignComplaint = async (complaintId: string, assignedTo: string) => {
     try {
       await updateComplaint(complaintId, { 
-        assignedTo,
+        assigned_to: assignedTo,
         status: 'investigating',
-        updatedAt: new Date().toISOString()
+        updated_at: new Date().toISOString()
       });
     } catch (error) {
       console.error('Failed to assign complaint:', error);
@@ -509,7 +516,7 @@ export default function BarangayOfficialDashboard() {
                           updateComplaint(selectedComplaint.id, { 
                             status: 'resolved',
                             resolution,
-                            updatedAt: new Date().toISOString()
+                            updated_at: new Date().toISOString()
                           });
                           setSelectedComplaint(null);
                         }

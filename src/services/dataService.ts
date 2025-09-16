@@ -655,26 +655,38 @@ export class DataService {
   }
 
   static async updateIncident(id: string, updates: any) {
-    // Get current data for audit
-    const { data: oldData } = await supabase
-      .from('incidents')
-      .select('*')
-      .eq('id', id)
-      .single()
+    try {
+      // Get current data for audit
+      const { data: oldData } = await supabase
+        .from('incidents')
+        .select('*')
+        .eq('id', id)
+        .single()
 
-    const { data, error } = await supabase
-      .from('incidents')
-      .update({ ...updates, updated_at: new Date().toISOString() })
-      .eq('id', id)
-      .select()
-      .single()
-    
-    if (error) throw error
-    
-    // Log the action
-    await this.logAction('incident.update', 'incident', id, oldData, data)
-    
-    return data
+      const { data, error } = await supabase
+        .from('incidents')
+        .update({ 
+          status: updates.status,
+          assigned_to: updates.assignedTo || updates.assigned_to,
+          resolution: updates.resolution,
+          priority: updates.priority,
+          evidence_files: updates.evidenceFiles || updates.evidence_files,
+          updated_at: new Date().toISOString() 
+        })
+        .eq('id', id)
+        .select()
+        .single()
+      
+      if (error) throw error
+      
+      // Log the action
+      await this.logAction('incident.update', 'incident', id, oldData, data)
+      
+      return data
+    } catch (error) {
+      console.error('Error updating incident:', error)
+      throw error
+    }
   }
 
   // Announcements Management
