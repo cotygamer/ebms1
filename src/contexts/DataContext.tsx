@@ -326,6 +326,7 @@ interface User {
   name: string;
   email: string;
   role: 'super-admin' | 'barangay-official' | 'resident' | 'medical-portal' | 'accounting-portal' | 'disaster-portal';
+  role: 'super-admin' | 'barangay-official' | 'resident' | 'medical-portal' | 'accounting-portal' | 'disaster-portal' | 'peace-order-portal';
   status: 'active' | 'inactive' | 'suspended';
   phone_number?: string;
   address?: string;
@@ -903,6 +904,8 @@ function getDefaultPermissions(role: string): string[] {
       return ['accounting', 'financial-reports', 'payments'];
     case 'disaster-portal':
       return ['disaster-management', 'emergency-alerts', 'evacuation'];
+    case 'peace-order-portal':
+      return ['peace-order', 'incident-management', 'crime-prevention', 'patrol-management'];
     default:
       return ['basic'];
   }

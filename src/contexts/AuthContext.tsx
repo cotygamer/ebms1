@@ -7,6 +7,7 @@ export interface User {
   email: string;
   name: string;
   role: 'super-admin' | 'barangay-official' | 'resident' | 'medical-portal' | 'accounting-portal' | 'disaster-portal';
+  role: 'super-admin' | 'barangay-official' | 'resident' | 'medical-portal' | 'accounting-portal' | 'disaster-portal' | 'peace-order-portal';
   verificationStatus?: 'non-verified' | 'details-updated' | 'semi-verified' | 'verified';
   qrCode?: string;
   familyTree?: any[];

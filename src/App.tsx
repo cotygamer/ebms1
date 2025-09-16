@@ -13,6 +13,7 @@ import ResidentDashboard from './pages/ResidentDashboard';
 import MedicalPortal from './pages/MedicalPortal';
 import AccountingPortal from './pages/AccountingPortal';
 import DisasterPortal from './pages/DisasterPortal';
+import PeaceOrderPortal from './pages/PeaceOrderPortal';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import { DataProvider } from './contexts/DataContext';
 
@@ -58,6 +59,10 @@ function AppRoutes() {
       <Route 
         path="/disaster-portal-dashboard" 
         element={user && (user.role === 'disaster-portal' || user.role === 'barangay-official') ? <DisasterPortal /> : <Navigate to="/login" />} 
+      />
+      <Route 
+        path="/peace-order-portal" 
+        element={user && (user.role === 'peace-order-portal' || user.role === 'barangay-official' || user.role === 'super-admin') ? <PeaceOrderPortal /> : <Navigate to="/login" />} 
       />
     </Routes>
   );

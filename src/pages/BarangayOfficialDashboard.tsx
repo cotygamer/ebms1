@@ -779,6 +779,17 @@ export default function BarangayOfficialDashboard() {
                 <p className="text-sm text-gray-600">Emergency management</p>
               </div>
             </Link>
+            
+            <Link
+              to="/peace-order-portal"
+              className="flex items-center p-4 bg-red-50 rounded-lg hover:bg-red-100 transition-colors"
+            >
+              <Shield className="h-8 w-8 text-red-600 mr-3" />
+              <div className="text-left">
+                <h4 className="font-semibold text-gray-900">Peace & Order Portal</h4>
+                <p className="text-sm text-gray-600">Incident & crime management</p>
+              </div>
+            </Link>
           </div>
         </div>
       </div>

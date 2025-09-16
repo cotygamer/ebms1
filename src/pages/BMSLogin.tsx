@@ -94,6 +94,13 @@ export default function BMSLogin() {
       icon: AlertTriangle,
       color: 'from-orange-500 to-red-500',
       credentials: 'disaster@barangay.gov'
+    },
+    {
+      name: 'Peace & Order Portal',
+      description: 'Incident & crime management',
+      icon: Shield,
+      color: 'from-red-500 to-red-600',
+      credentials: 'peaceorder@barangay.gov'
     }
   ];
 
@@ -275,6 +282,7 @@ export default function BMSLogin() {
                   <p><strong>Medical Staff:</strong> medical@barangay.gov / password123</p>
                   <p><strong>Accounting Staff:</strong> accounting@barangay.gov / password123</p>
                   <p><strong>Disaster Staff:</strong> disaster@barangay.gov / password123</p>
+                  <p><strong>Peace & Order Staff:</strong> peaceorder@barangay.gov / password123</p>
                 </div>
                 <div className="mt-4 p-3 bg-yellow-500 bg-opacity-20 border border-yellow-400 border-opacity-30 rounded-lg">
                   <p className="text-xs text-yellow-100">
