@@ -310,8 +310,8 @@ export default function KYCVerificationCenter() {
                                   </div>
                                   {entry.previousStatus && entry.newStatus && (
                                     <p className="text-gray-600">
-                                      Status changed from <span className="font-medium capitalize">{entry.previousStatus.replace('-', ' ')}</span> to{' '}
-                                      <span className="font-medium capitalize">{entry.newStatus.replace('-', ' ')}</span>
+                                      Status changed from <span className="font-medium capitalize">{(entry.previousStatus || 'unknown').replace('-', ' ')}</span> to{' '}
+                                      <span className="font-medium capitalize">{(entry.newStatus || 'unknown').replace('-', ' ')}</span>
                                     </p>
                                   )}
                                   <p className="text-xs text-gray-500">By: {entry.approvedBy}</p>
@@ -382,6 +382,7 @@ export default function KYCVerificationCenter() {
                         <span className={`inline-flex items-center px-3 py-1 text-sm font-semibold rounded-full border ${getStatusColor(selectedResident.verificationStatus)}`}>
                           {getStatusIcon(selectedResident.verificationStatus)}
                           <span className="ml-2 capitalize">{selectedResident.verificationStatus.replace('-', ' ')}</span>
+                          <span className="ml-1 capitalize">{(resident.verificationStatus || 'non-verified').replace('-', ' ')}</span>
                         </span>
                       </div>
                     </div>
@@ -438,7 +439,7 @@ export default function KYCVerificationCenter() {
                           <span className={`px-2 py-1 text-xs font-semibold rounded-full ${
                             idData.verified ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'
                           }`}>
-                            {idData.verified ? 'Verified' : 'Pending'}
+                            <span className="ml-2 capitalize">{(selectedResident.verificationStatus || 'non-verified').replace('-', ' ')}</span>
                           </span>
                         </div>
                         <p className="text-sm text-gray-600 mb-1">
