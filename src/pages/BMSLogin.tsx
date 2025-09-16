@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
+import { supabase } from '../lib/supabase';
 import { Building2, Eye, EyeOff, Shield, Users, Heart, Calculator, AlertTriangle } from 'lucide-react';
 
 export default function BMSLogin() {
@@ -9,6 +10,7 @@ export default function BMSLogin() {
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [setupLoading, setSetupLoading] = useState(false);
   const { login } = useAuth();
   const navigate = useNavigate();
 
@@ -27,6 +29,33 @@ export default function BMSLogin() {
       setError(err.message || 'Login failed. Please try again.');
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const handleSetupDemoUsers = async () => {
+    setSetupLoading(true);
+    try {
+      const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/setup-demo-users`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`,
+          'Content-Type': 'application/json',
+        },
+      });
+
+      const result = await response.json();
+      
+      if (response.ok) {
+        alert('Demo users created successfully! You can now login with the credentials shown below.');
+      } else {
+        console.error('Setup error:', result);
+        alert('Error setting up demo users. Check console for details.');
+      }
+    } catch (error) {
+      console.error('Setup error:', error);
+      alert('Error setting up demo users. Check console for details.');
+    } finally {
+      setSetupLoading(false);
     }
   };
 
@@ -121,9 +150,21 @@ export default function BMSLogin() {
                   <Shield className="h-6 w-6 mr-3" />
                   Portal Access
                 </h2>
-                <p className="text-blue-100 mt-2">
-                  <strong>Important:</strong> If login fails, you need to create these users in your Supabase Dashboard under Authentication &gt; Users first.
-                </p>
+                <div className="bg-blue-800/30 p-4 rounded-lg border border-blue-600/30">
+                  <h2 className="text-lg font-semibold text-white mb-3">
+                    Demo Credentials & Setup
+                  </h2>
+                  <button
+                    onClick={handleSetupDemoUsers}
+                    disabled={setupLoading}
+                    className="w-full bg-green-600 hover:bg-green-700 disabled:bg-green-800 text-white px-4 py-2 rounded-lg mb-4 font-medium transition-colors"
+                  >
+                    {setupLoading ? 'Setting up...' : 'Setup Demo Users'}
+                  </button>
+                  <p className="text-blue-100 mt-2">
+                    <strong>Click "Setup Demo Users" first</strong> to create all demo accounts automatically.
+                  </p>
+                </div>
               </div>
 
               <div className="p-8">
