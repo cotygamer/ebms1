@@ -167,7 +167,34 @@ export default function Register() {
       // Create emergency contact string
       const emergencyContact = `${formData.emergencyContactName} - ${formData.emergencyContactPhone} (${formData.emergencyContactRelation}) - ${formData.emergencyContactAddress}`;
       
+      // Step 1: Create the auth user first
+      let authResult;
+      try {
+        authResult = await dataService.createAuthUser(formData.email, formData.password, {
+          name: fullName,
+          role: 'resident',
+          status: 'active',
+          phone_number: formData.phoneNumber,
+          address: completeAddress,
+          permissions: ['basic']
+        });
+        
+        console.log('Auth user created successfully:', authResult);
+      } catch (authError: any) {
+        console.error('Auth user creation failed:', authError);
+        
+        if (authError.message?.includes('already registered') || authError.message?.includes('already exists')) {
+          throw new Error('An account with this email already exists. Please try signing in instead.');
+        } else if (authError.message?.includes('weak password')) {
+          throw new Error('Password is too weak. Please use a stronger password with at least 8 characters.');
+        } else {
+          throw new Error(`Account creation failed: ${authError.message}`);
+        }
+      }
+      
+      // Step 2: Create the resident record with the auth user ID
       const residentData = {
+        user_id: authResult.authUser?.id,
         name: fullName,
         email: formData.email,
         phone_number: formData.phoneNumber,
@@ -196,43 +223,12 @@ export default function Register() {
 
       console.log('Creating resident with data:', residentData);
       
-      // Step 1: Create the resident record first
       try {
         await dataService.createResident(residentData);
         console.log('Resident record created successfully');
       } catch (residentError: any) {
         console.error('Failed to create resident record:', residentError);
         throw new Error(`Registration failed: ${residentError.message}`);
-      }
-      
-      // Step 2: Create the auth user
-      try {
-        const authResult = await dataService.createAuthUser(formData.email, formData.password, {
-          name: fullName,
-          role: 'resident',
-          status: 'active',
-          phone_number: formData.phoneNumber,
-          address: completeAddress,
-          permissions: ['basic']
-        });
-        
-        console.log('Auth user created successfully:', authResult);
-        
-        // Step 3: Link the resident record to the auth user
-        await dataService.updateResident(residentData.email, {
-          user_id: authResult.authUser?.id
-        });
-        
-      } catch (authError: any) {
-        console.error('Auth user creation failed:', authError);
-        
-        if (authError.message?.includes('already registered') || authError.message?.includes('already exists')) {
-          throw new Error('An account with this email already exists. Please try signing in instead.');
-        } else if (authError.message?.includes('weak password')) {
-          throw new Error('Password is too weak. Please use a stronger password with at least 8 characters.');
-        } else {
-          throw new Error(`Account creation failed: ${authError.message}`);
-        }
       }
       
       console.log('Registration completed successfully');
