@@ -41,17 +41,25 @@ export default function OfflineIncidentForm() {
 
     try {
       const incidentData = {
+        residentName: user?.name || 'Anonymous',
+        residentEmail: user?.email || '',
         reporter_name: user?.name || 'Anonymous',
         reporter_email: user?.email || '',
+        type: formData.incidentType,
         incident_type: formData.incidentType,
         subject: formData.subject,
         description: formData.description,
         location: formData.location,
         priority: formData.priority,
         status: 'pending',
+        dateOccurred: formData.dateOccurred,
         date_occurred: formData.dateOccurred,
+        timeOccurred: formData.timeOccurred,
         time_occurred: formData.timeOccurred,
-        date_submitted: new Date().toISOString().split('T')[0]
+        dateSubmitted: new Date().toISOString().split('T')[0],
+        date_submitted: new Date().toISOString().split('T')[0],
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString()
       };
 
       if (isOnline) {

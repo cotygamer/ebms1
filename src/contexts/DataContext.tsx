@@ -288,24 +288,37 @@ interface Transaction {
 
 interface Complaint {
   id: string;
-  residentName: string;
-  residentEmail: string;
-  type: string;
+  residentName?: string;
+  residentEmail?: string;
+  reporter_name: string;
+  reporter_email: string;
+  reporter_phone?: string;
+  type?: string;
+  incident_type: string;
   subject: string;
   description: string;
   status: 'pending' | 'investigating' | 'resolved' | 'dismissed';
   priority: 'low' | 'medium' | 'high';
-  dateSubmitted: string;
+  dateSubmitted?: string;
+  date_submitted: string;
   assignedTo?: string;
+  assigned_to?: string;
   resolution?: string;
   location?: string;
   dateOccurred?: string;
+  date_occurred?: string;
   timeOccurred?: string;
+  time_occurred?: string;
   witnessName?: string;
+  witness_name?: string;
   witnessContact?: string;
+  witness_contact?: string;
   evidenceFiles?: any[];
+  evidence_files?: any[];
   createdAt: string;
+  created_at: string;
   updatedAt: string;
+  updated_at: string;
 }
 
 interface User {
@@ -607,9 +620,10 @@ export function DataProvider({ children }: { children: ReactNode }) {
   const addComplaint = async (complaintData: Omit<Complaint, 'id'>) => {
     try {
       await dataService.createIncident({
-        reporter_name: complaintData.residentName,
-        reporter_email: complaintData.residentEmail,
-        incident_type: complaintData.type,
+        reporter_name: complaintData.residentName || complaintData.reporter_name,
+        reporter_email: complaintData.residentEmail || complaintData.reporter_email,
+        reporter_phone: complaintData.reporter_phone,
+        incident_type: complaintData.type || complaintData.incident_type,
         subject: complaintData.subject,
         description: complaintData.description,
         status: complaintData.status,
@@ -620,6 +634,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
         witness_name: complaintData.witnessName,
         witness_contact: complaintData.witnessContact,
         assigned_to: complaintData.assignedTo,
+        resolution: complaintData.resolution,
         evidence_files: complaintData.evidenceFiles || [],
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString()
@@ -637,6 +652,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
         status: updates.status,
         assigned_to: updates.assignedTo,
         resolution: updates.resolution,
+        priority: updates.priority,
         evidence_files: updates.evidenceFiles,
         updated_at: new Date().toISOString()
       });
