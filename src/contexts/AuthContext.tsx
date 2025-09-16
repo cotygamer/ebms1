@@ -131,7 +131,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
         if (residentError) {
           console.error('User not found in users or residents table:', residentError);
-          throw new Error('User profile not found');
+          throw new Error('User profile not found. Please contact the barangay office to activate your account.');
         }
 
         // Create user profile from resident data
@@ -143,7 +143,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           status: 'active',
           phone_number: residentData.phone_number,
           address: residentData.address,
-          verificationStatus: residentData.verification_status,
+          verificationStatus: residentData.verification_status || 'non-verified',
           qrCode: residentData.qr_code,
           created_at: residentData.created_at,
           updated_at: residentData.updated_at,
@@ -170,11 +170,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         return;
       }
 
-      // Update last login timestamp
-      await supabase
-        .from('users')
-        .update({ last_login: new Date().toISOString() })
-        .eq('id', userData.id);
+      // Update last login timestamp (ignore errors)
+      try {
+        await supabase
+          .from('users')
+          .update({ last_login: new Date().toISOString() })
+          .eq('id', userData.id);
+      } catch (updateError) {
+        console.warn('Failed to update last login:', updateError);
+      }
 
       // Create user profile from users table data
       const userProfile: User = {
@@ -193,44 +197,49 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
       // If user is a resident, also load resident-specific data
       if (userData.role === 'resident') {
-        const { data: residentData } = await supabase
-          .from('residents')
-          .select('*')
-          .eq('email', email)
-          .single();
+        try {
+          const { data: residentData } = await supabase
+            .from('residents')
+            .select('*')
+            .eq('email', email)
+            .single();
 
-        if (residentData) {
-          userProfile.verificationStatus = residentData.verification_status;
-          userProfile.qrCode = residentData.qr_code;
-          userProfile.phone = residentData.phone_number;
-          userProfile.birthDate = residentData.birth_date;
-          userProfile.gender = residentData.gender;
-          userProfile.civilStatus = residentData.civil_status;
-          userProfile.nationality = residentData.nationality;
-          userProfile.occupation = residentData.occupation;
-          userProfile.monthlyIncome = residentData.monthly_income;
-          userProfile.houseLocation = residentData.house_location;
-          userProfile.governmentIds = residentData.government_ids;
-          
-          // Parse emergency contact
-          if (residentData.emergency_contact) {
-            const parts = residentData.emergency_contact.split(' - ');
-            userProfile.emergencyContactName = parts[0];
-            userProfile.emergencyContactPhone = parts[1];
-            userProfile.emergencyContactRelation = parts[2]?.replace(/[()]/g, '');
-            userProfile.emergencyContactAddress = parts[3];
-          }
-
-          // Create basic family tree
-          userProfile.familyTree = [
-            { 
-              id: 1, 
-              name: residentData.name, 
-              relation: 'self', 
-              age: calculateAge(residentData.birth_date), 
-              gender: residentData.gender 
+          if (residentData) {
+            userProfile.verificationStatus = residentData.verification_status || 'non-verified';
+            userProfile.qrCode = residentData.qr_code;
+            userProfile.phone = residentData.phone_number;
+            userProfile.birthDate = residentData.birth_date;
+            userProfile.gender = residentData.gender;
+            userProfile.civilStatus = residentData.civil_status;
+            userProfile.nationality = residentData.nationality;
+            userProfile.occupation = residentData.occupation;
+            userProfile.monthlyIncome = residentData.monthly_income;
+            userProfile.houseLocation = residentData.house_location;
+            userProfile.governmentIds = residentData.government_ids;
+            
+            // Parse emergency contact
+            if (residentData.emergency_contact) {
+              const parts = residentData.emergency_contact.split(' - ');
+              userProfile.emergencyContactName = parts[0];
+              userProfile.emergencyContactPhone = parts[1];
+              userProfile.emergencyContactRelation = parts[2]?.replace(/[()]/g, '');
+              userProfile.emergencyContactAddress = parts[3];
             }
-          ];
+
+            // Create basic family tree
+            userProfile.familyTree = [
+              { 
+                id: 1, 
+                name: residentData.name, 
+                relation: 'self', 
+                age: calculateAge(residentData.birth_date), 
+                gender: residentData.gender 
+              }
+            ];
+          }
+        } catch (residentError) {
+          console.warn('Failed to load resident data:', residentError);
+          // Continue with basic user profile
         }
       }
 

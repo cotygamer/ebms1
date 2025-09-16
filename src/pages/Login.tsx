@@ -136,13 +136,11 @@ export default function Login() {
             <div className="text-sm text-gray-600 bg-gray-50 p-4 rounded-lg">
               <h3 className="font-semibold mb-2">Demo Credentials:</h3>
               <div className="space-y-1">
-                <p className="text-xs text-gray-500 mb-2">
-                  <strong>Note:</strong> You need to create user accounts in the database first. 
-                  Use the Super Admin dashboard to add users with appropriate roles.
+                <p className="text-xs text-gray-500">
+                  <strong>For Testing:</strong> Register as a new resident or contact admin for demo accounts.
                 </p>
-                <p className="text-xs text-blue-600">
-                  If you're setting up for the first time, you may need to manually create 
-                  a super admin account in your Supabase users table.
+                <p className="text-xs text-blue-600 mt-2">
+                  After registration, you can login immediately with your email and password.
                 </p>
               </div>
             </div>

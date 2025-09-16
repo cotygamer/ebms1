@@ -181,18 +181,33 @@ export default function Register() {
         religion: formData.religion,
         occupation: formData.occupation,
         monthly_income: formData.monthlyIncome,
-        date_registered: new Date().toISOString().split('T')[0]
+        date_registered: new Date().toISOString().split('T')[0],
+        government_ids: {},
+        profile_data: {
+          phone: formData.phoneNumber,
+          address: completeAddress,
+          birthDate: formData.birthDate,
+          gender: formData.gender,
+          civilStatus: formData.civilStatus,
+          occupation: formData.occupation,
+          emergencyContact: emergencyContact
+        }
       };
 
       console.log('Creating resident with data:', residentData);
       
-      // Create both Supabase Auth user and resident profile
+      // Step 1: Create the resident record first
       try {
-        // First create the resident record
         await dataService.createResident(residentData);
-        
-        // Then create the auth user (this will allow them to login)
-        await dataService.createAuthUser(formData.email, formData.password, {
+        console.log('Resident record created successfully');
+      } catch (residentError: any) {
+        console.error('Failed to create resident record:', residentError);
+        throw new Error(`Registration failed: ${residentError.message}`);
+      }
+      
+      // Step 2: Create the auth user
+      try {
+        const authResult = await dataService.createAuthUser(formData.email, formData.password, {
           name: fullName,
           role: 'resident',
           status: 'active',
@@ -201,31 +216,33 @@ export default function Register() {
           permissions: ['basic']
         });
         
+        console.log('Auth user created successfully:', authResult);
+        
+        // Step 3: Link the resident record to the auth user
+        await dataService.updateResident(residentData.email, {
+          user_id: authResult.authUser?.id
+        });
+        
       } catch (authError: any) {
         console.error('Auth user creation failed:', authError);
-        // If auth creation fails, we should still inform the user
-        if (authError.message?.includes('User already registered')) {
-          throw new Error('An account with this email already exists. Please try logging in instead.');
+        
+        if (authError.message?.includes('already registered') || authError.message?.includes('already exists')) {
+          throw new Error('An account with this email already exists. Please try signing in instead.');
+        } else if (authError.message?.includes('weak password')) {
+          throw new Error('Password is too weak. Please use a stronger password with at least 8 characters.');
+        } else {
+          throw new Error(`Account creation failed: ${authError.message}`);
         }
-        // Continue with success message even if auth creation fails
-        // The resident record was created successfully
-        console.warn('Auth user creation failed, but resident record created:', authError);
       }
       
-      console.log('Resident created successfully');
+      console.log('Registration completed successfully');
 
       // Show success message
-      alert('🎉 Registration successful! Welcome to our digital barangay community. You can now login with your email and password. If you cannot login immediately, please contact the barangay office to activate your account.');
+      alert('🎉 Registration successful! Welcome to our digital barangay community. You can now login with your email and password.');
       navigate('/login');
     } catch (err: any) {
       console.error('Registration error:', err);
-      if (err.message?.includes('User already registered')) {
-        setError('An account with this email already exists. Please use a different email or try logging in.');
-      } else if (err.message?.includes('Invalid email')) {
-        setError('Please enter a valid email address.');
-      } else {
-        setError(`Registration failed: ${err.message || 'Please try again or contact the barangay office for assistance.'}`);
-      }
+      setError(err.message || 'Registration failed. Please try again or contact the barangay office for assistance.');
     } finally {
       setIsLoading(false);
     }
