@@ -2,55 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { useData } from '../contexts/DataContext';
-import { 
-  Shield, 
-  AlertTriangle, 
-  Users, 
-  FileText, 
-  Clock, 
-  CheckCircle, 
-  XCircle, 
-  Search, 
-  Filter, 
-  Plus, 
-  Eye, 
-  Edit, 
-  MapPin, 
-  Calendar, 
-  Phone, 
-  Mail, 
-  User, 
-  Building2, 
-  LogOut, 
-  Activity, 
-  BarChart3, 
-  Settings, 
-  Bell, 
-  Camera, 
-  Download, 
-  Upload, 
-  Star, 
-  TrendingUp, 
-  Target, 
-  Zap, 
-  Award, 
-  Home, 
-  Navigation, 
-  Crosshair, 
-  Save, 
-  X, 
-  ChevronDown, 
-  ChevronUp,
-  Siren,
-  Handcuffs,
-  Scale,
-  Gavel,
-  UserX,
-  AlertCircle,
-  Radio,
-  Car,
-  Megaphone
-} from 'lucide-react';
+import { Shield, AlertTriangle, Users, FileText, Clock, CheckCircle, XCircle, Search, Filter, Plus, Eye, Edit, MapPin, Calendar, Phone, Mail, User, Building2, LogOut, Activity, BarChart3, Settings, Bell, Camera, Download, Upload, Star, TrendingUp, Target, Zap, Award, Home, Navigation, Crosshair, Save, X, ChevronDown, ChevronUp, Siren, Hand as Handcuffs, Scale, Gavel, UserX, AlertCircle, Radio, Car, Megaphone } from 'lucide-react';
 
 interface Incident {
   id: string;
