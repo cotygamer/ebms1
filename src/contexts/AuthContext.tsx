@@ -103,16 +103,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           .from('users')
           .select('*')
           .eq('email', email)
-          .single();
+          .limit(1);
           
-        if (!userError && userData) {
+        if (!userError && userData && userData.length > 0) {
+          const user = userData[0];
           userProfile = {
-            id: userData.id,
-            email: userData.email,
-            name: userData.name,
-            role: userData.role,
-            phone: userData.phone_number,
-            address: userData.address
+            id: user.id,
+            email: user.email,
+            name: user.name,
+            role: user.role,
+            phone: user.phone_number,
+            address: user.address
           };
           console.log('Loaded user profile from users table:', userProfile);
         }
@@ -127,27 +128,28 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             .from('residents')
             .select('*')
             .eq('email', email)
-            .single();
+            .limit(1);
             
-          if (!residentError && residentData) {
+          if (!residentError && residentData && residentData.length > 0) {
+            const resident = residentData[0];
             userProfile = {
-              id: residentData.id,
-              email: residentData.email,
-              name: residentData.name,
+              id: resident.id,
+              email: resident.email,
+              name: resident.name,
               role: 'resident',
-              verificationStatus: residentData.verification_status,
-              qrCode: residentData.qr_code,
-              phone: residentData.phone_number,
-              address: residentData.address,
-              birthDate: residentData.birth_date,
-              gender: residentData.gender,
-              civilStatus: residentData.civil_status,
-              nationality: residentData.nationality,
-              religion: residentData.religion,
-              occupation: residentData.occupation,
-              monthlyIncome: residentData.monthly_income,
-              emergencyContact: residentData.emergency_contact,
-              dateRegistered: residentData.date_registered
+              verificationStatus: resident.verification_status,
+              qrCode: resident.qr_code,
+              phone: resident.phone_number,
+              address: resident.address,
+              birthDate: resident.birth_date,
+              gender: resident.gender,
+              civilStatus: resident.civil_status,
+              nationality: resident.nationality,
+              religion: resident.religion,
+              occupation: resident.occupation,
+              monthlyIncome: resident.monthly_income,
+              emergencyContact: resident.emergency_contact,
+              dateRegistered: resident.date_registered
             };
             console.log('Loaded user profile from residents table:', userProfile);
           }
