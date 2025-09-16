@@ -10,6 +10,7 @@ import OfflineIncidentForm from '../components/OfflineIncidentForm';
 import VerificationStatus from '../components/VerificationStatus';
 import QRCodeDisplay from '../components/QRCodeDisplay';
 import FamilyTreeView from '../components/FamilyTreeView';
+import HouseholdMapPinning from '../components/HouseholdMapPinning';
 import { 
   Building2, 
   User, 
@@ -744,6 +745,7 @@ export default function ResidentDashboard() {
             {[
               { id: 'profile', label: 'My Profile', icon: User },
               { id: 'verification', label: 'Verification', icon: Shield },
+              { id: 'location', label: 'House Location', icon: MapPin },
               { id: 'qr-code', label: 'QR Code', icon: QrCode },
               { id: 'documents', label: 'Documents', icon: FileText },
               { id: 'complaints', label: 'Reports & Complaints', icon: MessageSquare },
@@ -770,6 +772,7 @@ export default function ResidentDashboard() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {activeTab === 'profile' && renderProfile()}
         {activeTab === 'verification' && <VerificationStatus />}
+        {activeTab === 'location' && <HouseholdMapPinning />}
         {activeTab === 'qr-code' && <QRCodeDisplay />}
         {activeTab === 'documents' && (
           <div className="space-y-6">

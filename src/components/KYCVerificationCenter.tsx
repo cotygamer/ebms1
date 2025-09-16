@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useData } from '../contexts/DataContext';
 import { useAuth } from '../contexts/AuthContext';
+import LocationVerificationMap from './LocationVerificationMap';
 import { UserCheck, Users, Clock, CheckCircle, XCircle, Eye, MapPin, FileText, Phone, Mail, Home, Calendar, Shield, AlertTriangle, Download, Search, Filter, User, Car as IdCard, Camera, X, Check, History, ChevronDown, ChevronUp } from 'lucide-react';
 
 interface Resident {
@@ -36,6 +37,7 @@ export default function KYCVerificationCenter() {
   const [selectedResident, setSelectedResident] = useState<Resident | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [filterStatus, setFilterStatus] = useState('all');
+  const [activeTab, setActiveTab] = useState<'residents' | 'locations'>('residents');
   const [showAuditTrail, setShowAuditTrail] = useState<string | null>(null);
 
   const filteredResidents = residents.filter((resident: Resident) => {
@@ -94,6 +96,40 @@ export default function KYCVerificationCenter() {
     }
   };
 
+  // Mock location data for demonstration
+  const mockLocationData = residents
+    .filter(r => r.houseLocation)
+    .map(r => ({
+      id: `loc_${r.id}`,
+      residentId: r.id,
+      residentName: r.name,
+      lat: r.houseLocation?.lat || 14.5995,
+      lng: r.houseLocation?.lng || 120.9842,
+      address: r.houseLocation?.address || r.address,
+      verificationStatus: r.verificationStatus === 'verified' ? 'verified' as const : 'pending' as const,
+      submittedDate: r.dateRegistered,
+      verifiedDate: r.verificationStatus === 'verified' ? r.dateRegistered : undefined,
+      accuracy: 10
+    }));
+
+  const handleVerifyLocation = (locationId: string, status: 'verified' | 'rejected', notes?: string) => {
+    const location = mockLocationData.find(l => l.id === locationId);
+    if (location) {
+      const resident = residents.find(r => r.id === location.residentId);
+      if (resident) {
+        const newStatus = status === 'verified' ? 'verified' : 'semi-verified';
+        handleVerifyResident(resident.id, newStatus);
+      }
+    }
+  };
+
+  const handleViewLocationDetails = (location: any) => {
+    const resident = residents.find(r => r.id === location.residentId);
+    if (resident) {
+      setSelectedResident(resident);
+    }
+  };
+
   const stats = [
     {
       label: 'Total Residents',
@@ -135,6 +171,36 @@ export default function KYCVerificationCenter() {
         </div>
       </div>
 
+      {/* Tab Navigation */}
+      <div className="bg-white rounded-lg shadow-sm overflow-hidden">
+        <div className="border-b border-gray-200">
+          <nav className="flex space-x-8 px-6">
+            <button
+              onClick={() => setActiveTab('residents')}
+              className={`flex items-center px-3 py-4 text-sm font-medium border-b-2 ${
+                activeTab === 'residents'
+                  ? 'border-blue-500 text-blue-600'
+                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+              }`}
+            >
+              <Users className="h-4 w-4 mr-2" />
+              Resident Verification
+            </button>
+            <button
+              onClick={() => setActiveTab('locations')}
+              className={`flex items-center px-3 py-4 text-sm font-medium border-b-2 ${
+                activeTab === 'locations'
+                  ? 'border-blue-500 text-blue-600'
+                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+              }`}
+            >
+              <MapPin className="h-4 w-4 mr-2" />
+              Location Verification ({mockLocationData.length})
+            </button>
+          </nav>
+        </div>
+      </div>
+
       {/* Statistics */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         {stats.map((stat, index) => (
@@ -150,7 +216,200 @@ export default function KYCVerificationCenter() {
         ))}
       </div>
 
-      {/* Filters */}
+      {activeTab === 'residents' && (
+        <>
+          {/* Filters */}
+          <div className="bg-white rounded-lg shadow-sm p-6">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-5 w-5" />
+                <input
+                  type="text"
+                  placeholder="Search residents..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="pl-10 pr-4 py-2 w-full border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                />
+              </div>
+              
+              <select
+                value={filterStatus}
+                onChange={(e) => setFilterStatus(e.target.value)}
+                className="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+              >
+                <option value="all">All Status</option>
+                <option value="non-verified">Non-verified</option>
+                <option value="details-updated">Details Updated</option>
+                <option value="semi-verified">Semi-verified</option>
+                <option value="verified">Verified</option>
+              </select>
+              
+              <div className="flex items-center text-sm text-gray-600">
+                <Filter className="h-4 w-4 mr-2" />
+                {filteredResidents.length} residents found
+              </div>
+            </div>
+          </div>
+
+          {/* Residents List */}
+          <div className="bg-white rounded-lg shadow-sm overflow-hidden">
+            <div className="overflow-x-auto">
+              <table className="min-w-full divide-y divide-gray-200">
+                <thead className="bg-gray-50">
+                  <tr>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Resident
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Status
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Location
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Documents
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Actions
+                    </th>
+                  </tr>
+                </thead>
+                <tbody className="bg-white divide-y divide-gray-200">
+                  {filteredResidents.map((resident: Resident) => (
+                    <React.Fragment key={resident.id}>
+                      <tr className="hover:bg-gray-50">
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <div className="flex items-center">
+                            <div className="flex-shrink-0 h-10 w-10">
+                              <div className="h-10 w-10 rounded-full bg-blue-100 flex items-center justify-center">
+                                <span className="text-sm font-medium text-blue-700">
+                                  {resident.name.charAt(0)}
+                                </span>
+                              </div>
+                            </div>
+                            <div className="ml-4">
+                              <div className="text-sm font-medium text-gray-900">{resident.name}</div>
+                              <div className="text-sm text-gray-500">{resident.email}</div>
+                              <div className="text-xs text-gray-400">Registered: {resident.dateRegistered}</div>
+                            </div>
+                          </div>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <span className={`inline-flex items-center px-2 py-1 text-xs font-semibold rounded-full border ${getStatusColor(resident.verificationStatus)}`}>
+                            {getStatusIcon(resident.verificationStatus)}
+                            <span className="ml-1 capitalize">{String(resident.verificationStatus || 'non-verified').replace('-', ' ')}</span>
+                          </span>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          {resident.houseLocation ? (
+                            <div className="flex items-center text-sm text-green-600">
+                              <MapPin className="h-4 w-4 mr-1" />
+                              <span>Pinned</span>
+                            </div>
+                          ) : (
+                            <div className="flex items-center text-sm text-red-600">
+                              <MapPin className="h-4 w-4 mr-1" />
+                              <span>Not pinned</span>
+                            </div>
+                          )}
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <div className="flex items-center space-x-1">
+                            {resident.governmentIds && Object.keys(resident.governmentIds).length > 0 ? (
+                              <div className="flex items-center text-sm text-green-600">
+                                <IdCard className="h-4 w-4 mr-1" />
+                                <span>{Object.keys(resident.governmentIds).length} IDs</span>
+                              </div>
+                            ) : (
+                              <div className="flex items-center text-sm text-red-600">
+                                <IdCard className="h-4 w-4 mr-1" />
+                                <span>No IDs</span>
+                              </div>
+                            )}
+                          </div>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm font-medium space-x-2">
+                          <button
+                            onClick={() => setSelectedResident(resident)}
+                            className="text-blue-600 hover:text-blue-900"
+                            title="View Details"
+                          >
+                            <Eye className="h-4 w-4" />
+                          </button>
+                          
+                          {resident.verificationStatus === 'semi-verified' && (
+                            <button
+                              onClick={() => handleVerifyResident(resident.id, 'verified')}
+                              className="text-green-600 hover:text-green-900"
+                              title="Approve Verification"
+                            >
+                              <CheckCircle className="h-4 w-4" />
+                            </button>
+                          )}
+                          
+                          <button
+                            onClick={() => setShowAuditTrail(showAuditTrail === resident.id ? null : resident.id)}
+                            className="text-purple-600 hover:text-purple-900"
+                            title="View Audit Trail"
+                          >
+                            <History className="h-4 w-4" />
+                          </button>
+                        </td>
+                      </tr>
+                      
+                      {/* Audit Trail Row */}
+                      {showAuditTrail === resident.id && (
+                        <tr>
+                          <td colSpan={5} className="px-6 py-4 bg-gray-50">
+                            <div className="space-y-2">
+                              <h4 className="font-medium text-gray-900 flex items-center">
+                                <History className="h-4 w-4 mr-2" />
+                                Verification History
+                              </h4>
+                              {resident.auditTrail && resident.auditTrail.length > 0 ? (
+                                <div className="space-y-2">
+                                  {resident.auditTrail.map((entry, index) => (
+                                    <div key={index} className="bg-white p-3 rounded border text-sm">
+                                      <div className="flex items-center justify-between mb-1">
+                                        <span className="font-medium text-gray-900">{entry.action}</span>
+                                        <span className="text-xs text-gray-500">
+                                          {new Date(entry.timestamp).toLocaleDateString()} {new Date(entry.timestamp).toLocaleTimeString()}
+                                        </span>
+                                      </div>
+                                      {entry.previousStatus && entry.newStatus && (
+                                        <p className="text-gray-600">
+                                          Status changed from <span className="font-medium capitalize">{String(entry.previousStatus || 'unknown').replace('-', ' ')}</span> to{' '}
+                                          <span className="font-medium capitalize">{String(entry.newStatus || 'unknown').replace('-', ' ')}</span>
+                                        </p>
+                                      )}
+                                      <p className="text-xs text-gray-500">By: {entry.approvedBy}</p>
+                                    </div>
+                                  ))}
+                                </div>
+                              ) : (
+                                <p className="text-gray-500 text-sm">No verification history available</p>
+                              )}
+                            </div>
+                          </td>
+                        </tr>
+                      )}
+                    </React.Fragment>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </>
+      )}
+
+      {activeTab === 'locations' && (
+        <LocationVerificationMap
+          locations={mockLocationData}
+          onVerifyLocation={handleVerifyLocation}
+          onViewDetails={handleViewLocationDetails}
+        />
+      )}
+
       <div className="bg-white rounded-lg shadow-sm p-6">
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <div className="relative">
@@ -180,155 +439,6 @@ export default function KYCVerificationCenter() {
             <Filter className="h-4 w-4 mr-2" />
             {filteredResidents.length} residents found
           </div>
-        </div>
-      </div>
-
-      {/* Residents List */}
-      <div className="bg-white rounded-lg shadow-sm overflow-hidden">
-        <div className="overflow-x-auto">
-          <table className="min-w-full divide-y divide-gray-200">
-            <thead className="bg-gray-50">
-              <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Resident
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Status
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Location
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Documents
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Actions
-                </th>
-              </tr>
-            </thead>
-            <tbody className="bg-white divide-y divide-gray-200">
-              {filteredResidents.map((resident: Resident) => (
-                <React.Fragment key={resident.id}>
-                  <tr className="hover:bg-gray-50">
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="flex items-center">
-                        <div className="flex-shrink-0 h-10 w-10">
-                          <div className="h-10 w-10 rounded-full bg-blue-100 flex items-center justify-center">
-                            <span className="text-sm font-medium text-blue-700">
-                              {resident.name.charAt(0)}
-                            </span>
-                          </div>
-                        </div>
-                        <div className="ml-4">
-                          <div className="text-sm font-medium text-gray-900">{resident.name}</div>
-                          <div className="text-sm text-gray-500">{resident.email}</div>
-                          <div className="text-xs text-gray-400">Registered: {resident.dateRegistered}</div>
-                        </div>
-                      </div>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <span className={`inline-flex items-center px-2 py-1 text-xs font-semibold rounded-full border ${getStatusColor(resident.verificationStatus)}`}>
-                        {getStatusIcon(resident.verificationStatus)}
-                        <span className="ml-1 capitalize">{resident.verificationStatus.replace('-', ' ')}</span>
-                      </span>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      {resident.houseLocation ? (
-                        <div className="flex items-center text-sm text-green-600">
-                          <MapPin className="h-4 w-4 mr-1" />
-                          <span>Pinned</span>
-                        </div>
-                      ) : (
-                        <div className="flex items-center text-sm text-red-600">
-                          <MapPin className="h-4 w-4 mr-1" />
-                          <span>Not pinned</span>
-                        </div>
-                      )}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="flex items-center space-x-1">
-                        {resident.governmentIds && Object.keys(resident.governmentIds).length > 0 ? (
-                          <div className="flex items-center text-sm text-green-600">
-                            <IdCard className="h-4 w-4 mr-1" />
-                            <span>{Object.keys(resident.governmentIds).length} IDs</span>
-                          </div>
-                        ) : (
-                          <div className="flex items-center text-sm text-red-600">
-                            <IdCard className="h-4 w-4 mr-1" />
-                            <span>No IDs</span>
-                          </div>
-                        )}
-                      </div>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium space-x-2">
-                      <button
-                        onClick={() => setSelectedResident(resident)}
-                        className="text-blue-600 hover:text-blue-900"
-                        title="View Details"
-                      >
-                        <Eye className="h-4 w-4" />
-                      </button>
-                      
-                      {resident.verificationStatus === 'semi-verified' && (
-                        <button
-                          onClick={() => handleVerifyResident(resident.id, 'verified')}
-                          className="text-green-600 hover:text-green-900"
-                          title="Approve Verification"
-                        >
-                          <CheckCircle className="h-4 w-4" />
-                        </button>
-                      )}
-                      
-                      <button
-                        onClick={() => setShowAuditTrail(showAuditTrail === resident.id ? null : resident.id)}
-                        className="text-purple-600 hover:text-purple-900"
-                        title="View Audit Trail"
-                      >
-                        <History className="h-4 w-4" />
-                      </button>
-                    </td>
-                  </tr>
-                  
-                  {/* Audit Trail Row */}
-                  {showAuditTrail === resident.id && (
-                    <tr>
-                      <td colSpan={5} className="px-6 py-4 bg-gray-50">
-                        <div className="space-y-2">
-                          <h4 className="font-medium text-gray-900 flex items-center">
-                            <History className="h-4 w-4 mr-2" />
-                            Verification History
-                          </h4>
-                          {resident.auditTrail && resident.auditTrail.length > 0 ? (
-                            <div className="space-y-2">
-                              {resident.auditTrail.map((entry, index) => (
-                                <div key={index} className="bg-white p-3 rounded border text-sm">
-                                  <div className="flex items-center justify-between mb-1">
-                                    <span className="font-medium text-gray-900">{entry.action}</span>
-                                    <span className="text-xs text-gray-500">
-                                      {new Date(entry.timestamp).toLocaleDateString()} {new Date(entry.timestamp).toLocaleTimeString()}
-                                    </span>
-                                  </div>
-                                  {entry.previousStatus && entry.newStatus && (
-                                    <p className="text-gray-600">
-                                      Status changed from <span className="font-medium capitalize">{(entry.previousStatus || 'unknown').replace('-', ' ')}</span> to{' '}
-                                      <span className="font-medium capitalize">{(entry.newStatus || 'unknown').replace('-', ' ')}</span>
-                                    </p>
-                                  )}
-                                  <p className="text-xs text-gray-500">By: {entry.approvedBy}</p>
-                                </div>
-                              ))}
-                            </div>
-                          ) : (
-                            <p className="text-gray-500 text-sm">No verification history available</p>
-                          )}
-                        </div>
-                      </td>
-                    </tr>
-                  )}
-                </React.Fragment>
-              ))}
-            </tbody>
-          </table>
         </div>
       </div>
 
