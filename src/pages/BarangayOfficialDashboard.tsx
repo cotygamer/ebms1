@@ -39,7 +39,8 @@ import {
   Home,
   Phone,
   Mail,
-  Database
+  Database,
+  X
 } from 'lucide-react';
 
 export default function BarangayOfficialDashboard() {
@@ -349,7 +350,6 @@ export default function BarangayOfficialDashboard() {
                         <X className="h-4 w-4" />
                       </button>
                     )}
-                    </button>
                   </td>
                 </tr>
               ))}
