@@ -4,6 +4,7 @@ import { offlineService } from './services/offlineService';
 import LandingPage from './pages/LandingPage';
 import AboutPage from './pages/AboutPage';
 import Login from './pages/Login';
+import BMSLogin from './pages/BMSLogin';
 import Register from './pages/Register';
 import ForgotPassword from './pages/ForgotPassword';
 import SuperAdminDashboard from './pages/SuperAdminDashboard';
@@ -23,6 +24,7 @@ function AppRoutes() {
       <Route path="/" element={<LandingPage />} />
       <Route path="/about" element={<AboutPage />} />
       <Route path="/login" element={!user ? <Login /> : <Navigate to={`/${user.role}-dashboard`} />} />
+      <Route path="/bms" element={!user ? <BMSLogin /> : <Navigate to={`/${user.role === 'resident' ? 'resident' : user.role}-dashboard`} />} />
       <Route path="/register" element={!user ? <Register /> : <Navigate to={`/${user.role}-dashboard`} />} />
       <Route path="/forgot-password" element={!user ? <ForgotPassword /> : <Navigate to={`/${user.role}-dashboard`} />} />
       

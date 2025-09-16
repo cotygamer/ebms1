@@ -202,7 +202,13 @@ export default function LandingPage() {
                   to="/login"
                   className="text-blue-600 hover:text-blue-800 font-medium transition-colors"
                 >
-                  Sign In
+                  Resident Login
+                </Link>
+                <Link
+                  to="/bms"
+                  className="text-purple-600 hover:text-purple-800 font-medium transition-colors"
+                >
+                  Staff Portal
                 </Link>
                 <Link
                   to="/register"
@@ -219,7 +225,13 @@ export default function LandingPage() {
                 onClick={() => setIsMenuOpen(!isMenuOpen)}
                 className="text-gray-700 hover:text-blue-600 transition-colors"
               >
-                {isMenuOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
+                Resident Portal
+              </Link>
+              <Link
+                to="/bms"
+                className="border-2 border-white text-white px-8 py-4 rounded-xl hover:bg-white hover:text-blue-600 transition-all flex items-center justify-center font-semibold"
+              >
+                Staff Portal
               </button>
             </div>
           </div>
@@ -238,7 +250,13 @@ export default function LandingPage() {
                     to="/login"
                     className="text-blue-600 hover:text-blue-800 font-medium transition-colors text-center"
                   >
-                    Sign In
+                    Resident Login
+                  </Link>
+                  <Link
+                    to="/bms"
+                    className="text-purple-600 hover:text-purple-800 font-medium transition-colors text-center"
+                  >
+                    Staff Portal
                   </Link>
                   <Link
                     to="/register"

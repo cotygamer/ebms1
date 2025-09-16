@@ -69,6 +69,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     try {
       console.log('Attempting login with email:', email);
       
+      // Determine if this is a resident or staff login based on email domain
+      const isResidentLogin = !email.includes('@barangay.gov');
+      
       // Authenticate with Supabase
       const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
         email,
@@ -80,7 +83,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         
         // Provide specific error messages
         if (authError.message.includes('Invalid login credentials')) {
-          throw new Error('Invalid email or password. Please check your credentials and try again.');
+          if (isResidentLogin) {
+            throw new Error('Invalid email or password. Please check your credentials and try again.');
+          } else {
+            throw new Error('Invalid staff credentials. Please verify your official email and password.');
+          }
         } else if (authError.message.includes('Email not confirmed')) {
           throw new Error('Please check your email and click the confirmation link before logging in.');
         } else if (authError.message.includes('Too many requests')) {
@@ -96,33 +103,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
       console.log('Auth successful, loading user profile...');
       
-      // Try to load user from users table first (for admin/staff accounts)
       let userProfile = null;
-      try {
-        const { data: userData, error: userError } = await supabase
-          .from('users')
-          .select('*')
-          .eq('email', email)
-          .limit(1);
-          
-        if (!userError && userData && userData.length > 0) {
-          const user = userData[0];
-          userProfile = {
-            id: user.id,
-            email: user.email,
-            name: user.name,
-            role: user.role,
-            phone: user.phone_number,
-            address: user.address
-          };
-          console.log('Loaded user profile from users table:', userProfile);
-        }
-      } catch (error) {
-        console.log('User not found in users table, checking residents table...');
-      }
       
-      // If not found in users table, try residents table
-      if (!userProfile) {
+      if (isResidentLogin) {
+        // For residents, check residents table
         try {
           const { data: residentData, error: residentError } = await supabase
             .from('residents')
@@ -151,15 +135,43 @@ export function AuthProvider({ children }: { children: ReactNode }) {
               emergencyContact: resident.emergency_contact,
               dateRegistered: resident.date_registered
             };
-            console.log('Loaded user profile from residents table:', userProfile);
+            console.log('Loaded resident profile:', userProfile);
           }
         } catch (error) {
           console.error('Error loading resident profile:', error);
         }
+      } else {
+        // For staff/admin, check users table
+        try {
+        const { data: userData, error: userError } = await supabase
+          .from('users')
+          .select('*')
+          .eq('email', email)
+          .limit(1);
+          
+        if (!userError && userData && userData.length > 0) {
+          const user = userData[0];
+          userProfile = {
+            id: user.id,
+            email: user.email,
+            name: user.name,
+            role: user.role,
+            phone: user.phone_number,
+            address: user.address
+          };
+          console.log('Loaded user profile from users table:', userProfile);
+          }
+        } catch (error) {
+          console.error('Error loading user profile:', error);
+        }
       }
       
       if (!userProfile) {
-        throw new Error('User profile not found. Please contact support.');
+        if (isResidentLogin) {
+          throw new Error('Resident profile not found. Please register first or contact support.');
+        } else {
+          throw new Error('Staff profile not found. Please contact the system administrator.');
+        }
       }
 
       // Update last login time
