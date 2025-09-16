@@ -122,7 +122,7 @@ export default function BMSLogin() {
                   Portal Access
                 </h2>
                 <p className="text-blue-100 mt-2">
-                  <strong>Important:</strong> If login fails, you need to create these users in your Supabase Dashboard under Authentication > Users first.
+                  <strong>Important:</strong> If login fails, you need to create these users in your Supabase Dashboard under Authentication &gt; Users first.
                 </p>
               </div>
 
