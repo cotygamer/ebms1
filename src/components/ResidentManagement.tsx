@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useData } from '../contexts/DataContext';
-import { Eye, UserCheck, UserX, QrCode, Users, Search, MapPin, Car as IdCard, Phone, Mail, Calendar, Shield, History, Edit, Key, X, Save } from 'lucide-react';
+import { Eye, UserCheck, UserX, QrCode, Users, Search, MapPin, Car as IdCard, Phone, Mail, Calendar, Shield, History, Edit, Key, X, Save, AlertTriangle } from 'lucide-react';
 
 export default function ResidentManagement() {
   const { residents, verifyResident } = useData();
