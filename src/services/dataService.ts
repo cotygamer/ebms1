@@ -166,8 +166,19 @@ export class DataService {
   }
 
   static async verifyResident(id: string, status: string) {
-    // Generate QR code for verified residents
-    const qrCode = status === 'verified' ? `BRG_${id}_${Date.now()}` : undefined
+    // Generate permanent QR code based on resident ID and registration date
+    let qrCode = undefined;
+    if (status === 'verified' || status === 'semi-verified') {
+      // Get the resident's registration date for permanent QR code
+      const { data: resident } = await supabase
+        .from('residents')
+        .select('date_registered')
+        .eq('id', id)
+        .single();
+      
+      const dateCode = resident?.date_registered?.replace(/-/g, '') || new Date().toISOString().split('T')[0].replace(/-/g, '');
+      qrCode = `BRG_${id}_${dateCode}`;
+    }
     
     return await this.updateResident(id, { 
       verification_status: status,

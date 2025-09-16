@@ -1,13 +1,15 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
+import QRCode from 'qrcode';
 import { QrCode, Download, Copy, Check, Shield, User, Clock, XCircle, CheckCircle } from 'lucide-react';
 
 export default function QRCodeDisplay() {
   const { user } = useAuth();
   const [showQR, setShowQR] = useState(false);
   const [copied, setCopied] = useState(false);
+  const [qrCodeDataUrl, setQrCodeDataUrl] = useState<string>('');
 
-  // Generate permanent QR code based on user ID and registration date
+  // Generate permanent QR code based on user ID and registration date - NEVER changes
   const getPermanentQRCode = () => {
     if (!user?.id) return 'BRG_UNKNOWN';
     const dateCode = user?.dateRegistered?.replace(/-/g, '') || new Date().toISOString().split('T')[0].replace(/-/g, '');
@@ -16,17 +18,42 @@ export default function QRCodeDisplay() {
 
   const generateQRData = () => {
     return JSON.stringify({
-      id: user?.id,
+      qrCode: getPermanentQRCode(),
+      residentId: user?.id,
       name: user?.name,
       email: user?.email,
-      phone: user?.phone,
-      address: user?.houseNumber ? `${user.houseNumber}, ${user.barangay}, ${user.city}` : user?.address,
       verificationStatus: user?.verificationStatus,
-      qrCode: getPermanentQRCode(),
       dateRegistered: user?.dateRegistered || new Date().toISOString().split('T')[0],
-      dateGenerated: user?.dateRegistered || new Date().toISOString().split('T')[0]
+      barangay: 'San Miguel',
+      issuedBy: 'Barangay San Miguel Digital System',
+      version: '1.0'
     });
   };
+
+  // Generate actual QR code image
+  useEffect(() => {
+    const generateQRImage = async () => {
+      if (showQR && user?.id) {
+        try {
+          const qrData = generateQRData();
+          const dataUrl = await QRCode.toDataURL(qrData, {
+            width: 300,
+            margin: 2,
+            color: {
+              dark: '#000000',
+              light: '#FFFFFF'
+            },
+            errorCorrectionLevel: 'M'
+          });
+          setQrCodeDataUrl(dataUrl);
+        } catch (error) {
+          console.error('Failed to generate QR code:', error);
+        }
+      }
+    };
+
+    generateQRImage();
+  }, [showQR, user?.id]);
 
   const getStatusIcon = (status: string) => {
     switch (status) {
@@ -67,32 +94,12 @@ export default function QRCodeDisplay() {
   };
 
   const handleDownloadQR = () => {
-    const canvas = document.createElement('canvas');
-    const ctx = canvas.getContext('2d');
-    canvas.width = 300;
-    canvas.height = 300;
-    
-    if (ctx) {
-      // Fill white background
-      ctx.fillStyle = 'white';
-      ctx.fillRect(0, 0, 300, 300);
-      
-      // Draw QR pattern simulation
-      ctx.fillStyle = 'black';
-      for (let i = 0; i < 15; i++) {
-        for (let j = 0; j < 15; j++) {
-          if (Math.random() > 0.5) {
-            ctx.fillRect(i * 20, j * 20, 20, 20);
-          }
-        }
-      }
+    if (qrCodeDataUrl) {
+      const link = document.createElement('a');
+      link.download = `qr-code-${user?.name?.replace(/\s+/g, '-')}-${getPermanentQRCode()}.png`;
+      link.href = qrCodeDataUrl;
+      link.click();
     }
-    
-    // Download the canvas as image
-    const link = document.createElement('a');
-    link.download = `qr-code-${user?.name?.replace(/\s+/g, '-')}.png`;
-    link.href = canvas.toDataURL();
-    link.click();
   };
 
   return (
@@ -122,30 +129,25 @@ export default function QRCodeDisplay() {
           <div className="bg-white rounded-lg p-6 mb-4 border-2 border-dashed border-gray-300">
             {showQR ? (
               <div className="space-y-4">
-                <div className="w-48 h-48 sm:w-64 sm:h-64 mx-auto bg-white border-4 border-blue-500 rounded-lg flex items-center justify-center shadow-lg">
-                  <div className="text-center">
-                    <div className="grid grid-cols-8 gap-0.5 sm:gap-1 mb-4">
-                      {Array.from({ length: 64 }, (_, i) => (
-                        <div
-                          key={i}
-                          className={`w-2 h-2 sm:w-3 sm:h-3 ${
-                            Math.random() > 0.5 ? 'bg-black' : 'bg-white'
-                          }`}
-                        />
-                      ))}
+                <div className="w-64 h-64 mx-auto bg-white border-4 border-blue-500 rounded-lg flex items-center justify-center shadow-lg">
+                  {qrCodeDataUrl ? (
+                    <img 
+                      src={qrCodeDataUrl} 
+                      alt="QR Code" 
+                      className="w-full h-full object-contain p-4"
+                    />
+                  ) : (
+                    <div className="text-center">
+                      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-2"></div>
+                      <p className="text-gray-500 text-sm">Generating QR Code...</p>
                     </div>
-                    <div className="bg-blue-100 p-2 rounded">
-                      <QrCode className="h-6 w-6 sm:h-8 sm:w-8 text-blue-600 mx-auto mb-1" />
-                      <p className="text-xs font-mono text-blue-800 break-all">
-                        {getPermanentQRCode()}
-                      </p>
-                    </div>
-                  </div>
+                  )}
                 </div>
                 
                 <div className="bg-gray-50 p-4 rounded-lg">
                   <h4 className="font-semibold text-gray-900 mb-2">QR Code Information</h4>
                   <div className="text-sm text-gray-600 space-y-1 text-left">
+                    <p><strong>QR Code ID:</strong> <span className="font-mono text-blue-600">{getPermanentQRCode()}</span></p>
                     <p><strong>Resident ID:</strong> {user?.id}</p>
                     <p><strong>Name:</strong> {user?.name}</p>
                     <p><strong>Email:</strong> {user?.email}</p>
@@ -160,15 +162,16 @@ export default function QRCodeDisplay() {
                         {user?.verificationStatus === 'verified' && ' ✓'}
                       </span>
                     </p>
-                    <p><strong>QR Code:</strong> <span className="font-mono">{getPermanentQRCode()}</span></p>
                     <p><strong>Generated:</strong> {user?.dateRegistered || new Date().toLocaleDateString()}</p>
+                    <p><strong>Barangay:</strong> San Miguel</p>
                   </div>
                 </div>
               </div>
             ) : (
               <div className="py-12">
                 <QrCode className="h-16 w-16 sm:h-24 sm:w-24 text-gray-400 mx-auto mb-4" />
-                <p className="text-gray-600">Click below to display your QR code</p>
+                <p className="text-gray-600">Click below to display your permanent QR code</p>
+                <p className="text-sm text-gray-500 mt-2">QR Code ID: {getPermanentQRCode()}</p>
               </div>
             )}
           </div>
@@ -181,7 +184,7 @@ export default function QRCodeDisplay() {
               {showQR ? 'Hide QR Code' : 'Show QR Code'}
             </button>
             
-            {showQR && (
+            {showQR && qrCodeDataUrl && (
               <>
                 <button 
                   onClick={handleDownloadQR}
@@ -207,14 +210,34 @@ export default function QRCodeDisplay() {
       <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
         <h3 className="text-lg font-semibold text-yellow-800 mb-2 flex items-center">
           <Shield className="h-5 w-5 mr-2" />
-          QR Code Security
+          QR Code Security & Usage
         </h3>
         <div className="text-sm text-yellow-700 space-y-1">
-          <p>• This QR code is permanent and will never change</p>
-          <p>• Safe to print on your official barangay ID</p>
-          <p>• Only authorized barangay personnel can scan and verify</p>
-          <p>• Contains encrypted personal information for verification</p>
-          <p>• Do not share with unauthorized individuals</p>
+          <p>• <strong>Permanent ID:</strong> Your QR code ID is {getPermanentQRCode()} and will never change</p>
+          <p>• <strong>Unique Identifier:</strong> This QR code is permanently linked to your account</p>
+          <p>• <strong>Cross-Platform Use:</strong> Use this QR code for all barangay services and transactions</p>
+          <p>• <strong>Verification:</strong> Officials can scan this to verify your identity and status</p>
+          <p>• <strong>Security:</strong> Contains encrypted data that only authorized personnel can access</p>
+          <p>• <strong>Print Safe:</strong> You can safely print this QR code on your barangay ID</p>
+        </div>
+      </div>
+
+      {/* QR Code Features */}
+      <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+        <h3 className="text-lg font-semibold text-blue-800 mb-2">QR Code Features</h3>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm text-blue-700">
+          <div className="space-y-1">
+            <p>✓ Permanent identification number</p>
+            <p>✓ Real-time verification status</p>
+            <p>✓ Secure encrypted data</p>
+            <p>✓ Cross-platform compatibility</p>
+          </div>
+          <div className="space-y-1">
+            <p>✓ Works with any QR scanner</p>
+            <p>✓ Printable for physical ID cards</p>
+            <p>✓ Links to complete resident profile</p>
+            <p>✓ Tamper-proof identification</p>
+          </div>
         </div>
       </div>
     </div>

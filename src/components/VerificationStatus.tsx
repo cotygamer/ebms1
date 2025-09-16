@@ -201,12 +201,16 @@ export default function VerificationStatus() {
       <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 sm:p-6">
         <h3 className="text-lg font-semibold text-yellow-800 mb-4 flex items-center">
           <AlertTriangle className="h-5 w-5 mr-2" />
-          Important Verification Rules
+          Important QR Code & Verification Rules
         </h3>
         <div className="space-y-3 text-sm text-yellow-700">
           <div className="flex items-start space-x-2">
+            <Shield className="h-4 w-4 mt-0.5 flex-shrink-0" />
+            <p><strong>Permanent QR Code:</strong> Your QR code ID is generated once and never changes. It's permanently linked to your account for life.</p>
+          </div>
+          <div className="flex items-start space-x-2">
             <AlertTriangle className="h-4 w-4 mt-0.5 flex-shrink-0" />
-            <p><strong>Profile Changes:</strong> Any changes to your profile will revert your status back to semi-verified and require re-verification by barangay officials.</p>
+            <p><strong>Profile Changes:</strong> Profile updates may affect your verification status but your QR code ID remains the same.</p>
           </div>
           <div className="flex items-start space-x-2">
             <MapPin className="h-4 w-4 mt-0.5 flex-shrink-0" />
