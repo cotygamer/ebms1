@@ -785,10 +785,25 @@ export class DataService {
       // Get current user from auth context
       const { data: { user } } = await supabase.auth.getUser()
       
+      // Check if the authenticated user exists in the users table
+      let validUserId = null
+      if (user?.id) {
+        const { data: existingUser } = await supabase
+          .from('users')
+          .select('id')
+          .eq('id', user.id)
+          .limit(1)
+        
+        // Only use user_id if it exists in the users table
+        if (existingUser && existingUser.length > 0) {
+          validUserId = user.id
+        }
+      }
+      
       await supabase
         .from('audit_logs')
         .insert([{
-          user_id: user?.id,
+          user_id: validUserId,
           action_type: actionType,
           resource_type: resourceType,
           resource_id: resourceId,
