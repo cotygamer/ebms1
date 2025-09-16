@@ -36,7 +36,14 @@ A comprehensive digital platform for modernizing barangay governance with real-t
 
 2. **Database Setup**:
    - Connect to Supabase using the "Connect to Supabase" button
-   - Run the migration in `supabase/migrations/create_centralized_database.sql`
+   - Run all migrations in the `supabase/migrations/` folder
+   - **Important**: Create demo users in Supabase Dashboard > Authentication > Users:
+     - superadmin@barangay.gov / password123
+     - official@barangay.gov / password123
+     - medical@barangay.gov / password123
+     - accounting@barangay.gov / password123
+     - disaster@barangay.gov / password123
+     - resident@email.com / password123
 
 3. **Start Development**:
    ```bash
