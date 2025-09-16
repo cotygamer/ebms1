@@ -9,8 +9,20 @@ export default function Login() {
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
-  const { login } = useAuth();
+  const { login, loading: authLoading } = useAuth();
   const navigate = useNavigate();
+
+  // Show loading spinner while checking existing session
+  if (authLoading) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-green-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+          <p className="text-gray-600">Loading...</p>
+        </div>
+      </div>
+    );
+  }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -20,12 +32,13 @@ export default function Login() {
     try {
       const success = await login(email, password);
       if (success) {
-        // Navigation will be handled by the AuthProvider
+        // Navigation will be handled by the App component based on user role
       } else {
-        setError('Invalid email or password');
+        setError('Invalid email or password. Please check your credentials and try again.');
       }
     } catch (err) {
-      setError('An error occurred. Please try again.');
+      console.error('Login error:', err);
+      setError(err.message || 'An error occurred during login. Please try again.');
     } finally {
       setIsLoading(false);
     }
@@ -123,12 +136,12 @@ export default function Login() {
             <div className="text-sm text-gray-600 bg-gray-50 p-4 rounded-lg">
               <h3 className="font-semibold mb-2">Demo Credentials:</h3>
               <div className="space-y-1">
-                <p><strong>Super Admin:</strong> superadmin@barangay.gov / password123</p>
-                <p><strong>Barangay Official:</strong> official@barangay.gov / password123</p>
-                <p><strong>Resident:</strong> resident@email.com / password123</p>
-                <p><strong>Medical Staff:</strong> medical@barangay.gov / password123</p>
-                <p><strong>Accounting Staff:</strong> accounting@barangay.gov / password123</p>
-                <p><strong>Disaster Staff:</strong> disaster@barangay.gov / password123</p>
+                <p className="text-xs text-gray-500">
+                  <strong>For Testing:</strong> Register as a new resident or contact admin for demo accounts.
+                </p>
+                <p className="text-xs text-blue-600 mt-2">
+                  After registration, you can login immediately with your email and password.
+                </p>
               </div>
             </div>
           </div>

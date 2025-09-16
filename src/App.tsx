@@ -16,13 +16,25 @@ import { AuthProvider, useAuth } from './contexts/AuthContext';
 import { DataProvider } from './contexts/DataContext';
 
 function AppRoutes() {
-  const { user } = useAuth();
+  const { user, loading } = useAuth();
+
+  // Show loading spinner while checking authentication
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-green-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+          <p className="text-gray-600">Loading application...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <Routes>
       <Route path="/" element={<LandingPage />} />
       <Route path="/about" element={<AboutPage />} />
-      <Route path="/login" element={!user ? <Login /> : <Navigate to={`/${user.role}-dashboard`} />} />
+      <Route path="/login" element={!user ? <Login /> : <Navigate to={getRedirectPath(user.role)} />} />
       <Route path="/register" element={!user ? <Register /> : <Navigate to={`/${user.role}-dashboard`} />} />
       <Route path="/forgot-password" element={!user ? <ForgotPassword /> : <Navigate to={`/${user.role}-dashboard`} />} />
       
@@ -59,6 +71,26 @@ function AppRoutes() {
       />
     </Routes>
   );
+}
+
+// Helper function to get the correct redirect path based on user role
+function getRedirectPath(role: string): string {
+  switch (role) {
+    case 'super-admin':
+      return '/super-admin-dashboard';
+    case 'barangay-official':
+      return '/barangay-official-dashboard';
+    case 'resident':
+      return '/resident-dashboard';
+    case 'medical-portal':
+      return '/medical-portal';
+    case 'accounting-portal':
+      return '/accounting-portal';
+    case 'disaster-portal':
+      return '/disaster-portal';
+    default:
+      return '/login';
+  }
 }
 
 function App() {
