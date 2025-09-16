@@ -31,7 +31,10 @@ export class DataService {
     // First create the auth user in Supabase Auth
     const { data: authData, error: authError } = await supabase.auth.signUp({
       email,
-      password
+      password,
+      options: {
+        emailRedirectTo: undefined // Disable email confirmation for development
+      }
     })
     
     if (authError) throw authError

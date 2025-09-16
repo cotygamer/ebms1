@@ -254,7 +254,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
       if (error) {
         console.error('Supabase auth error:', error);
-        return false;
+        
+        // Provide more specific error messages
+        if (error.message.includes('Invalid login credentials')) {
+          throw new Error('Invalid email or password. Please check your credentials and try again.');
+        } else if (error.message.includes('Email not confirmed')) {
+          throw new Error('Please check your email and click the confirmation link before signing in.');
+        } else if (error.message.includes('captcha')) {
+          throw new Error('CAPTCHA verification failed. Please contact support if this persists.');
+        } else {
+          throw new Error(`Login failed: ${error.message}`);
+        }
       }
 
       if (data.user) {
@@ -266,7 +276,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       return false;
     } catch (error) {
       console.error('Login error:', error);
-      return false;
+      throw error; // Re-throw to be handled by the login component
     }
   };
 

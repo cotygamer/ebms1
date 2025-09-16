@@ -202,8 +202,13 @@ export default function Register() {
         });
         
       } catch (authError: any) {
-        // If auth user creation fails but resident was created, that's okay
-        // They can still be created manually by admin
+        console.error('Auth user creation failed:', authError);
+        // If auth creation fails, we should still inform the user
+        if (authError.message?.includes('User already registered')) {
+          throw new Error('An account with this email already exists. Please try logging in instead.');
+        }
+        // Continue with success message even if auth creation fails
+        // The resident record was created successfully
         console.warn('Auth user creation failed, but resident record created:', authError);
       }
       
