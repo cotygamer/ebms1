@@ -1,19 +1,10 @@
-import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
-import { supabase } from '../lib/supabase';
-import { dataService } from '../services/dataService';
+import React, { createContext, useContext, useState, ReactNode } from 'react';
 
 export interface User {
   id: string;
   email: string;
   name: string;
   role: 'super-admin' | 'barangay-official' | 'resident' | 'medical-portal' | 'accounting-portal' | 'disaster-portal';
-  status?: 'active' | 'inactive' | 'suspended';
-  permissions?: string[];
-  phone_number?: string;
-  address?: string;
-  last_login?: string;
-  created_at?: string;
-  updated_at?: string;
   verificationStatus?: 'non-verified' | 'details-updated' | 'semi-verified' | 'verified';
   qrCode?: string;
   familyTree?: any[];
@@ -59,259 +50,181 @@ export interface User {
 
 interface AuthContextType {
   user: User | null;
-  loading: boolean;
   login: (email: string, password: string) => Promise<boolean>;
-  logout: () => Promise<void>;
+  logout: () => void;
   updateUser: (updates: Partial<User>) => void;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export function AuthProvider({ children }: { children: ReactNode }) {
-  const [user, setUser] = useState<User | null>(null);
-  const [loading, setLoading] = useState(true);
-
-  // Check for existing session on mount
-  useEffect(() => {
-    const initializeAuth = async () => {
-      try {
-        const { data: { session }, error } = await supabase.auth.getSession();
-        
-        if (error) {
-          console.error('Error getting session:', error);
-          setLoading(false);
-          return;
-        }
-
-        if (session?.user) {
-          await loadUserProfile(session.user.email!);
-        }
-      } catch (error) {
-        console.error('Error initializing auth:', error);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    initializeAuth();
-
-    // Listen for auth state changes
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
-      if (event === 'SIGNED_IN' && session?.user) {
-        await loadUserProfile(session.user.email!);
-      } else if (event === 'SIGNED_OUT') {
-        setUser(null);
-        localStorage.removeItem('user');
-      }
-    });
-
-    return () => subscription.unsubscribe();
-  }, []);
-
-  const loadUserProfile = async (email: string) => {
-    try {
-      console.log('Loading user profile for email:', email);
-      
-      // Get user from the users table
-      const { data: userData, error: userError } = await supabase
-        .from('users')
-        .select('*')
-        .eq('email', email)
-        .single();
-
-      if (userError) {
-        console.error('Error fetching user profile:', userError);
-        
-        // If user not found in users table, check if they're a resident
-        const { data: residentData, error: residentError } = await supabase
-          .from('residents')
-          .select('*')
-          .eq('email', email)
-          .single();
-
-        if (residentError) {
-          console.error('User not found in users or residents table:', residentError);
-          throw new Error('User profile not found. Please contact the barangay office to activate your account.');
-        }
-
-        // Create user profile from resident data
-        const userProfile: User = {
-          id: residentData.id,
-          email: residentData.email,
-          name: residentData.name,
-          role: 'resident',
-          status: 'active',
-          phone_number: residentData.phone_number,
-          address: residentData.address,
-          verificationStatus: residentData.verification_status || 'non-verified',
-          qrCode: residentData.qr_code,
-          created_at: residentData.created_at,
-          updated_at: residentData.updated_at,
-          // Map resident fields to user profile
-          phone: residentData.phone_number,
-          birthDate: residentData.birth_date,
-          gender: residentData.gender,
-          civilStatus: residentData.civil_status,
-          nationality: residentData.nationality,
-          occupation: residentData.occupation,
-          monthlyIncome: residentData.monthly_income,
-          emergencyContactName: residentData.emergency_contact?.split(' - ')[0],
-          emergencyContactPhone: residentData.emergency_contact?.split(' - ')[1],
-          emergencyContactRelation: residentData.emergency_contact?.split(' - ')[2]?.replace(/[()]/g, ''),
-          houseLocation: residentData.house_location,
-          governmentIds: residentData.government_ids,
-          familyTree: [
-            { id: 1, name: residentData.name, relation: 'self', age: calculateAge(residentData.birth_date), gender: residentData.gender }
-          ]
-        };
-
-        setUser(userProfile);
-        localStorage.setItem('user', JSON.stringify(userProfile));
-        return;
-      }
-
-      // Update last login timestamp (ignore errors)
-      try {
-        await supabase
-          .from('users')
-          .update({ last_login: new Date().toISOString() })
-          .eq('id', userData.id);
-      } catch (updateError) {
-        console.warn('Failed to update last login:', updateError);
-      }
-
-      // Create user profile from users table data
-      const userProfile: User = {
-        id: userData.id,
-        email: userData.email,
-        name: userData.name,
-        role: userData.role,
-        status: userData.status,
-        permissions: userData.permissions || [],
-        phone_number: userData.phone_number,
-        address: userData.address,
-        last_login: userData.last_login,
-        created_at: userData.created_at,
-        updated_at: userData.updated_at
-      };
-
-      // If user is a resident, also load resident-specific data
-      if (userData.role === 'resident') {
-        try {
-          const { data: residentData } = await supabase
-            .from('residents')
-            .select('*')
-            .eq('email', email)
-            .single();
-
-          if (residentData) {
-            userProfile.verificationStatus = residentData.verification_status || 'non-verified';
-            userProfile.qrCode = residentData.qr_code;
-            userProfile.phone = residentData.phone_number;
-            userProfile.birthDate = residentData.birth_date;
-            userProfile.gender = residentData.gender;
-            userProfile.civilStatus = residentData.civil_status;
-            userProfile.nationality = residentData.nationality;
-            userProfile.occupation = residentData.occupation;
-            userProfile.monthlyIncome = residentData.monthly_income;
-            userProfile.houseLocation = residentData.house_location;
-            userProfile.governmentIds = residentData.government_ids;
-            
-            // Parse emergency contact
-            if (residentData.emergency_contact) {
-              const parts = residentData.emergency_contact.split(' - ');
-              userProfile.emergencyContactName = parts[0];
-              userProfile.emergencyContactPhone = parts[1];
-              userProfile.emergencyContactRelation = parts[2]?.replace(/[()]/g, '');
-              userProfile.emergencyContactAddress = parts[3];
-            }
-
-            // Create basic family tree
-            userProfile.familyTree = [
-              { 
-                id: 1, 
-                name: residentData.name, 
-                relation: 'self', 
-                age: calculateAge(residentData.birth_date), 
-                gender: residentData.gender 
-              }
-            ];
-          }
-        } catch (residentError) {
-          console.warn('Failed to load resident data:', residentError);
-          // Continue with basic user profile
-        }
-      }
-
-      console.log('User profile loaded:', userProfile);
-      setUser(userProfile);
-      localStorage.setItem('user', JSON.stringify(userProfile));
-    } catch (error) {
-      console.error('Error loading user profile:', error);
-      throw error;
-    }
-  };
+  const [user, setUser] = useState<User | null>(() => {
+    const savedUser = localStorage.getItem('user');
+    return savedUser ? JSON.parse(savedUser) : null;
+  });
 
   const login = async (email: string, password: string): Promise<boolean> => {
-    try {
-      console.log('Attempting login for:', email);
-      
-      const { data, error } = await supabase.auth.signInWithPassword({
-        email,
-        password
-      });
-
-      if (error) {
-        console.error('Supabase auth error:', error);
-        
-        // Provide more specific error messages
-        if (error.message.includes('Invalid login credentials')) {
-          throw new Error('Invalid email or password. Please check your credentials and try again.');
-        } else if (error.message.includes('Email not confirmed')) {
-          throw new Error('Please check your email and click the confirmation link before signing in.');
-        } else if (error.message.includes('captcha')) {
-          throw new Error('CAPTCHA verification failed. Please contact support if this persists.');
-        } else {
-          throw new Error(`Login failed: ${error.message}`);
-        }
+    // Simulated authentication - in real app, this would call an API
+    const mockUsers: User[] = [
+      {
+        id: '1',
+        email: 'superadmin@barangay.gov',
+        name: 'Super Administrator',
+        role: 'super-admin'
+      },
+      {
+        id: '3',
+        email: 'official@barangay.gov',
+        name: 'Barangay Official',
+        role: 'barangay-official'
+      },
+      {
+        id: '4',
+        email: 'medical@barangay.gov',
+        name: 'Dr. Maria Santos',
+        role: 'medical-portal'
+      },
+      {
+        id: '5',
+        email: 'accounting@barangay.gov',
+        name: 'Ana Cruz',
+        role: 'accounting-portal'
+      },
+      {
+        id: '6',
+        email: 'disaster@barangay.gov',
+        name: 'Pedro Martinez',
+        role: 'disaster-portal'
+      },
+      {
+        id: '2',
+        email: 'resident@email.com',
+        name: 'Juan Dela Cruz',
+        role: 'resident',
+        verificationStatus: 'verified',
+        qrCode: 'QR123456789',
+        firstName: 'Juan',
+        lastName: 'Dela Cruz',
+        phone: '+63 912 345 6789',
+        birthDate: '1989-05-15',
+        gender: 'male',
+        civilStatus: 'married',
+        nationality: 'Filipino',
+        occupation: 'Teacher',
+        houseNumber: '123 Main Street',
+        barangay: 'San Miguel',
+        city: 'Metro Manila',
+        province: 'Metro Manila',
+        dateRegistered: '2024-01-15',
+        houseLocation: { lat: 14.5995, lng: 120.9842, address: '123 Main Street, San Miguel, Metro Manila' },
+        familyTree: [
+          { id: 1, name: 'Juan Dela Cruz', relation: 'self', age: 35, gender: 'male' },
+          { id: 2, name: 'Maria Dela Cruz', relation: 'spouse', age: 32, gender: 'female' },
+          { id: 3, name: 'Pedro Dela Cruz', relation: 'son', age: 10, gender: 'male' },
+          { id: 4, name: 'Ana Dela Cruz', relation: 'daughter', age: 8, gender: 'female' }
+        ],
+        auditTrail: [
+          {
+            timestamp: '2024-01-15T10:00:00Z',
+            action: 'Account Created',
+            newStatus: 'non-verified',
+            approvedBy: 'System'
+          },
+          {
+            timestamp: '2024-01-16T14:30:00Z',
+            action: 'Profile Completed',
+            previousStatus: 'non-verified',
+            newStatus: 'details-updated',
+            approvedBy: 'Self (Resident)'
+          },
+          {
+            timestamp: '2024-01-17T09:15:00Z',
+            action: 'Documents Submitted',
+            previousStatus: 'details-updated',
+            newStatus: 'semi-verified',
+            approvedBy: 'Self (Resident)'
+          },
+          {
+            timestamp: '2024-01-20T11:45:00Z',
+            action: 'Physical Verification Completed',
+            previousStatus: 'semi-verified',
+            newStatus: 'verified',
+            approvedBy: 'Barangay Official - Maria Santos'
+          }
+        ]
+      },
+      {
+        id: '7',
+        email: 'test@resident.com',
+        name: 'Test Resident',
+        role: 'resident',
+        verificationStatus: 'non-verified',
+        dateRegistered: '2024-03-01',
+        phone: '+63 912 345 6788',
+        address: '456 Test Street, San Miguel, Metro Manila'
+      },
+      {
+        id: '8', 
+        email: 'maria@resident.com',
+        name: 'Maria Santos',
+        role: 'resident',
+        verificationStatus: 'semi-verified',
+        dateRegistered: '2024-02-15',
+        phone: '+63 912 345 6787',
+        address: '789 Santos Avenue, San Miguel, Metro Manila'
+      },
+      {
+        id: '9',
+        email: 'carlos@resident.com',
+        name: 'Carlos Rivera',
+        role: 'resident',
+        verificationStatus: 'details-updated',
+        dateRegistered: '2024-03-10',
+        phone: '+63 912 345 6786',
+        address: '321 Rivera Street, San Miguel, Metro Manila'
+      },
+      {
+        id: '10',
+        email: 'ana@resident.com',
+        name: 'Ana Garcia',
+        role: 'resident',
+        verificationStatus: 'verified',
+        qrCode: 'QR987654321',
+        dateRegistered: '2024-01-20',
+        phone: '+63 912 345 6785',
+        address: '654 Garcia Avenue, San Miguel, Metro Manila'
       }
+    ];
 
-      if (data.user) {
-        console.log('Supabase auth successful, loading user profile...');
-        await loadUserProfile(email);
-        return true;
-      }
-
-      return false;
-    } catch (error) {
-      console.error('Login error:', error);
-      throw error; // Re-throw to be handled by the login component
+    const foundUser = mockUsers.find(u => u.email === email && password === 'password123');
+    if (foundUser) {
+      setUser(foundUser);
+      localStorage.setItem('user', JSON.stringify(foundUser));
+      return true;
     }
+    return false;
   };
 
-  const logout = async () => {
+  const logout = () => {
     try {
-      // Sign out from Supabase
-      const { error } = await supabase.auth.signOut();
-      
-      if (error) {
-        console.error('Error signing out:', error);
-      }
-
-      // Clear local storage and state
+      // Clear all authentication-related data
       localStorage.removeItem('user');
       localStorage.removeItem('authToken');
       localStorage.removeItem('refreshToken');
       localStorage.removeItem('sessionId');
+      
+      // Clear any session storage
       sessionStorage.clear();
       
+      // Reset user state
       setUser(null);
     } catch (error) {
       console.error('Error during logout:', error);
-      // Force clear user state even if logout fails
+      // Force clear user state even if localStorage operations fail
       setUser(null);
-      localStorage.removeItem('user');
     }
+    setUser(null);
+    localStorage.removeItem('user');
   };
 
   const updateUser = (updates: Partial<User>) => {
@@ -323,7 +236,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   return (
-    <AuthContext.Provider value={{ user, loading, login, logout, updateUser }}>
+    <AuthContext.Provider value={{ user, login, logout, updateUser }}>
       {children}
     </AuthContext.Provider>
   );
@@ -335,19 +248,4 @@ export function useAuth() {
     throw new Error('useAuth must be used within an AuthProvider');
   }
   return context;
-}
-
-// Helper function to calculate age from birth date
-function calculateAge(birthDate?: string): number {
-  if (!birthDate) return 0;
-  const today = new Date();
-  const birth = new Date(birthDate);
-  let age = today.getFullYear() - birth.getFullYear();
-  const monthDiff = today.getMonth() - birth.getMonth();
-  
-  if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birth.getDate())) {
-    age--;
-  }
-  
-  return age;
 }
