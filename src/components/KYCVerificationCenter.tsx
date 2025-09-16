@@ -381,8 +381,7 @@ export default function KYCVerificationCenter() {
                       <div className="mt-1">
                         <span className={`inline-flex items-center px-3 py-1 text-sm font-semibold rounded-full border ${getStatusColor(selectedResident.verificationStatus)}`}>
                           {getStatusIcon(selectedResident.verificationStatus)}
-                          <span className="ml-2 capitalize">{selectedResident.verificationStatus.replace('-', ' ')}</span>
-                          <span className="ml-1 capitalize">{(resident.verificationStatus || 'non-verified').replace('-', ' ')}</span>
+                          <span className="ml-2 capitalize">{String(selectedResident.verificationStatus || 'non-verified').replace('-', ' ')}</span>
                         </span>
                       </div>
                     </div>
