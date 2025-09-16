@@ -1,4 +1,6 @@
 import React, { createContext, useContext, useState, ReactNode } from 'react';
+import { supabase } from '../lib/supabase';
+import { dataService } from '../services/dataService';
 
 export interface User {
   id: string;
@@ -64,145 +66,121 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   });
 
   const login = async (email: string, password: string): Promise<boolean> => {
-    // Simulated authentication - in real app, this would call an API
-    const mockUsers: User[] = [
-      {
-        id: '1',
-        email: 'superadmin@barangay.gov',
-        name: 'Super Administrator',
-        role: 'super-admin'
-      },
-      {
-        id: '3',
-        email: 'official@barangay.gov',
-        name: 'Barangay Official',
-        role: 'barangay-official'
-      },
-      {
-        id: '4',
-        email: 'medical@barangay.gov',
-        name: 'Dr. Maria Santos',
-        role: 'medical-portal'
-      },
-      {
-        id: '5',
-        email: 'accounting@barangay.gov',
-        name: 'Ana Cruz',
-        role: 'accounting-portal'
-      },
-      {
-        id: '6',
-        email: 'disaster@barangay.gov',
-        name: 'Pedro Martinez',
-        role: 'disaster-portal'
-      },
-      {
-        id: '2',
-        email: 'resident@email.com',
-        name: 'Juan Dela Cruz',
-        role: 'resident',
-        verificationStatus: 'verified',
-        qrCode: 'QR123456789',
-        firstName: 'Juan',
-        lastName: 'Dela Cruz',
-        phone: '+63 912 345 6789',
-        birthDate: '1989-05-15',
-        gender: 'male',
-        civilStatus: 'married',
-        nationality: 'Filipino',
-        occupation: 'Teacher',
-        houseNumber: '123 Main Street',
-        barangay: 'San Miguel',
-        city: 'Metro Manila',
-        province: 'Metro Manila',
-        dateRegistered: '2024-01-15',
-        houseLocation: { lat: 14.5995, lng: 120.9842, address: '123 Main Street, San Miguel, Metro Manila' },
-        familyTree: [
-          { id: 1, name: 'Juan Dela Cruz', relation: 'self', age: 35, gender: 'male' },
-          { id: 2, name: 'Maria Dela Cruz', relation: 'spouse', age: 32, gender: 'female' },
-          { id: 3, name: 'Pedro Dela Cruz', relation: 'son', age: 10, gender: 'male' },
-          { id: 4, name: 'Ana Dela Cruz', relation: 'daughter', age: 8, gender: 'female' }
-        ],
-        auditTrail: [
-          {
-            timestamp: '2024-01-15T10:00:00Z',
-            action: 'Account Created',
-            newStatus: 'non-verified',
-            approvedBy: 'System'
-          },
-          {
-            timestamp: '2024-01-16T14:30:00Z',
-            action: 'Profile Completed',
-            previousStatus: 'non-verified',
-            newStatus: 'details-updated',
-            approvedBy: 'Self (Resident)'
-          },
-          {
-            timestamp: '2024-01-17T09:15:00Z',
-            action: 'Documents Submitted',
-            previousStatus: 'details-updated',
-            newStatus: 'semi-verified',
-            approvedBy: 'Self (Resident)'
-          },
-          {
-            timestamp: '2024-01-20T11:45:00Z',
-            action: 'Physical Verification Completed',
-            previousStatus: 'semi-verified',
-            newStatus: 'verified',
-            approvedBy: 'Barangay Official - Maria Santos'
-          }
-        ]
-      },
-      {
-        id: '7',
-        email: 'test@resident.com',
-        name: 'Test Resident',
-        role: 'resident',
-        verificationStatus: 'non-verified',
-        dateRegistered: '2024-03-01',
-        phone: '+63 912 345 6788',
-        address: '456 Test Street, San Miguel, Metro Manila'
-      },
-      {
-        id: '8', 
-        email: 'maria@resident.com',
-        name: 'Maria Santos',
-        role: 'resident',
-        verificationStatus: 'semi-verified',
-        dateRegistered: '2024-02-15',
-        phone: '+63 912 345 6787',
-        address: '789 Santos Avenue, San Miguel, Metro Manila'
-      },
-      {
-        id: '9',
-        email: 'carlos@resident.com',
-        name: 'Carlos Rivera',
-        role: 'resident',
-        verificationStatus: 'details-updated',
-        dateRegistered: '2024-03-10',
-        phone: '+63 912 345 6786',
-        address: '321 Rivera Street, San Miguel, Metro Manila'
-      },
-      {
-        id: '10',
-        email: 'ana@resident.com',
-        name: 'Ana Garcia',
-        role: 'resident',
-        verificationStatus: 'verified',
-        qrCode: 'QR987654321',
-        dateRegistered: '2024-01-20',
-        phone: '+63 912 345 6785',
-        address: '654 Garcia Avenue, San Miguel, Metro Manila'
-      }
-    ];
+    try {
+      console.log('Attempting login with email:', email);
+      
+      // Authenticate with Supabase
+      const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
+        email,
+        password
+      });
 
-    const foundUser = mockUsers.find(u => u.email === email && password === 'password123');
-    if (foundUser) {
-      setUser(foundUser);
-      localStorage.setItem('user', JSON.stringify(foundUser));
+      if (authError) {
+        console.error('Supabase auth error:', authError);
+        
+        // Provide specific error messages
+        if (authError.message.includes('Invalid login credentials')) {
+          throw new Error('Invalid email or password. Please check your credentials and try again.');
+        } else if (authError.message.includes('Email not confirmed')) {
+          throw new Error('Please check your email and click the confirmation link before logging in.');
+        } else if (authError.message.includes('Too many requests')) {
+          throw new Error('Too many login attempts. Please wait a few minutes and try again.');
+        } else {
+          throw new Error(authError.message || 'Login failed. Please try again.');
+        }
+      }
+
+      if (!authData.user) {
+        throw new Error('Authentication failed. Please try again.');
+      }
+
+      console.log('Auth successful, loading user profile...');
+      
+      // Try to load user from users table first (for admin/staff accounts)
+      let userProfile = null;
+      try {
+        const { data: userData, error: userError } = await supabase
+          .from('users')
+          .select('*')
+          .eq('email', email)
+          .single();
+          
+        if (!userError && userData) {
+          userProfile = {
+            id: userData.id,
+            email: userData.email,
+            name: userData.name,
+            role: userData.role,
+            phone: userData.phone_number,
+            address: userData.address
+          };
+          console.log('Loaded user profile from users table:', userProfile);
+        }
+      } catch (error) {
+        console.log('User not found in users table, checking residents table...');
+      }
+      
+      // If not found in users table, try residents table
+      if (!userProfile) {
+        try {
+          const { data: residentData, error: residentError } = await supabase
+            .from('residents')
+            .select('*')
+            .eq('email', email)
+            .single();
+            
+          if (!residentError && residentData) {
+            userProfile = {
+              id: residentData.id,
+              email: residentData.email,
+              name: residentData.name,
+              role: 'resident',
+              verificationStatus: residentData.verification_status,
+              qrCode: residentData.qr_code,
+              phone: residentData.phone_number,
+              address: residentData.address,
+              birthDate: residentData.birth_date,
+              gender: residentData.gender,
+              civilStatus: residentData.civil_status,
+              nationality: residentData.nationality,
+              religion: residentData.religion,
+              occupation: residentData.occupation,
+              monthlyIncome: residentData.monthly_income,
+              emergencyContact: residentData.emergency_contact,
+              dateRegistered: residentData.date_registered
+            };
+            console.log('Loaded user profile from residents table:', userProfile);
+          }
+        } catch (error) {
+          console.error('Error loading resident profile:', error);
+        }
+      }
+      
+      if (!userProfile) {
+        throw new Error('User profile not found. Please contact support.');
+      }
+
+      // Update last login time
+      try {
+        if (userProfile.role !== 'resident') {
+          await supabase
+            .from('users')
+            .update({ last_login: new Date().toISOString() })
+            .eq('email', email);
+        }
+      } catch (error) {
+        console.warn('Failed to update last login time:', error);
+      }
+
+      setUser(userProfile);
+      localStorage.setItem('user', JSON.stringify(userProfile));
+      console.log('Login successful for user:', userProfile.name);
       return true;
+      
+    } catch (error: any) {
+      console.error('Login error:', error);
+      throw error;
     }
-    return false;
   };
 
   const logout = () => {

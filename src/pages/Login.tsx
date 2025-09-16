@@ -18,14 +18,11 @@ export default function Login() {
     setIsLoading(true);
 
     try {
-      const success = await login(email, password);
-      if (success) {
-        // Navigation will be handled by the AuthProvider
-      } else {
-        setError('Invalid email or password');
-      }
+      await login(email, password);
+      // Navigation will be handled by the AuthProvider
     } catch (err) {
-      setError('An error occurred. Please try again.');
+      console.error('Login error:', err);
+      setError(err.message || 'An error occurred. Please try again.');
     } finally {
       setIsLoading(false);
     }
