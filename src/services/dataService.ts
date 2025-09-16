@@ -16,61 +16,6 @@ export class DataService {
     return data
   }
 
-  static async getUserByEmail(email: string) {
-    const { data, error } = await supabase
-      .from('users')
-      .select('*')
-      .eq('email', email)
-      .single()
-    
-    if (error) throw error
-    return data
-  }
-
-  static async createAuthUser(email: string, password: string, userData: any) {
-    // First create the auth user in Supabase Auth
-    const { data: authData, error: authError } = await supabase.auth.signUp({
-      email,
-      password,
-      options: {
-        emailRedirectTo: undefined, // Disable email confirmation for development
-        data: {
-          name: userData.name,
-          role: userData.role
-        }
-      }
-    })
-    
-    if (authError) throw authError
-    
-    // Wait a moment for auth user to be created
-    await new Promise(resolve => setTimeout(resolve, 1000))
-    
-    // Then create the user profile in the users table
-    const { data, error } = await supabase
-      .from('users')
-      .insert([{
-        ...userData,
-        email,
-        id: authData.user?.id, // Use the auth user ID
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString()
-      }])
-      .select()
-      .single()
-    
-    if (error) throw error
-    
-    // Log the action
-    try {
-      await this.logAction('user.create', 'user', data.id, null, data)
-    } catch (logError) {
-      console.warn('Failed to log user creation:', logError)
-    }
-    
-    return { authUser: authData.user, userProfile: data }
-  }
-
   static async createUser(userData: any) {
     console.log('Creating user with data:', userData);
     
@@ -170,8 +115,6 @@ export class DataService {
       occupation: residentData.occupation,
       monthly_income: residentData.monthly_income,
       date_registered: residentData.date_registered || new Date().toISOString().split('T')[0],
-      government_ids: residentData.government_ids || {},
-      profile_data: residentData.profile_data || {},
       created_at: new Date().toISOString(),
       updated_at: new Date().toISOString()
     };
@@ -188,8 +131,8 @@ export class DataService {
       console.error('Supabase error creating resident:', error);
       
       // Provide more specific error messages
-      if (error.code === '42501' || error.message?.includes('row-level security')) {
-        throw new Error('Registration permission error. Please ensure you are not already logged in and try again.');
+      if (error.code === '42501') {
+        throw new Error('Registration is temporarily unavailable. Please contact the barangay office.');
       } else if (error.code === '23505') {
         throw new Error('An account with this email already exists.');
       } else {
@@ -198,50 +141,28 @@ export class DataService {
     }
     
     console.log('Resident created successfully:', data);
-    
-    // Log the action
-    try {
-      await this.logAction('resident.create', 'resident', data.id, null, data)
-    } catch (logError) {
-      console.warn('Failed to log resident creation:', logError)
-    }
-    
     return data
   }
 
   static async updateResident(id: string, updates: any) {
-    // Try to update by ID first, then by email if ID fails
-    let data, error;
-    
-    // If id looks like an email, update by email
-    if (id.includes('@')) {
-      const result = await supabase
-        .from('residents')
-        .update({ ...updates, updated_at: new Date().toISOString() })
-        .eq('email', id)
-        .select()
-        .single();
-      data = result.data;
-      error = result.error;
-    } else {
-      const result = await supabase
-        .from('residents')
-        .update({ ...updates, updated_at: new Date().toISOString() })
-        .eq('id', id)
-        .select()
-        .single();
-      data = result.data;
-      error = result.error;
-    }
+    // Get current data for audit
+    const { data: oldData } = await supabase
+      .from('residents')
+      .select('*')
+      .eq('id', id)
+      .single()
 
+    const { data, error } = await supabase
+      .from('residents')
+      .update({ ...updates, updated_at: new Date().toISOString() })
+      .eq('id', id)
+      .select()
+      .single()
+    
     if (error) throw error
     
     // Log the action
-    try {
-      await this.logAction('resident.update', 'resident', data.id, null, data)
-    } catch (logError) {
-      console.warn('Failed to log resident update:', logError)
-    }
+    await this.logAction('resident.update', 'resident', id, oldData, data)
     
     return data
   }
