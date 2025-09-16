@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
-import { offlineService } from './services/offlineService';
 import LandingPage from './pages/LandingPage';
 import AboutPage from './pages/AboutPage';
 import Login from './pages/Login';
@@ -62,11 +61,6 @@ function AppRoutes() {
 }
 
 function App() {
-  useEffect(() => {
-    // Initialize offline service when app starts
-    offlineService.initialize().catch(console.error);
-  }, []);
-
   return (
     <AuthProvider>
       <DataProvider>

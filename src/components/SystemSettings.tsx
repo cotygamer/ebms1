@@ -86,8 +86,7 @@ export default function SystemSettings() {
       
       setTimeout(() => setMessage(''), 3000); // Clear message after 3 seconds
     } catch (error) {
-      console.error('Settings update error:', error);
-      setMessage(`Failed to update settings: ${error.message || 'Please try again.'}`);
+      setMessage('Failed to update settings. Please try again.');
       setTimeout(() => setMessage(''), 3000); // Clear message after 3 seconds
     } finally {
       setIsLoading(false);

@@ -1,7 +1,6 @@
 import React from 'react';
-import { useState } from 'react';
 import { useAuth } from '../contexts/AuthContext';
-import { CheckCircle, Clock, XCircle, Upload, MapPin, Camera, FileText, Shield, AlertTriangle, User, Mail, Phone, Home, Edit } from 'lucide-react';
+import { CheckCircle, Clock, XCircle, Upload, MapPin, Camera, FileText, Shield, AlertTriangle, User, Mail, Phone, Home } from 'lucide-react';
 
 export default function VerificationStatus() {
   const { user } = useAuth();

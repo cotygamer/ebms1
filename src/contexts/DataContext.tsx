@@ -1,19 +1,4 @@
 import React, { createContext, useContext, useState, ReactNode } from 'react';
-import { dataService } from '../services/dataService';
-import { 
-  useUsers, 
-  useResidents, 
-  useDocuments, 
-  useIncidents, 
-  useAnnouncements, 
-  useTransactions,
-  useAppointments,
-  usePatients,
-  useMedicalRecords,
-  useInventoryItems,
-  useProjects,
-  useBusinessPermits
-} from '../hooks/useRealTimeData';
 
 interface Resident {
   id: string;
@@ -26,16 +11,6 @@ interface Resident {
   phoneNumber: string;
   dateRegistered: string;
   documents: string[];
-  birthDate?: string;
-  gender?: string;
-  civilStatus?: string;
-  nationality?: string;
-  religion?: string;
-  occupation?: string;
-  monthlyIncome?: string;
-  emergencyContact?: string;
-  houseLocation?: { lat: number; lng: number; address: string };
-  governmentIds?: any;
   profileData?: {
     phone?: string;
     address?: string;
@@ -55,6 +30,50 @@ interface Resident {
   }[];
 }
 
+interface Document {
+  id: string;
+  residentId?: string;
+  residentName: string;
+  residentEmail?: string;
+  residentPhone?: string;
+  documentType: string;
+  status: 'pending' | 'processing' | 'ready' | 'released' | 'rejected';
+  requestedDate: string;
+  processedDate?: string;
+  releasedDate?: string;
+  fee: number;
+  paymentStatus: 'unpaid' | 'paid' | 'refunded';
+  paymentMethod?: string;
+  notes?: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+interface Announcement {
+  id: string;
+  title: string;
+  content: string;
+  type: 'important' | 'event' | 'notice' | 'emergency' | 'health' | 'weather' | 'evacuation' | 'update';
+  priority: 'low' | 'medium' | 'high';
+  status: 'published' | 'draft';
+  author: string;
+  expiresAt?: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+interface Transaction {
+  id: string;
+  type: 'revenue' | 'expense';
+  description: string;
+  amount: number;
+  category: string;
+  paymentMethod: string;
+  referenceNumber?: string;
+  transactionDate: string;
+  createdAt: string;
+  updatedAt: string;
+}
 interface SystemSettings {
   googleMapsApiKey: string;
   paymentGateway: {
@@ -101,211 +120,20 @@ interface DataContextType {
   documents: Document[];
   announcements: Announcement[];
   transactions: Transaction[];
-  complaints: Complaint[];
-  appointments: Appointment[];
-  patients: Patient[];
-  medicalRecords: MedicalRecord[];
-  inventoryItems: InventoryItem[];
-  projects: Project[];
-  businessPermits: BusinessPermit[];
   updateResident: (id: string, updates: Partial<Resident>) => void;
   updateSystemSettings: (updates: Partial<SystemSettings>) => void;
   verifyResident: (id: string, status: 'semi-verified' | 'verified') => void;
   addUser: (user: Omit<User, 'id'>) => void;
   updateUser: (id: string, updates: Partial<User>) => void;
   deleteUser: (id: string) => void;
-  addDocument: (document: Omit<Document, 'id'>) => void;
+  addDocument: (document: Omit<Document, 'id' | 'createdAt' | 'updatedAt'>) => void;
   updateDocument: (id: string, updates: Partial<Document>) => void;
-  addAnnouncement: (announcement: Omit<Announcement, 'id'>) => void;
+  addAnnouncement: (announcement: Omit<Announcement, 'id' | 'createdAt' | 'updatedAt'>) => void;
   updateAnnouncement: (id: string, updates: Partial<Announcement>) => void;
-  addTransaction: (transaction: Omit<Transaction, 'id'>) => void;
-  addComplaint: (complaint: Omit<Complaint, 'id'>) => void;
-  updateComplaint: (id: string, updates: Partial<Complaint>) => void;
-  addAppointment: (appointment: Omit<Appointment, 'id'>) => void;
-  updateAppointment: (id: string, updates: Partial<Appointment>) => void;
-  addPatient: (patient: Omit<Patient, 'id'>) => void;
-  updatePatient: (id: string, updates: Partial<Patient>) => void;
-  addMedicalRecord: (record: Omit<MedicalRecord, 'id'>) => void;
-  addInventoryItem: (item: Omit<InventoryItem, 'id'>) => void;
-  updateInventoryItem: (id: string, updates: Partial<InventoryItem>) => void;
-  addProject: (project: Omit<Project, 'id'>) => void;
-  updateProject: (id: string, updates: Partial<Project>) => void;
-  addBusinessPermit: (permit: Omit<BusinessPermit, 'id'>) => void;
-  updateBusinessPermit: (id: string, updates: Partial<BusinessPermit>) => void;
-}
-
-interface Appointment {
-  id: string;
-  residentId?: string;
-  residentName: string;
-  residentEmail?: string;
-  residentPhone?: string;
-  service: string;
-  serviceType: string;
-  appointmentDate: string;
-  appointmentTime: string;
-  status: string;
-  notes?: string;
-  assignedStaff?: string;
-  createdAt: string;
-  updatedAt: string;
-}
-
-interface Patient {
-  id: string;
-  residentId?: string;
-  name: string;
-  age: number;
-  gender: string;
-  contactNumber: string;
-  address: string;
-  medicalHistory?: string;
-  allergies?: string;
-  emergencyContact: string;
-  bloodType?: string;
-  heightCm?: number;
-  weightKg?: number;
-  createdAt: string;
-  updatedAt: string;
-}
-
-interface MedicalRecord {
-  id: string;
-  patientId: string;
-  visitDate: string;
-  diagnosis: string;
-  treatment: string;
-  prescription?: string;
-  doctorNotes?: string;
-  vitalSigns?: any;
-  followUpDate?: string;
-  attendingPhysician?: string;
-  createdAt: string;
-  updatedAt: string;
-}
-
-interface InventoryItem {
-  id: string;
-  name: string;
-  category: string;
-  currentStock: number;
-  minimumStock: number;
-  unit: string;
-  costPerUnit: number;
-  supplier?: string;
-  expiryDate?: string;
-  batchNumber?: string;
-  location?: string;
-  createdAt: string;
-  updatedAt: string;
-}
-
-interface Project {
-  id: string;
-  title: string;
-  description: string;
-  category: string;
-  status: string;
-  startDate: string;
-  endDate?: string;
-  budget: number;
-  location: string;
-  beneficiaries: number;
-  imageUrl?: string;
-  projectManager?: string;
-  completionPercentage?: number;
-  achievements?: any[];
-  createdAt: string;
-  updatedAt: string;
-}
-
-interface BusinessPermit {
-  id: string;
-  businessName: string;
-  ownerName: string;
-  ownerEmail: string;
-  businessType: string;
-  address: string;
-  contactInfo?: any;
-  permitType: string;
-  applicationStatus: string;
-  documents?: any[];
-  fees?: any;
-  paymentStatus: string;
-  approvalDate?: string;
-  expiryDate?: string;
-  permitNumber?: string;
-  notes?: string;
-  createdAt: string;
-  updatedAt: string;
-}
-interface Document {
-  id: string;
-  residentId: string;
-  documentType: string;
-  status: 'pending' | 'processing' | 'ready' | 'released' | 'rejected';
-  requestedDate: string;
-  processedDate?: string;
-  releasedDate?: string;
-  fee: number;
-  paymentStatus: 'unpaid' | 'paid' | 'refunded';
-  paymentMethod?: string;
-  notes?: string;
-  purpose?: string;
-  trackingNumber?: string;
-}
-
-interface Announcement {
-  id: string;
-  title: string;
-  content: string;
-  type: 'important' | 'event' | 'notice' | 'emergency' | 'health' | 'weather' | 'evacuation' | 'update';
-  priority: 'low' | 'medium' | 'high';
-  status: 'published' | 'draft';
-  author: string;
-  targetAudience?: string;
-  expiresAt?: string;
-  imageUrl?: string;
-  createdAt: string;
-  updatedAt: string;
-}
-
-interface Transaction {
-  id: string;
-  type: 'revenue' | 'expense';
-  description: string;
-  amount: number;
-  category: string;
-  paymentMethod: string;
-  referenceNumber?: string;
-  transactionDate: string;
-  documentId?: string;
-  processedBy?: string;
-  approvedBy?: string;
-  createdAt: string;
-  updatedAt: string;
-}
-
-interface Complaint {
-  id: string;
-  residentName: string;
-  residentEmail: string;
-  type: string;
-  subject: string;
-  description: string;
-  status: 'pending' | 'investigating' | 'resolved' | 'dismissed';
-  priority: 'low' | 'medium' | 'high';
-  dateSubmitted: string;
-  assignedTo?: string;
-  resolution?: string;
-  location?: string;
-  dateOccurred?: string;
-  timeOccurred?: string;
-  witnessName?: string;
-  witnessContact?: string;
-  evidenceFiles?: any[];
-  createdAt: string;
-  updatedAt: string;
+  deleteAnnouncement: (id: string) => void;
+  addTransaction: (transaction: Omit<Transaction, 'id' | 'createdAt' | 'updatedAt'>) => void;
+  updateTransaction: (id: string, updates: Partial<Transaction>) => void;
+  deleteTransaction: (id: string) => void;
 }
 
 interface User {
@@ -314,43 +142,15 @@ interface User {
   email: string;
   role: 'super-admin' | 'barangay-official' | 'resident' | 'medical-portal' | 'accounting-portal' | 'disaster-portal';
   status: 'active' | 'inactive' | 'suspended';
-  phone_number?: string;
-  address?: string;
-  password_hash?: string;
-  last_login?: string;
-  created_at: string;
-  updated_at: string;
+  dateCreated: string;
+  lastLogin: string;
   permissions: string[];
 }
 
 const DataContext = createContext<DataContextType | undefined>(undefined);
 
 export function DataProvider({ children }: { children: ReactNode }) {
-  // Use real-time data hooks
-  const { data: users, refresh: refreshUsers } = useUsers();
-  const { data: residents, refresh: refreshResidents } = useResidents();
-  const { data: documents, refresh: refreshDocuments } = useDocuments();
-  const { data: incidents, refresh: refreshIncidents } = useIncidents();
-  const { data: announcements, refresh: refreshAnnouncements } = useAnnouncements();
-  const { data: transactions, refresh: refreshTransactions } = useTransactions();
-  const { data: appointments, refresh: refreshAppointments } = useAppointments();
-  const { data: patients, refresh: refreshPatients } = usePatients();
-  const { data: medicalRecords, refresh: refreshMedicalRecords } = useMedicalRecords();
-  const { data: inventoryItems, refresh: refreshInventoryItems } = useInventoryItems();
-  const { data: projects, refresh: refreshProjects } = useProjects();
-  const { data: businessPermits, refresh: refreshBusinessPermits } = useBusinessPermits();
-
-  // Debug logging to check data loading
-  React.useEffect(() => {
-    console.log('DataProvider - Users loaded:', users.length);
-    console.log('DataProvider - Residents loaded:', residents.length);
-    console.log('DataProvider - Documents loaded:', documents.length);
-    console.log('DataProvider - Incidents loaded:', incidents.length);
-    console.log('DataProvider - Appointments loaded:', appointments.length);
-    console.log('DataProvider - Patients loaded:', patients.length);
-  }, [users, residents, documents, incidents]);
-
-  // Initialize settings from localStorage with Supabase sync
+  // Initialize settings from localStorage
   const [systemSettings, setSystemSettings] = useState<SystemSettings>(() => {
     const savedSettings = localStorage.getItem('systemSettings');
     if (savedSettings) {
@@ -377,457 +177,341 @@ export function DataProvider({ children }: { children: ReactNode }) {
     };
   });
 
-  // Load system settings from database
-  React.useEffect(() => {
-    const loadSystemSettings = async () => {
+  const [residents, setResidents] = useState<Resident[]>([
+    {
+      id: '1',
+      name: 'Juan Dela Cruz',
+      email: 'juan@email.com',
+      verificationStatus: 'verified',
+      qrCode: 'QR123456789',
+      familyTree: [
+        { id: 1, name: 'Juan Dela Cruz', relation: 'self', age: 35, gender: 'male' },
+        { id: 2, name: 'Maria Dela Cruz', relation: 'spouse', age: 32, gender: 'female' },
+        { id: 3, name: 'Pedro Dela Cruz', relation: 'son', age: 10, gender: 'male' },
+        { id: 4, name: 'Ana Dela Cruz', relation: 'daughter', age: 8, gender: 'female' }
+      ],
+      address: '123 Main St, Barangay Center',
+      phoneNumber: '+63 912 345 6789',
+      dateRegistered: '2024-01-15',
+      documents: ['Birth Certificate', 'Valid ID', 'Proof of Address']
+    },
+    {
+      id: '2',
+      name: 'Maria Santos',
+      email: 'maria@email.com',
+      verificationStatus: 'semi-verified',
+      familyTree: [
+        { id: 1, name: 'Maria Santos', relation: 'self', age: 28, gender: 'female' }
+      ],
+      address: '456 Oak Ave, Barangay North',
+      phoneNumber: '+63 917 654 3210',
+      dateRegistered: '2024-02-20',
+      documents: ['Valid ID']
+    }
+  ]);
+
+  const [documents, setDocuments] = useState<Document[]>([
+    {
+      id: '1',
+      residentId: '1',
+      residentName: 'Juan Dela Cruz',
+      residentEmail: 'juan@email.com',
+      residentPhone: '+63 912 345 6789',
+      documentType: 'Barangay Clearance',
+      status: 'ready',
+      requestedDate: '2024-03-10',
+      processedDate: '2024-03-12',
+      fee: 50,
+      paymentStatus: 'paid',
+      paymentMethod: 'GCash',
+      notes: 'For employment purposes',
+      createdAt: '2024-03-10T08:00:00Z',
+      updatedAt: '2024-03-12T14:30:00Z'
+    },
+    {
+      id: '2',
+      residentName: 'Maria Santos',
+      residentEmail: 'maria@email.com',
+      residentPhone: '+63 917 654 3210',
+      documentType: 'Certificate of Residency',
+      status: 'processing',
+      requestedDate: '2024-03-15',
+      fee: 30,
+      paymentStatus: 'unpaid',
+      notes: 'For school enrollment',
+      createdAt: '2024-03-15T10:15:00Z',
+      updatedAt: '2024-03-15T10:15:00Z'
+    },
+    {
+      id: '3',
+      residentName: 'Pedro Martinez',
+      residentEmail: 'pedro@email.com',
+      documentType: 'Business Permit',
+      status: 'pending',
+      requestedDate: '2024-03-18',
+      fee: 200,
+      paymentStatus: 'unpaid',
+      notes: 'Small sari-sari store',
+      createdAt: '2024-03-18T09:30:00Z',
+      updatedAt: '2024-03-18T09:30:00Z'
+    }
+  ]);
+
+  const [announcements, setAnnouncements] = useState<Announcement[]>([
+    {
+      id: '1',
+      title: 'Community Health Drive - Free Medical Checkup',
+      content: 'Free medical checkup and vaccination for all residents. Bring your barangay ID and health records. Schedule: March 25-27, 2024 at the Barangay Health Center.',
+      type: 'health',
+      priority: 'high',
+      status: 'published',
+      author: 'Dr. Maria Santos',
+      expiresAt: '2024-03-30T23:59:59Z',
+      createdAt: '2024-03-20T08:00:00Z',
+      updatedAt: '2024-03-20T08:00:00Z'
+    },
+    {
+      id: '2',
+      title: 'Road Maintenance Schedule',
+      content: 'Main Street will undergo maintenance from March 25-27. Please use alternative routes during construction hours (8 AM - 5 PM).',
+      type: 'notice',
+      priority: 'medium',
+      status: 'published',
+      author: 'Public Works Department',
+      expiresAt: '2024-03-28T23:59:59Z',
+      createdAt: '2024-03-18T14:00:00Z',
+      updatedAt: '2024-03-18T14:00:00Z'
+    },
+    {
+      id: '3',
+      title: 'Barangay Assembly Meeting',
+      content: 'Monthly barangay assembly meeting on March 30, 2024 at 7:00 PM at the Barangay Hall. All residents are invited to participate.',
+      type: 'event',
+      priority: 'medium',
+      status: 'published',
+      author: 'Barangay Council',
+      createdAt: '2024-03-15T16:00:00Z',
+      updatedAt: '2024-03-15T16:00:00Z'
+    }
+  ]);
+
+  const [transactions, setTransactions] = useState<Transaction[]>([
+    {
+      id: '1',
+      type: 'revenue',
+      description: 'Barangay Clearance Fees',
+      amount: 1500,
+      category: 'Document Fees',
+      paymentMethod: 'GCash',
+      referenceNumber: 'GC20240315001',
+      transactionDate: '2024-03-15',
+      createdAt: '2024-03-15T10:00:00Z',
+      updatedAt: '2024-03-15T10:00:00Z'
+    },
+    {
+      id: '2',
+      type: 'expense',
+      description: 'Office Supplies Purchase',
+      amount: 2500,
+      category: 'Office Supplies',
+      paymentMethod: 'Cash',
+      transactionDate: '2024-03-14',
+      createdAt: '2024-03-14T14:30:00Z',
+      updatedAt: '2024-03-14T14:30:00Z'
+    },
+    {
+      id: '3',
+      type: 'revenue',
+      description: 'Business Permit Fees',
+      amount: 800,
+      category: 'Permit Fees',
+      paymentMethod: 'Maya',
+      referenceNumber: 'MY20240313001',
+      transactionDate: '2024-03-13',
+      createdAt: '2024-03-13T11:15:00Z',
+      updatedAt: '2024-03-13T11:15:00Z'
+    },
+    {
+      id: '4',
+      type: 'expense',
+      description: 'Utility Bills Payment',
+      amount: 3200,
+      category: 'Utilities',
+      paymentMethod: 'Bank Transfer',
+      transactionDate: '2024-03-12',
+      createdAt: '2024-03-12T16:45:00Z',
+      updatedAt: '2024-03-12T16:45:00Z'
+    }
+  ]);
+
+  const [users, setUsers] = useState<User[]>([
+    {
+      id: '1',
+      name: 'Super Administrator',
+      email: 'superadmin@barangay.gov',
+      role: 'super-admin',
+      status: 'active',
+      dateCreated: '2024-01-01',
+      lastLogin: '2024-03-15 10:30 AM',
+      permissions: ['all']
+    },
+    {
+      id: '2',
+      name: 'Barangay Captain',
+      email: 'captain@barangay.gov',
+      role: 'barangay-official',
+      status: 'active',
+      dateCreated: '2024-01-02',
+      lastLogin: '2024-03-15 09:15 AM',
+      permissions: ['residents', 'documents', 'reports', 'medical', 'accounting', 'disaster']
+    },
+    {
+      id: '3',
+      name: 'Dr. Maria Santos',
+      email: 'medical@barangay.gov',
+      role: 'medical-portal',
+      status: 'active',
+      dateCreated: '2024-01-03',
+      lastLogin: '2024-03-15 08:45 AM',
+      permissions: ['health', 'medical-records', 'appointments']
+    },
+    {
+      id: '4',
+      name: 'Ana Cruz',
+      email: 'accounting@barangay.gov',
+      role: 'accounting-portal',
+      status: 'active',
+      dateCreated: '2024-01-04',
+      lastLogin: '2024-03-15 08:30 AM',
+      permissions: ['accounting', 'financial-reports', 'payments']
+    },
+    {
+      id: '5',
+      name: 'Pedro Martinez',
+      email: 'disaster@barangay.gov',
+      role: 'disaster-portal',
+      status: 'active',
+      dateCreated: '2024-01-05',
+      lastLogin: '2024-03-15 08:15 AM',
+      permissions: ['disaster-management', 'emergency-alerts', 'evacuation']
+    }
+  ]);
+
+  const updateResident = (id: string, updates: Partial<Resident>) => {
+    setResidents(prev => prev.map(resident => 
+      resident.id === id ? { ...resident, ...updates } : resident
+    ));
+  };
+
+  const updateSystemSettings = (updates: Partial<SystemSettings>) => {
+    return new Promise((resolve, reject) => {
       try {
-        const dbSettings = await dataService.getSystemSettings();
-        if (dbSettings && Object.keys(dbSettings).length > 0) {
-          const formattedSettings = {
-            googleMapsApiKey: dbSettings.google_maps_api_key || '',
-            paymentGateway: dbSettings.payment_gateway || {
-              provider: 'PayPal',
-              apiKey: '',
-              secretKey: '',
-              gcash: { enabled: true, merchantId: '', apiKey: '' },
-              maya: { enabled: true, publicKey: '', secretKey: '' },
-              dragonpay: { enabled: false, merchantId: '', password: '' },
-              cashOnPickup: { enabled: true }
-            },
-            barangayName: dbSettings.barangay_name || 'Barangay San Miguel',
-            barangayAddress: dbSettings.barangay_address || 'San Miguel, Metro Manila, Philippines',
-            contactNumber: dbSettings.contact_number || '+63 2 8123 4567',
-            emailAddress: dbSettings.email_address || '',
-            website: dbSettings.website || '',
-            facebookPage: dbSettings.facebook_page || '',
-            operatingHours: dbSettings.operating_hours || '8:00 AM - 5:00 PM',
-            timezone: dbSettings.timezone || 'Asia/Manila',
-            language: dbSettings.language || 'English',
-            currency: dbSettings.currency || 'PHP',
-            dateFormat: dbSettings.date_format || 'MM/DD/YYYY',
-            timeFormat: dbSettings.time_format || '12-hour',
-            maxFileSize: dbSettings.max_file_size || '10',
-            allowedFileTypes: dbSettings.allowed_file_types || 'PDF, JPG, PNG, DOCX',
-            sessionTimeout: dbSettings.session_timeout || '30',
-            passwordPolicy: dbSettings.password_policy || 'strong',
-            twoFactorAuth: dbSettings.two_factor_auth || false,
-            emailNotifications: dbSettings.email_notifications || true,
-            smsNotifications: dbSettings.sms_notifications || false,
-            pushNotifications: dbSettings.push_notifications || true,
-            maintenanceMode: dbSettings.maintenance_mode || false,
-            debugMode: dbSettings.debug_mode || false,
-            backupFrequency: dbSettings.backup_frequency || 'daily',
-            primaryColor: dbSettings.primary_color || '#2563eb',
-            secondaryColor: dbSettings.secondary_color || '#059669',
-            accentColor: dbSettings.accent_color || '#dc2626'
-          };
-          setSystemSettings(formattedSettings);
-        }
+        const newSettings = { ...systemSettings, ...updates };
+        setSystemSettings(newSettings);
+        localStorage.setItem('systemSettings', JSON.stringify(newSettings));
+        
+        // Trigger a custom event to notify other components about the update
+        window.dispatchEvent(new CustomEvent('barangaySettingsUpdated', { 
+          detail: newSettings 
+        }));
+        
+        setTimeout(() => {
+          resolve(true);
+        }, 500); // Reduced delay for better UX
       } catch (error) {
-        console.error('Failed to load system settings:', error);
+        console.error('Error updating settings:', error);
+        reject(error);
       }
+    });
+  };
+
+  const verifyResident = (id: string, status: 'semi-verified' | 'verified') => {
+    setResidents(prev => prev.map(resident => {
+      if (resident.id === id) {
+        const qrCode = status === 'verified' ? `QR${Date.now()}${Math.random().toString(36).substr(2, 9)}` : undefined;
+        return { ...resident, verificationStatus: status, qrCode };
+      }
+      return resident;
+    }));
+  };
+
+  const addUser = (userData: Omit<User, 'id'>) => {
+    const newUser = {
+      ...userData,
+      id: Date.now().toString(),
+      dateCreated: new Date().toISOString().split('T')[0],
+      lastLogin: 'Never'
     };
-
-    loadSystemSettings();
-  }, []);
-  // Updated functions to use centralized data service
-  const updateResident = async (id: string, updates: Partial<Resident>) => {
-    try {
-      await dataService.updateResident(id, updates);
-      refreshResidents();
-    } catch (error) {
-      console.error('Failed to update resident:', error);
-      throw error;
-    }
+    setUsers(prev => [...prev, newUser]);
   };
 
-  const updateSystemSettings = async (updates: Partial<SystemSettings>) => {
-    try {
-      const newSettings = { ...systemSettings, ...updates };
-      
-      // Convert to database format
-      const dbUpdates: Record<string, any> = {};
-      if (updates.googleMapsApiKey !== undefined) dbUpdates.google_maps_api_key = updates.googleMapsApiKey;
-      if (updates.paymentGateway !== undefined) dbUpdates.payment_gateway = updates.paymentGateway;
-      if (updates.barangayName !== undefined) dbUpdates.barangay_name = updates.barangayName;
-      if (updates.barangayAddress !== undefined) dbUpdates.barangay_address = updates.barangayAddress;
-      if (updates.contactNumber !== undefined) dbUpdates.contact_number = updates.contactNumber;
-      if (updates.emailAddress !== undefined) dbUpdates.email_address = updates.emailAddress;
-      if (updates.website !== undefined) dbUpdates.website = updates.website;
-      if (updates.facebookPage !== undefined) dbUpdates.facebook_page = updates.facebookPage;
-      if (updates.operatingHours !== undefined) dbUpdates.operating_hours = updates.operatingHours;
-      if (updates.timezone !== undefined) dbUpdates.timezone = updates.timezone;
-      if (updates.language !== undefined) dbUpdates.language = updates.language;
-      if (updates.currency !== undefined) dbUpdates.currency = updates.currency;
-      if (updates.dateFormat !== undefined) dbUpdates.date_format = updates.dateFormat;
-      if (updates.timeFormat !== undefined) dbUpdates.time_format = updates.timeFormat;
-      if (updates.maxFileSize !== undefined) dbUpdates.max_file_size = updates.maxFileSize;
-      if (updates.allowedFileTypes !== undefined) dbUpdates.allowed_file_types = updates.allowedFileTypes;
-      if (updates.sessionTimeout !== undefined) dbUpdates.session_timeout = updates.sessionTimeout;
-      if (updates.passwordPolicy !== undefined) dbUpdates.password_policy = updates.passwordPolicy;
-      if (updates.twoFactorAuth !== undefined) dbUpdates.two_factor_auth = updates.twoFactorAuth;
-      if (updates.emailNotifications !== undefined) dbUpdates.email_notifications = updates.emailNotifications;
-      if (updates.smsNotifications !== undefined) dbUpdates.sms_notifications = updates.smsNotifications;
-      if (updates.pushNotifications !== undefined) dbUpdates.push_notifications = updates.pushNotifications;
-      if (updates.maintenanceMode !== undefined) dbUpdates.maintenance_mode = updates.maintenanceMode;
-      if (updates.debugMode !== undefined) dbUpdates.debug_mode = updates.debugMode;
-      if (updates.backupFrequency !== undefined) dbUpdates.backup_frequency = updates.backupFrequency;
-      if (updates.primaryColor !== undefined) dbUpdates.primary_color = updates.primaryColor;
-      if (updates.secondaryColor !== undefined) dbUpdates.secondary_color = updates.secondaryColor;
-      if (updates.accentColor !== undefined) dbUpdates.accent_color = updates.accentColor;
-      
-      // Update database
-      await dataService.updateMultipleSystemSettings(dbUpdates);
-      
-      // Update local state
-      setSystemSettings(newSettings);
-      localStorage.setItem('systemSettings', JSON.stringify(newSettings));
-      
-      // Trigger a custom event to notify other components about the update
-      window.dispatchEvent(new CustomEvent('barangaySettingsUpdated', { 
-        detail: newSettings 
-      }));
-      
-      return true;
-    } catch (error) {
-      console.error('Error updating settings:', error);
-      throw error;
-    }
+  const updateUser = (id: string, updates: Partial<User>) => {
+    setUsers(prev => prev.map(user => 
+      user.id === id ? { ...user, ...updates } : user
+    ));
   };
 
-  const verifyResident = async (id: string, status: 'semi-verified' | 'verified') => {
-    try {
-      await dataService.verifyResident(id, status);
-      refreshResidents();
-    } catch (error) {
-      console.error('Failed to verify resident:', error);
-      throw error;
-    }
+  const deleteUser = (id: string) => {
+    setUsers(prev => prev.filter(user => user.id !== id));
   };
 
-  const addUser = async (userData: Omit<User, 'id'>) => {
-    try {
-      console.log('DataContext - Adding user:', userData);
-      await dataService.createUser({
-        ...userData,
-        permissions: getDefaultPermissions(userData.role),
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString()
-      });
-      console.log('DataContext - User created, refreshing users...');
-      refreshUsers();
-      console.log('DataContext - Users refreshed');
-    } catch (error) {
-      console.error('Failed to add user:', error);
-      throw error;
-    }
+  // Document Management Functions
+  const addDocument = (documentData: Omit<Document, 'id' | 'createdAt' | 'updatedAt'>) => {
+    const newDocument = {
+      ...documentData,
+      id: Date.now().toString(),
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString()
+    };
+    setDocuments(prev => [newDocument, ...prev]);
   };
 
-  const updateUser = async (id: string, updates: Partial<User>) => {
-    try {
-      await dataService.updateUser(id, updates);
-      refreshUsers();
-    } catch (error) {
-      console.error('Failed to update user:', error);
-      throw error;
-    }
+  const updateDocument = (id: string, updates: Partial<Document>) => {
+    setDocuments(prev => prev.map(doc => 
+      doc.id === id ? { ...doc, ...updates, updatedAt: new Date().toISOString() } : doc
+    ));
   };
 
-  const deleteUser = async (id: string) => {
-    try {
-      await dataService.deleteUser(id);
-      refreshUsers();
-    } catch (error) {
-      console.error('Failed to delete user:', error);
-      throw error;
-    }
+  // Announcement Management Functions
+  const addAnnouncement = (announcementData: Omit<Announcement, 'id' | 'createdAt' | 'updatedAt'>) => {
+    const newAnnouncement = {
+      ...announcementData,
+      id: Date.now().toString(),
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString()
+    };
+    setAnnouncements(prev => [newAnnouncement, ...prev]);
   };
 
-  const addDocument = async (documentData: Omit<Document, 'id'>) => {
-    try {
-      await dataService.createDocument(documentData);
-      refreshDocuments();
-    } catch (error) {
-      console.error('Failed to add document:', error);
-      throw error;
-    }
+  const updateAnnouncement = (id: string, updates: Partial<Announcement>) => {
+    setAnnouncements(prev => prev.map(announcement => 
+      announcement.id === id ? { ...announcement, ...updates, updatedAt: new Date().toISOString() } : announcement
+    ));
   };
 
-  const updateDocument = async (id: string, updates: Partial<Document>) => {
-    try {
-      await dataService.updateDocument(id, updates);
-      refreshDocuments();
-    } catch (error) {
-      console.error('Failed to update document:', error);
-      throw error;
-    }
+  const deleteAnnouncement = (id: string) => {
+    setAnnouncements(prev => prev.filter(announcement => announcement.id !== id));
   };
 
-  const addAnnouncement = async (announcementData: Omit<Announcement, 'id'>) => {
-    try {
-      await dataService.createAnnouncement({
-        ...announcementData,
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString()
-      });
-      refreshAnnouncements();
-    } catch (error) {
-      console.error('Failed to add announcement:', error);
-      throw error;
-    }
+  // Transaction Management Functions
+  const addTransaction = (transactionData: Omit<Transaction, 'id' | 'createdAt' | 'updatedAt'>) => {
+    const newTransaction = {
+      ...transactionData,
+      id: Date.now().toString(),
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString()
+    };
+    setTransactions(prev => [newTransaction, ...prev]);
   };
 
-  const updateAnnouncement = async (id: string, updates: Partial<Announcement>) => {
-    try {
-      await dataService.updateAnnouncement(id, {
-        ...updates,
-        updated_at: new Date().toISOString()
-      });
-      refreshAnnouncements();
-    } catch (error) {
-      console.error('Failed to update announcement:', error);
-      throw error;
-    }
+  const updateTransaction = (id: string, updates: Partial<Transaction>) => {
+    setTransactions(prev => prev.map(transaction => 
+      transaction.id === id ? { ...transaction, ...updates, updatedAt: new Date().toISOString() } : transaction
+    ));
   };
 
-  const addTransaction = async (transactionData: Omit<Transaction, 'id'>) => {
-    try {
-      await dataService.createTransaction({
-        ...transactionData,
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString()
-      });
-      refreshTransactions();
-    } catch (error) {
-      console.error('Failed to add transaction:', error);
-      throw error;
-    }
-  };
-
-  const addComplaint = async (complaintData: Omit<Complaint, 'id'>) => {
-    try {
-      await dataService.createIncident({
-        reporter_name: complaintData.residentName,
-        reporter_email: complaintData.residentEmail,
-        incident_type: complaintData.type,
-        subject: complaintData.subject,
-        description: complaintData.description,
-        status: complaintData.status,
-        priority: complaintData.priority,
-        location: complaintData.location,
-        date_occurred: complaintData.dateOccurred,
-        time_occurred: complaintData.timeOccurred,
-        witness_name: complaintData.witnessName,
-        witness_contact: complaintData.witnessContact,
-        assigned_to: complaintData.assignedTo,
-        evidence_files: complaintData.evidenceFiles || [],
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString()
-      });
-      refreshIncidents();
-    } catch (error) {
-      console.error('Failed to add complaint:', error);
-      throw error;
-    }
-  };
-
-  const updateComplaint = async (id: string, updates: Partial<Complaint>) => {
-    try {
-      await dataService.updateIncident(id, {
-        status: updates.status,
-        assigned_to: updates.assignedTo,
-        resolution: updates.resolution,
-        evidence_files: updates.evidenceFiles,
-        updated_at: new Date().toISOString()
-      });
-      refreshIncidents();
-    } catch (error) {
-      console.error('Failed to update complaint:', error);
-      throw error;
-    }
-  };
-
-  // New module functions
-  const addAppointment = async (appointmentData: Omit<Appointment, 'id'>) => {
-    try {
-      await dataService.createAppointment({
-        resident_id: appointmentData.residentId,
-        resident_name: appointmentData.residentName,
-        resident_email: appointmentData.residentEmail,
-        resident_phone: appointmentData.residentPhone,
-        service: appointmentData.service,
-        service_type: appointmentData.serviceType,
-        appointment_date: appointmentData.appointmentDate,
-        appointment_time: appointmentData.appointmentTime,
-        status: appointmentData.status || 'scheduled',
-        notes: appointmentData.notes,
-        assigned_staff: appointmentData.assignedStaff
-      });
-      refreshAppointments();
-    } catch (error) {
-      console.error('Failed to add appointment:', error);
-      throw error;
-    }
-  };
-
-  const updateAppointment = async (id: string, updates: Partial<Appointment>) => {
-    try {
-      await dataService.updateAppointment(id, updates);
-      refreshAppointments();
-    } catch (error) {
-      console.error('Failed to update appointment:', error);
-      throw error;
-    }
-  };
-
-  const addPatient = async (patientData: Omit<Patient, 'id'>) => {
-    try {
-      await dataService.createPatient({
-        resident_id: patientData.residentId,
-        name: patientData.name,
-        age: patientData.age,
-        gender: patientData.gender,
-        contact_number: patientData.contactNumber,
-        address: patientData.address,
-        medical_history: patientData.medicalHistory,
-        allergies: patientData.allergies,
-        emergency_contact: patientData.emergencyContact,
-        blood_type: patientData.bloodType,
-        height_cm: patientData.heightCm,
-        weight_kg: patientData.weightKg
-      });
-      refreshPatients();
-    } catch (error) {
-      console.error('Failed to add patient:', error);
-      throw error;
-    }
-  };
-
-  const updatePatient = async (id: string, updates: Partial<Patient>) => {
-    try {
-      await dataService.updatePatient(id, updates);
-      refreshPatients();
-    } catch (error) {
-      console.error('Failed to update patient:', error);
-      throw error;
-    }
-  };
-
-  const addMedicalRecord = async (recordData: Omit<MedicalRecord, 'id'>) => {
-    try {
-      await dataService.createMedicalRecord({
-        patient_id: recordData.patientId,
-        visit_date: recordData.visitDate,
-        diagnosis: recordData.diagnosis,
-        treatment: recordData.treatment,
-        prescription: recordData.prescription,
-        doctor_notes: recordData.doctorNotes,
-        vital_signs: recordData.vitalSigns,
-        follow_up_date: recordData.followUpDate,
-        attending_physician: recordData.attendingPhysician
-      });
-      refreshMedicalRecords();
-    } catch (error) {
-      console.error('Failed to add medical record:', error);
-      throw error;
-    }
-  };
-
-  const addInventoryItem = async (itemData: Omit<InventoryItem, 'id'>) => {
-    try {
-      await dataService.createInventoryItem({
-        name: itemData.name,
-        category: itemData.category,
-        current_stock: itemData.currentStock,
-        minimum_stock: itemData.minimumStock,
-        unit: itemData.unit,
-        cost_per_unit: itemData.costPerUnit,
-        supplier: itemData.supplier,
-        expiry_date: itemData.expiryDate,
-        batch_number: itemData.batchNumber,
-        location: itemData.location
-      });
-      refreshInventoryItems();
-    } catch (error) {
-      console.error('Failed to add inventory item:', error);
-      throw error;
-    }
-  };
-
-  const updateInventoryItem = async (id: string, updates: Partial<InventoryItem>) => {
-    try {
-      await dataService.updateInventoryItem(id, updates);
-      refreshInventoryItems();
-    } catch (error) {
-      console.error('Failed to update inventory item:', error);
-      throw error;
-    }
-  };
-
-  const addProject = async (projectData: Omit<Project, 'id'>) => {
-    try {
-      await dataService.createProject({
-        title: projectData.title,
-        description: projectData.description,
-        category: projectData.category,
-        status: projectData.status || 'planning',
-        start_date: projectData.startDate,
-        end_date: projectData.endDate,
-        budget: projectData.budget,
-        location: projectData.location,
-        beneficiaries: projectData.beneficiaries,
-        image_url: projectData.imageUrl,
-        project_manager: projectData.projectManager,
-        completion_percentage: projectData.completionPercentage || 0
-      });
-      refreshProjects();
-    } catch (error) {
-      console.error('Failed to add project:', error);
-      throw error;
-    }
-  };
-
-  const updateProject = async (id: string, updates: Partial<Project>) => {
-    try {
-      await dataService.updateProject(id, updates);
-      refreshProjects();
-    } catch (error) {
-      console.error('Failed to update project:', error);
-      throw error;
-    }
-  };
-
-  const addBusinessPermit = async (permitData: Omit<BusinessPermit, 'id'>) => {
-    try {
-      await dataService.createBusinessPermit({
-        business_name: permitData.businessName,
-        owner_name: permitData.ownerName,
-        owner_email: permitData.ownerEmail,
-        business_type: permitData.businessType,
-        address: permitData.address,
-        contact_info: permitData.contactInfo || {},
-        permit_type: permitData.permitType || 'new',
-        application_status: permitData.applicationStatus || 'pending',
-        documents: permitData.documents || [],
-        fees: permitData.fees || {},
-        payment_status: permitData.paymentStatus || 'unpaid',
-        notes: permitData.notes
-      });
-      refreshBusinessPermits();
-    } catch (error) {
-      console.error('Failed to add business permit:', error);
-      throw error;
-    }
-  };
-
-  const updateBusinessPermit = async (id: string, updates: Partial<BusinessPermit>) => {
-    try {
-      await dataService.updateBusinessPermit(id, updates);
-      refreshBusinessPermits();
-    } catch (error) {
-      console.error('Failed to update business permit:', error);
-      throw error;
-    }
+  const deleteTransaction = (id: string) => {
+    setTransactions(prev => prev.filter(transaction => transaction.id !== id));
   };
   return (
     <DataContext.Provider value={{
@@ -837,13 +521,6 @@ export function DataProvider({ children }: { children: ReactNode }) {
       documents,
       announcements,
       transactions,
-      complaints: incidents, // Map incidents to complaints for backward compatibility
-      appointments,
-      patients,
-      medicalRecords,
-      inventoryItems,
-      projects,
-      businessPermits,
       updateResident,
       updateSystemSettings,
       verifyResident,
@@ -854,20 +531,10 @@ export function DataProvider({ children }: { children: ReactNode }) {
       updateDocument,
       addAnnouncement,
       updateAnnouncement,
+      deleteAnnouncement,
       addTransaction,
-      addComplaint,
-      updateComplaint,
-      addAppointment,
-      updateAppointment,
-      addPatient,
-      updatePatient,
-      addMedicalRecord,
-      addInventoryItem,
-      updateInventoryItem,
-      addProject,
-      updateProject,
-      addBusinessPermit,
-      updateBusinessPermit
+      updateTransaction,
+      deleteTransaction
     }}>
       {children}
     </DataContext.Provider>
@@ -880,21 +547,4 @@ export function useData() {
     throw new Error('useData must be used within a DataProvider');
   }
   return context;
-}
-
-function getDefaultPermissions(role: string): string[] {
-  switch (role) {
-    case 'super-admin':
-      return ['all'];
-    case 'barangay-official':
-      return ['residents', 'documents', 'reports', 'announcements'];
-    case 'medical-portal':
-      return ['health', 'medical-records', 'appointments'];
-    case 'accounting-portal':
-      return ['accounting', 'financial-reports', 'payments'];
-    case 'disaster-portal':
-      return ['disaster-management', 'emergency-alerts', 'evacuation'];
-    default:
-      return ['basic'];
-  }
 }
