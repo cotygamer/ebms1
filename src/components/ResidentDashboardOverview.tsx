@@ -24,10 +24,19 @@ import {
   ArrowRight,
   User,
   QrCode,
-  Building2
+  Building2,
+  Heart,
+  Wrench,
+  MessageSquare,
+  Info,
+  PhoneCall
 } from 'lucide-react';
 
-export default function ResidentDashboardOverview() {
+interface ResidentDashboardOverviewProps {
+  setActiveTab?: (tab: string) => void;
+}
+
+export default function ResidentDashboardOverview({ setActiveTab }: ResidentDashboardOverviewProps) {
   const { user } = useAuth();
   const { documents, complaints, residents } = useData();
 
