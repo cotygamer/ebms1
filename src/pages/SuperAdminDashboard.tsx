@@ -5,7 +5,6 @@ import { useData } from '../contexts/DataContext';
 import { useOfflineSync } from '../hooks/useOfflineSync';
 import OfflineIndicator from '../components/OfflineIndicator';
 import OfflineSyncStatus from '../components/OfflineSyncStatus';
-import Sidebar from '../components/Sidebar';
 import UserManagement from '../components/UserManagement';
 import ResidentManagement from '../components/ResidentManagement';
 import ModuleControl from '../components/ModuleControl';
@@ -29,11 +28,46 @@ import {
   AlertTriangle,
   CheckCircle,
   X,
-  UserCheck
+  UserCheck,
+  Menu,
+  Bell,
+  Search,
+  Home,
+  FileText,
+  Heart,
+  Calculator,
+  Building2,
+  TestTube,
+  Wrench,
+  Globe,
+  Lock,
+  Palette,
+  Monitor,
+  Smartphone,
+  Wifi,
+  HardDrive,
+  Zap,
+  TrendingUp,
+  Clock,
+  Eye,
+  Download,
+  Upload,
+  RefreshCw,
+  Star,
+  Award,
+  Target,
+  Layers,
+  Code,
+  Server,
+  Cloud,
+  Key,
+  Mail,
+  Phone
 } from 'lucide-react';
 
 export default function SuperAdminDashboard() {
-  const [activeTab, setActiveTab] = useState('overview');
+  const [activeTab, setActiveTab] = useState('dashboard');
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const { user, logout } = useAuth();
   const { status: offlineStatus } = useOfflineSync();
   const navigate = useNavigate();
@@ -44,171 +78,499 @@ export default function SuperAdminDashboard() {
   };
 
   const menuItems = [
-    { id: 'overview', label: 'Overview', icon: Activity },
-    { id: 'offline-sync', label: 'Offline Sync', icon: Database },
-    { id: 'users', label: 'User Management', icon: Users },
-    { id: 'sync-tests', label: 'Sync Tests', icon: Settings },
-    { id: 'residents', label: 'Resident Management', icon: Users },
-    { id: 'kyc-verification', label: 'KYC Verification Center', icon: UserCheck },
-    { id: 'modules', label: 'Module Control', icon: Database },
-    { id: 'projects', label: 'Projects & Gallery', icon: Camera },
-    { id: 'analytics', label: 'Analytics', icon: BarChart3 },
-    { id: 'integrations', label: 'Integrations', icon: CreditCard },
-    { id: 'settings', label: 'System Settings', icon: Settings },
+    // Main Section
+    { id: 'dashboard', label: 'Dashboard', icon: Home, description: 'System overview and analytics', section: 'Main' },
+    { id: 'analytics', label: 'Analytics', icon: BarChart3, description: 'Data insights and reports', section: 'Main' },
+    { id: 'offline-sync', label: 'Data Sync', icon: Database, description: 'Monitor data synchronization', section: 'Main' },
+    
+    // User Management Section
+    { id: 'users', label: 'User Management', icon: Users, description: 'Manage system users and roles', section: 'User Management' },
+    { id: 'residents', label: 'Resident Management', icon: Users, description: 'Manage resident profiles', section: 'User Management' },
+    { id: 'kyc-verification', label: 'KYC Verification', icon: UserCheck, description: 'Verify resident identities', section: 'User Management' },
+    
+    // System Section
+    { id: 'modules', label: 'Module Control', icon: Layers, description: 'Enable/disable system modules', section: 'System' },
+    { id: 'settings', label: 'System Settings', icon: Settings, description: 'Configure system preferences', section: 'System' },
+    { id: 'integrations', label: 'Integrations', icon: Globe, description: 'Third-party integrations', section: 'System' },
+    { id: 'security', label: 'Security', icon: Lock, description: 'Security settings and logs', section: 'System' },
+    
+    // Content Section
+    { id: 'projects', label: 'Projects Gallery', icon: Camera, description: 'Manage project showcase', section: 'Content' },
+    { id: 'announcements', label: 'Announcements', icon: Bell, description: 'Manage community announcements', section: 'Content' },
+    
+    // Testing Section
+    { id: 'sync-tests', label: 'Sync Tests', icon: TestTube, description: 'Test data synchronization', section: 'Testing' },
+    { id: 'system-health', label: 'System Health', icon: Activity, description: 'Monitor system performance', section: 'Testing' }
   ];
+
+  const getActiveMenuItem = () => {
+    return menuItems.find(item => item.id === activeTab) || menuItems[0];
+  };
 
   const renderContent = () => {
     switch (activeTab) {
-      case 'overview':
+      case 'dashboard':
         return <SuperAdminOverview />;
+      case 'analytics':
+        return <Analytics />;
       case 'offline-sync':
         return <OfflineSyncStatus />;
       case 'users':
         return <UserManagement />;
-      case 'sync-tests':
-        return <SyncTestPanel />;
       case 'residents':
         return <ResidentManagement />;
       case 'kyc-verification':
         return <KYCVerificationCenter />;
       case 'modules':
         return <ModuleControl />;
-      case 'projects':
-        return <ProjectGallery />;
-      case 'analytics':
-        return <Analytics />;
-      case 'integrations':
-        return <IntegrationsManagement />;
       case 'settings':
         return <SystemSettings />;
+      case 'integrations':
+        return <IntegrationsManagement />;
+      case 'security':
+        return <SecurityManagement />;
+      case 'projects':
+        return <ProjectGallery />;
+      case 'announcements':
+        return <AnnouncementsManagement />;
+      case 'sync-tests':
+        return <SyncTestPanel />;
+      case 'system-health':
+        return <SystemHealthMonitor />;
       default:
         return <SuperAdminOverview />;
     }
   };
 
+  const groupedMenuItems = menuItems.reduce((acc, item) => {
+    if (!acc[item.section]) {
+      acc[item.section] = [];
+    }
+    acc[item.section].push(item);
+    return acc;
+  }, {} as Record<string, typeof menuItems>);
+
   return (
-    <div className="flex h-screen bg-gray-100">
+    <div className="min-h-screen bg-gray-50">
       <OfflineIndicator />
       
-      <Sidebar
-        menuItems={menuItems}
-        activeTab={activeTab}
-        setActiveTab={setActiveTab}
-        userRole="super-admin"
-      />
-      
-      <div className="flex-1 flex flex-col overflow-hidden">
-        <header className="bg-white shadow-sm border-b border-gray-200 px-4 sm:px-6 py-4">
-          <div className="flex items-center justify-between">
-            <h1 className="text-xl sm:text-2xl font-semibold text-gray-900">
-              Super Admin Dashboard
-            </h1>
-            <div className="flex items-center space-x-2 sm:space-x-4">
-              <span className="hidden sm:block text-gray-600">Welcome, {user?.name}</span>
-              <div className="w-8 h-8 bg-red-600 rounded-full flex items-center justify-center text-white font-semibold">
-                {user?.name?.charAt(0)}
+      <div className="flex h-screen">
+        {/* Sidebar */}
+        <div className={`${sidebarCollapsed ? 'w-20' : 'w-80'} bg-gray-900 text-white shadow-xl transition-all duration-300 ease-in-out flex flex-col`}>
+          {/* Sidebar Header */}
+          <div className="flex items-center justify-between p-6 border-b border-gray-700">
+            {!sidebarCollapsed && (
+              <div className="flex items-center space-x-3">
+                <div className="w-10 h-10 bg-red-600 rounded-xl flex items-center justify-center">
+                  <Shield className="h-6 w-6 text-white" />
+                </div>
+                <div>
+                  <h1 className="text-lg font-bold text-white">Bucana Portal</h1>
+                  <p className="text-sm text-gray-300">Super Admin</p>
+                </div>
               </div>
+            )}
+            <button
+              onClick={() => setSidebarCollapsed(!sidebarCollapsed)}
+              className="p-2 rounded-lg text-gray-400 hover:bg-gray-800 hover:text-white transition-colors"
+            >
+              <Menu className="h-5 w-5" />
+            </button>
+          </div>
+
+          {/* Navigation Menu */}
+          <nav className="flex-1 p-4 space-y-6 overflow-y-auto">
+            {Object.entries(groupedMenuItems).map(([section, items]) => (
+              <div key={section}>
+                {!sidebarCollapsed && (
+                  <h3 className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3">
+                    {section}
+                  </h3>
+                )}
+                <div className="space-y-1">
+                  {items.map((item) => (
+                    <button
+                      key={item.id}
+                      onClick={() => setActiveTab(item.id)}
+                      className={`w-full flex items-center px-3 py-3 rounded-lg text-left transition-all duration-200 group ${
+                        activeTab === item.id
+                          ? 'bg-red-600 text-white shadow-lg'
+                          : 'text-gray-300 hover:bg-gray-800 hover:text-white'
+                      }`}
+                      title={sidebarCollapsed ? item.label : ''}
+                    >
+                      <item.icon className={`h-5 w-5 ${sidebarCollapsed ? 'mx-auto' : 'mr-3'} ${
+                        activeTab === item.id ? 'text-white' : 'text-gray-400 group-hover:text-white'
+                      }`} />
+                      {!sidebarCollapsed && (
+                        <div className="flex-1">
+                          <div className="font-medium">{item.label}</div>
+                          <div className="text-xs text-gray-400 group-hover:text-gray-300">
+                            {item.description}
+                          </div>
+                        </div>
+                      )}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            ))}
+          </nav>
+
+          {/* Sidebar Footer */}
+          <div className="p-4 border-t border-gray-700">
+            {!sidebarCollapsed && (
+              <div className="flex items-center space-x-3 mb-4">
+                <div className="w-10 h-10 bg-gradient-to-br from-red-600 to-red-700 rounded-full flex items-center justify-center">
+                  <span className="text-white font-semibold text-sm">
+                    {user?.name?.charAt(0)}
+                  </span>
+                </div>
+                <div className="flex-1">
+                  <p className="font-medium text-white text-sm">{user?.name}</p>
+                  <p className="text-xs text-gray-400">{user?.email}</p>
+                </div>
+              </div>
+            )}
+            
+            <div className="flex space-x-2">
+              <button 
+                className={`${sidebarCollapsed ? 'w-full' : 'flex-1'} p-2 bg-gray-800 rounded-lg hover:bg-gray-700 transition-colors`}
+                title="Settings"
+              >
+                <Settings className="h-4 w-4 mx-auto text-gray-300" />
+              </button>
+              <button 
+                className={`${sidebarCollapsed ? 'w-full' : 'flex-1'} p-2 bg-gray-800 rounded-lg hover:bg-gray-700 transition-colors`}
+                title="Notifications"
+              >
+                <Bell className="h-4 w-4 mx-auto text-gray-300" />
+              </button>
               <button
                 onClick={handleLogout}
-                className="flex items-center px-3 py-2 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-colors"
+                className={`${sidebarCollapsed ? 'w-full' : 'flex-1'} p-2 bg-red-600 rounded-lg hover:bg-red-700 transition-colors`}
                 title="Logout"
               >
-                <LogOut className="h-5 w-5" />
+                <LogOut className="h-4 w-4 mx-auto text-white" />
               </button>
             </div>
           </div>
-        </header>
-        
-        <main className="flex-1 overflow-x-hidden overflow-y-auto bg-gray-100 p-4 sm:p-6">
-          {renderContent()}
-        </main>
+        </div>
+
+        {/* Main Content */}
+        <div className="flex-1 flex flex-col overflow-hidden">
+          {/* Header */}
+          <header className="bg-white shadow-sm border-b border-gray-200">
+            <div className="px-8 py-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h1 className="text-2xl font-bold text-gray-900">
+                    {getActiveMenuItem().label}
+                  </h1>
+                  <p className="text-gray-600 mt-1">
+                    {getActiveMenuItem().description}
+                  </p>
+                </div>
+                <div className="flex items-center space-x-4">
+                  <div className="relative">
+                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
+                    <input
+                      type="text"
+                      placeholder="Search..."
+                      className="pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500 w-64"
+                    />
+                  </div>
+                  <button className="p-2 text-gray-400 hover:text-gray-600 rounded-lg hover:bg-gray-100">
+                    <Bell className="h-5 w-5" />
+                  </button>
+                  <div className="flex items-center space-x-3">
+                    <div className="text-right">
+                      <p className="text-sm font-medium text-gray-900">{user?.name}</p>
+                      <p className="text-xs text-gray-600">Super Administrator</p>
+                    </div>
+                    <div className="w-10 h-10 bg-gradient-to-br from-red-600 to-red-700 rounded-full flex items-center justify-center">
+                      <span className="text-white font-semibold">
+                        {user?.name?.charAt(0)}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </header>
+
+          {/* Content Area */}
+          <main className="flex-1 overflow-x-hidden overflow-y-auto bg-gray-50 p-8">
+            <div className="max-w-7xl mx-auto">
+              {renderContent()}
+            </div>
+          </main>
+        </div>
       </div>
     </div>
   );
 }
 
 function SuperAdminOverview() {
-  const { users, residents } = useData();
+  const { users, residents, documents, announcements, transactions } = useData();
   
   const stats = [
-    { label: 'Total Users', value: users.length, icon: Users, color: 'text-blue-600' },
-    { label: 'Total Residents', value: residents.length, icon: Users, color: 'text-green-600' },
-    { label: 'Verified Residents', value: residents.filter(r => r.verificationStatus === 'verified').length, icon: Shield, color: 'text-purple-600' },
-    { label: 'Active Modules', value: 12, icon: Database, color: 'text-orange-600' }
+    { 
+      label: 'Total Users', 
+      value: users.length, 
+      icon: Users, 
+      color: 'text-blue-600',
+      bgColor: 'bg-blue-50',
+      change: '+12%',
+      changeColor: 'text-green-600'
+    },
+    { 
+      label: 'Total Residents', 
+      value: residents.length, 
+      icon: Users, 
+      color: 'text-green-600',
+      bgColor: 'bg-green-50',
+      change: '+8%',
+      changeColor: 'text-green-600'
+    },
+    { 
+      label: 'Verified Residents', 
+      value: residents.filter(r => r.verificationStatus === 'verified').length, 
+      icon: Shield, 
+      color: 'text-purple-600',
+      bgColor: 'bg-purple-50',
+      change: '+15%',
+      changeColor: 'text-green-600'
+    },
+    { 
+      label: 'Documents Processed', 
+      value: documents.length, 
+      icon: FileText, 
+      color: 'text-orange-600',
+      bgColor: 'bg-orange-50',
+      change: '+23%',
+      changeColor: 'text-green-600'
+    },
+    { 
+      label: 'Active Modules', 
+      value: 12, 
+      icon: Database, 
+      color: 'text-indigo-600',
+      bgColor: 'bg-indigo-50',
+      change: '100%',
+      changeColor: 'text-green-600'
+    },
+    { 
+      label: 'System Uptime', 
+      value: '99.9%', 
+      icon: Activity, 
+      color: 'text-emerald-600',
+      bgColor: 'bg-emerald-50',
+      change: 'Excellent',
+      changeColor: 'text-green-600'
+    }
+  ];
+
+  const recentActivities = [
+    {
+      type: 'user',
+      title: 'New user registered',
+      description: 'Juan Dela Cruz joined as resident',
+      time: '2 minutes ago',
+      icon: Users,
+      iconColor: 'text-blue-500',
+      bgColor: 'bg-blue-50'
+    },
+    {
+      type: 'verification',
+      title: 'Resident verified',
+      description: 'Maria Santos completed KYC verification',
+      time: '15 minutes ago',
+      icon: Shield,
+      iconColor: 'text-green-500',
+      bgColor: 'bg-green-50'
+    },
+    {
+      type: 'document',
+      title: 'Document processed',
+      description: 'Barangay clearance approved for Ana Garcia',
+      time: '1 hour ago',
+      icon: FileText,
+      iconColor: 'text-purple-500',
+      bgColor: 'bg-purple-50'
+    },
+    {
+      type: 'system',
+      title: 'System backup completed',
+      description: 'Daily backup completed successfully',
+      time: '2 hours ago',
+      icon: Database,
+      iconColor: 'text-indigo-500',
+      bgColor: 'bg-indigo-50'
+    }
+  ];
+
+  const systemHealth = [
+    { name: 'Database', status: 'healthy', uptime: '99.9%', color: 'text-green-500' },
+    { name: 'Authentication', status: 'healthy', uptime: '100%', color: 'text-green-500' },
+    { name: 'File Storage', status: 'healthy', uptime: '99.8%', color: 'text-green-500' },
+    { name: 'Email Service', status: 'warning', uptime: '98.5%', color: 'text-yellow-500' }
   ];
 
   return (
-    <div className="space-y-6">
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
-        {stats.map((stat, index) => (
-          <div key={index} className="bg-white rounded-lg shadow-sm p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-gray-600">{stat.label}</p>
-                <p className={`text-3xl font-bold ${stat.color}`}>{stat.value}</p>
+    <div className="space-y-8">
+      {/* Welcome Section */}
+      <div className="bg-gradient-to-r from-red-600 to-red-700 rounded-2xl p-8 text-white">
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-3xl font-bold mb-2">
+              Welcome back, {user?.name?.split(' ')[0]}!
+            </h1>
+            <p className="text-red-100 text-lg">
+              Monitor and manage the entire barangay management system
+            </p>
+            <div className="flex items-center mt-4 space-x-6">
+              <div className="flex items-center text-red-100">
+                <Shield className="h-4 w-4 mr-2" />
+                <span className="text-sm">Super Administrator</span>
               </div>
-              <stat.icon className={`h-12 w-12 ${stat.color}`} />
+              <div className="flex items-center text-red-100">
+                <Activity className="h-4 w-4 mr-2" />
+                <span className="text-sm">All Systems Operational</span>
+              </div>
+            </div>
+          </div>
+          <div className="hidden md:block">
+            <div className="w-32 h-32 bg-white bg-opacity-20 rounded-2xl flex items-center justify-center">
+              <Shield className="h-16 w-16 text-white opacity-80" />
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Statistics Grid */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        {stats.map((stat, index) => (
+          <div key={index} className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 hover:shadow-md transition-shadow">
+            <div className="flex items-center justify-between mb-4">
+              <div className={`p-3 rounded-xl ${stat.bgColor}`}>
+                <stat.icon className={`h-6 w-6 ${stat.color}`} />
+              </div>
+              <TrendingUp className="h-4 w-4 text-gray-400" />
+            </div>
+            <div>
+              <h3 className="text-2xl font-bold text-gray-900 mb-1">{stat.value}</h3>
+              <p className="text-gray-600 text-sm mb-2">{stat.label}</p>
+              <p className={`text-xs font-medium ${stat.changeColor}`}>
+                {stat.change}
+              </p>
             </div>
           </div>
         ))}
       </div>
 
-      <div className="bg-white rounded-lg shadow-sm p-6">
-        <h2 className="text-xl font-semibold text-gray-900 mb-4">System Status</h2>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          <div className="text-center p-4 bg-green-50 rounded-lg">
-            <CheckCircle className="h-12 w-12 text-green-600 mx-auto mb-2" />
-            <div className="text-2xl font-bold text-green-600 mb-2">Operational</div>
-            <div className="text-sm text-green-800">All systems running</div>
+      {/* Main Content Grid */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+        {/* Recent Activity */}
+        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+          <div className="flex items-center justify-between mb-6">
+            <h2 className="text-xl font-bold text-gray-900">Recent Activity</h2>
+            <button className="text-red-600 hover:text-red-700 text-sm font-medium">
+              View All
+            </button>
           </div>
-          
-          <div className="text-center p-4 bg-blue-50 rounded-lg">
-            <Activity className="h-12 w-12 text-blue-600 mx-auto mb-2" />
-            <div className="text-2xl font-bold text-blue-600 mb-2">99.9%</div>
-            <div className="text-sm text-blue-800">System uptime</div>
+          <div className="space-y-4">
+            {recentActivities.map((activity, index) => (
+              <div key={index} className="flex items-start space-x-4 p-4 rounded-lg hover:bg-gray-50 transition-colors">
+                <div className={`p-2 rounded-lg ${activity.bgColor}`}>
+                  <activity.icon className={`h-5 w-5 ${activity.iconColor}`} />
+                </div>
+                <div className="flex-1">
+                  <h4 className="font-medium text-gray-900 mb-1">{activity.title}</h4>
+                  <p className="text-sm text-gray-600 mb-2">{activity.description}</p>
+                  <span className="text-xs text-gray-500">{activity.time}</span>
+                </div>
+              </div>
+            ))}
           </div>
-          
-          <div className="text-center p-4 bg-purple-50 rounded-lg">
-            <Database className="h-12 w-12 text-purple-600 mx-auto mb-2" />
-            <div className="text-2xl font-bold text-purple-600 mb-2">Latest</div>
-            <div className="text-sm text-purple-800">System version 2.1.0</div>
+        </div>
+
+        {/* System Health */}
+        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+          <div className="flex items-center justify-between mb-6">
+            <h2 className="text-xl font-bold text-gray-900">System Health</h2>
+            <div className="flex items-center text-green-600">
+              <CheckCircle className="h-4 w-4 mr-1" />
+              <span className="text-sm font-medium">All Systems Operational</span>
+            </div>
+          </div>
+          <div className="space-y-4">
+            {systemHealth.map((service, index) => (
+              <div key={index} className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
+                <div className="flex items-center space-x-3">
+                  <div className={`w-3 h-3 rounded-full ${
+                    service.status === 'healthy' ? 'bg-green-500' :
+                    service.status === 'warning' ? 'bg-yellow-500' : 'bg-red-500'
+                  }`}></div>
+                  <span className="font-medium text-gray-900">{service.name}</span>
+                </div>
+                <div className="text-right">
+                  <p className={`text-sm font-medium ${service.color}`}>
+                    {service.status.charAt(0).toUpperCase() + service.status.slice(1)}
+                  </p>
+                  <p className="text-xs text-gray-500">{service.uptime} uptime</p>
+                </div>
+              </div>
+            ))}
           </div>
         </div>
       </div>
 
-      <div className="bg-white rounded-lg shadow-sm p-6">
-        <h2 className="text-xl font-semibold text-gray-900 mb-4">Quick Actions</h2>
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+      {/* Quick Actions */}
+      <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-8">
+        <h2 className="text-xl font-bold text-gray-900 mb-6">Quick Actions</h2>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
           <button
-            onClick={() => window.location.href = '#users'}
-            className="flex items-center p-4 bg-blue-50 rounded-lg hover:bg-blue-100 transition-colors text-left"
+            onClick={() => setActiveTab('users')}
+            className="flex items-center p-6 bg-blue-50 rounded-xl hover:bg-blue-100 transition-colors text-left group"
           >
-            <Users className="h-8 w-8 text-blue-600 mr-3" />
+            <Users className="h-8 w-8 text-blue-600 mr-4 group-hover:scale-110 transition-transform" />
             <div>
               <h3 className="font-semibold text-gray-900">Manage Users</h3>
-              <p className="text-sm text-gray-600">Add, edit, or remove system users</p>
+              <p className="text-sm text-gray-600">Add, edit, or remove users</p>
             </div>
           </button>
           
           <button
-            onClick={() => window.location.href = '#modules'}
-            className="flex items-center p-4 bg-green-50 rounded-lg hover:bg-green-100 transition-colors text-left"
+            onClick={() => setActiveTab('kyc-verification')}
+            className="flex items-center p-6 bg-green-50 rounded-xl hover:bg-green-100 transition-colors text-left group"
           >
-            <Database className="h-8 w-8 text-green-600 mr-3" />
+            <UserCheck className="h-8 w-8 text-green-600 mr-4 group-hover:scale-110 transition-transform" />
+            <div>
+              <h3 className="font-semibold text-gray-900">KYC Verification</h3>
+              <p className="text-sm text-gray-600">Verify resident identities</p>
+            </div>
+          </button>
+          
+          <button
+            onClick={() => setActiveTab('modules')}
+            className="flex items-center p-6 bg-purple-50 rounded-xl hover:bg-purple-100 transition-colors text-left group"
+          >
+            <Layers className="h-8 w-8 text-purple-600 mr-4 group-hover:scale-110 transition-transform" />
             <div>
               <h3 className="font-semibold text-gray-900">Module Control</h3>
-              <p className="text-sm text-gray-600">Enable/disable system modules</p>
+              <p className="text-sm text-gray-600">Enable/disable modules</p>
             </div>
           </button>
           
           <button
-            onClick={() => window.location.href = '#settings'}
-            className="flex items-center p-4 bg-purple-50 rounded-lg hover:bg-purple-100 transition-colors text-left"
+            onClick={() => setActiveTab('settings')}
+            className="flex items-center p-6 bg-orange-50 rounded-xl hover:bg-orange-100 transition-colors text-left group"
           >
-            <Settings className="h-8 w-8 text-purple-600 mr-3" />
+            <Settings className="h-8 w-8 text-orange-600 mr-4 group-hover:scale-110 transition-transform" />
             <div>
               <h3 className="font-semibold text-gray-900">System Settings</h3>
-              <p className="text-sm text-gray-600">Configure system preferences</p>
+              <p className="text-sm text-gray-600">Configure preferences</p>
             </div>
           </button>
         </div>
@@ -220,7 +582,6 @@ function SuperAdminOverview() {
 function IntegrationsManagement() {
   const { systemSettings, updateSystemSettings } = useData();
   
-  // Initialize settings from systemSettings
   const [settings, setSettings] = useState(() => ({
     googleMapsApiKey: systemSettings.googleMapsApiKey || '',
     paymentGateway: systemSettings.paymentGateway || {
@@ -236,23 +597,6 @@ function IntegrationsManagement() {
   
   const [isLoading, setIsLoading] = useState(false);
   const [message, setMessage] = useState('');
-  const [activeIntegration, setActiveIntegration] = useState('maps');
-
-  // Update local settings when systemSettings changes
-  React.useEffect(() => {
-    setSettings({
-      googleMapsApiKey: systemSettings.googleMapsApiKey || '',
-      paymentGateway: systemSettings.paymentGateway || {
-        provider: 'PayPal',
-        apiKey: '',
-        secretKey: '',
-        gcash: { enabled: false, merchantId: '', apiKey: '' },
-        maya: { enabled: false, publicKey: '', secretKey: '' },
-        dragonpay: { enabled: false, merchantId: '', password: '' },
-        cashOnPickup: { enabled: true }
-      }
-    });
-  }, [systemSettings]);
 
   const handleSave = async () => {
     setIsLoading(true);
@@ -261,32 +605,14 @@ function IntegrationsManagement() {
     try {
       await updateSystemSettings(settings);
       setMessage('Integration settings updated successfully!');
-      setTimeout(() => setMessage(''), 3000); // Clear message after 3 seconds
+      setTimeout(() => setMessage(''), 3000);
     } catch (error) {
       setMessage('Failed to update settings. Please try again.');
-      setTimeout(() => setMessage(''), 3000); // Clear message after 3 seconds
+      setTimeout(() => setMessage(''), 3000);
     } finally {
       setIsLoading(false);
     }
   };
-
-  const togglePaymentMethod = (method: string, enabled: boolean) => {
-    setSettings(prev => ({
-      ...prev,
-      paymentGateway: {
-        ...prev.paymentGateway,
-        [method]: {
-          ...prev.paymentGateway[method as keyof typeof prev.paymentGateway],
-          enabled
-        }
-      }
-    }));
-  };
-
-  const integrationTabs = [
-    { id: 'maps', label: 'Google Maps', icon: MapPin },
-    { id: 'payments', label: 'Payment Gateway', icon: CreditCard }
-  ];
 
   return (
     <div className="space-y-6">
@@ -295,7 +621,7 @@ function IntegrationsManagement() {
         <button
           onClick={handleSave}
           disabled={isLoading}
-          className="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center"
+          className="bg-red-600 text-white px-6 py-2 rounded-lg hover:bg-red-700 disabled:opacity-50 flex items-center"
         >
           <Save className="h-4 w-4 mr-2" />
           {isLoading ? 'Saving...' : 'Save Changes'}
@@ -311,408 +637,416 @@ function IntegrationsManagement() {
         </div>
       )}
 
-      <div className="bg-white rounded-lg shadow-sm overflow-hidden">
-        <div className="border-b border-gray-200">
-          <nav className="flex space-x-8 px-6">
-            {integrationTabs.map((tab) => (
-              <button
-                key={tab.id}
-                onClick={() => setActiveIntegration(tab.id)}
-                className={`flex items-center px-3 py-4 text-sm font-medium border-b-2 ${
-                  activeIntegration === tab.id
-                    ? 'border-blue-500 text-blue-600'
-                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-                }`}
-              >
-                <tab.icon className="h-4 w-4 mr-2" />
-                {tab.label}
-              </button>
-            ))}
-          </nav>
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        {/* Google Maps Integration */}
+        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+          <div className="flex items-center mb-4">
+            <MapPin className="h-6 w-6 text-blue-600 mr-3" />
+            <h3 className="text-lg font-semibold text-gray-900">Google Maps</h3>
+          </div>
+          <div className="space-y-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">API Key</label>
+              <input
+                type="password"
+                value={settings.googleMapsApiKey}
+                onChange={(e) => setSettings({ ...settings, googleMapsApiKey: e.target.value })}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                placeholder="Enter Google Maps API key"
+              />
+            </div>
+            <div className="bg-blue-50 p-3 rounded-lg">
+              <p className="text-sm text-blue-700">
+                Required for location services and mapping features
+              </p>
+            </div>
+          </div>
         </div>
-        
-        <div className="p-6">
-          {activeIntegration === 'maps' && (
-            <div className="space-y-6">
-              <div>
-                <h3 className="text-lg font-semibold text-gray-900 mb-4">Google Maps Integration</h3>
-                <p className="text-gray-600 mb-4">
-                  Configure Google Maps API for location services and mapping features.
-                </p>
-              </div>
-              
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Google Maps API Key
-                </label>
-                <input
-                  type="text"
-                  value={settings.googleMapsApiKey}
-                  onChange={(e) => setSettings({ ...settings, googleMapsApiKey: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  placeholder="Enter your Google Maps API key"
-                />
-                <p className="text-sm text-gray-500 mt-2">
-                  Get your API key from the <a href="https://console.cloud.google.com/" target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">Google Cloud Console</a>
-                </p>
-              </div>
-              
-              {/* Google Maps Preview */}
-              <div className="bg-gray-50 border border-gray-200 rounded-lg p-6">
-                <h4 className="font-semibold text-gray-900 mb-4">Map Preview</h4>
-                {settings.googleMapsApiKey ? (
-                  <div className="space-y-4">
-                    <div className="bg-white border border-gray-300 rounded-lg overflow-hidden">
-                      <GoogleMapPreview 
-                        apiKey={settings.googleMapsApiKey}
-                        barangayName={systemSettings.barangayName}
-                        barangayAddress={systemSettings.barangayAddress}
-                      />
-                    </div>
-                  </div>
-                ) : (
-                  <div className="text-center py-12">
-                    <MapPin className="h-16 w-16 text-gray-300 mx-auto mb-4" />
-                    <p className="text-gray-500 mb-2">No API key configured</p>
-                    <p className="text-sm text-gray-400">Enter your Google Maps API key above to see the map preview</p>
-                  </div>
-                )}
-              </div>
-              
-              <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-                <h4 className="font-semibold text-blue-800 mb-2">Required APIs</h4>
-                <ul className="text-sm text-blue-700 space-y-1">
-                  <li>• Maps JavaScript API</li>
-                  <li>• Geocoding API</li>
-                  <li>• Places API</li>
-                </ul>
-              </div>
+
+        {/* Payment Gateway */}
+        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+          <div className="flex items-center mb-4">
+            <CreditCard className="h-6 w-6 text-green-600 mr-3" />
+            <h3 className="text-lg font-semibold text-gray-900">Payment Gateway</h3>
+          </div>
+          <div className="space-y-4">
+            <div className="flex items-center justify-between p-3 border border-gray-200 rounded-lg">
+              <span className="font-medium">GCash</span>
+              <button className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
+                settings.paymentGateway.gcash?.enabled ? 'bg-green-600' : 'bg-gray-300'
+              }`}>
+                <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+                  settings.paymentGateway.gcash?.enabled ? 'translate-x-6' : 'translate-x-1'
+                }`} />
+              </button>
             </div>
-          )}
-
-          {activeIntegration === 'payments' && (
-            <div className="space-y-6">
-              <div>
-                <h3 className="text-lg font-semibold text-gray-900 mb-4">Payment Gateway Configuration</h3>
-                <p className="text-gray-600 mb-6">
-                  Configure payment methods available for residents to pay barangay fees and services.
-                </p>
-              </div>
-
-              {/* GCash */}
-              <div className={`p-4 border rounded-lg ${settings.paymentGateway.gcash?.enabled ? 'border-green-200 bg-green-50' : 'border-gray-200 bg-gray-50'}`}>
-                <div className="flex items-center justify-between mb-2">
-                  <h4 className="font-medium text-gray-900">GCash</h4>
-                  <button
-                    onClick={() => togglePaymentMethod('gcash', !settings.paymentGateway.gcash?.enabled)}
-                    className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
-                      settings.paymentGateway.gcash?.enabled ? 'bg-green-600' : 'bg-gray-300'
-                    }`}
-                  >
-                    <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
-                      settings.paymentGateway.gcash?.enabled ? 'translate-x-6' : 'translate-x-1'
-                    }`} />
-                  </button>
-                </div>
-                {settings.paymentGateway.gcash?.enabled && (
-                  <div className="space-y-3 mt-4">
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">Merchant ID</label>
-                      <input
-                        type="text"
-                        value={settings.paymentGateway.gcash?.merchantId || ''}
-                        onChange={(e) => setSettings(prev => ({
-                          ...prev,
-                          paymentGateway: {
-                            ...prev.paymentGateway,
-                            gcash: { ...prev.paymentGateway.gcash, merchantId: e.target.value }
-                          }
-                        }))}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
-                        placeholder="Enter GCash Merchant ID"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">API Key</label>
-                      <input
-                        type="password"
-                        value={settings.paymentGateway.gcash?.apiKey || ''}
-                        onChange={(e) => setSettings(prev => ({
-                          ...prev,
-                          paymentGateway: {
-                            ...prev.paymentGateway,
-                            gcash: { ...prev.paymentGateway.gcash, apiKey: e.target.value }
-                          }
-                        }))}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
-                        placeholder="Enter GCash API Key"
-                      />
-                    </div>
-                  </div>
-                )}
-              </div>
-
-              {/* Maya */}
-              <div className={`p-4 border rounded-lg ${settings.paymentGateway.maya?.enabled ? 'border-green-200 bg-green-50' : 'border-gray-200 bg-gray-50'}`}>
-                <div className="flex items-center justify-between mb-2">
-                  <h4 className="font-medium text-gray-900">Maya (PayMaya)</h4>
-                  <button
-                    onClick={() => togglePaymentMethod('maya', !settings.paymentGateway.maya?.enabled)}
-                    className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
-                      settings.paymentGateway.maya?.enabled ? 'bg-green-600' : 'bg-gray-300'
-                    }`}
-                  >
-                    <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
-                      settings.paymentGateway.maya?.enabled ? 'translate-x-6' : 'translate-x-1'
-                    }`} />
-                  </button>
-                </div>
-                {settings.paymentGateway.maya?.enabled && (
-                  <div className="space-y-3 mt-4">
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">Public Key</label>
-                      <input
-                        type="text"
-                        value={settings.paymentGateway.maya?.publicKey || ''}
-                        onChange={(e) => setSettings(prev => ({
-                          ...prev,
-                          paymentGateway: {
-                            ...prev.paymentGateway,
-                            maya: { ...prev.paymentGateway.maya, publicKey: e.target.value }
-                          }
-                        }))}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
-                        placeholder="Enter Maya Public Key"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">Secret Key</label>
-                      <input
-                        type="password"
-                        value={settings.paymentGateway.maya?.secretKey || ''}
-                        onChange={(e) => setSettings(prev => ({
-                          ...prev,
-                          paymentGateway: {
-                            ...prev.paymentGateway,
-                            maya: { ...prev.paymentGateway.maya, secretKey: e.target.value }
-                          }
-                        }))}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
-                        placeholder="Enter Maya Secret Key"
-                      />
-                    </div>
-                  </div>
-                )}
-              </div>
-
-              {/* DragonPay */}
-              <div className={`p-4 border rounded-lg ${settings.paymentGateway.dragonpay?.enabled ? 'border-green-200 bg-green-50' : 'border-gray-200 bg-gray-50'}`}>
-                <div className="flex items-center justify-between mb-2">
-                  <h4 className="font-medium text-gray-900">DragonPay</h4>
-                  <button
-                    onClick={() => togglePaymentMethod('dragonpay', !settings.paymentGateway.dragonpay?.enabled)}
-                    className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
-                      settings.paymentGateway.dragonpay?.enabled ? 'bg-green-600' : 'bg-gray-300'
-                    }`}
-                  >
-                    <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
-                      settings.paymentGateway.dragonpay?.enabled ? 'translate-x-6' : 'translate-x-1'
-                    }`} />
-                  </button>
-                </div>
-                {settings.paymentGateway.dragonpay?.enabled && (
-                  <div className="space-y-3 mt-4">
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">Merchant ID</label>
-                      <input
-                        type="text"
-                        value={settings.paymentGateway.dragonpay?.merchantId || ''}
-                        onChange={(e) => setSettings(prev => ({
-                          ...prev,
-                          paymentGateway: {
-                            ...prev.paymentGateway,
-                            dragonpay: { ...prev.paymentGateway.dragonpay, merchantId: e.target.value }
-                          }
-                        }))}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
-                        placeholder="Enter DragonPay Merchant ID"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">Password</label>
-                      <input
-                        type="password"
-                        value={settings.paymentGateway.dragonpay?.password || ''}
-                        onChange={(e) => setSettings(prev => ({
-                          ...prev,
-                          paymentGateway: {
-                            ...prev.paymentGateway,
-                            dragonpay: { ...prev.paymentGateway.dragonpay, password: e.target.value }
-                          }
-                        }))}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
-                        placeholder="Enter DragonPay Password"
-                      />
-                    </div>
-                  </div>
-                )}
-              </div>
-
-              {/* Cash on Pickup */}
-              <div className={`p-4 border rounded-lg ${settings.paymentGateway.cashOnPickup?.enabled ? 'border-green-200 bg-green-50' : 'border-gray-200 bg-gray-50'}`}>
-                <div className="flex items-center justify-between mb-2">
-                  <div>
-                    <h4 className="font-medium text-gray-900">Cash on Pickup</h4>
-                    <p className="text-sm text-gray-600">Allow residents to pay when picking up documents</p>
-                  </div>
-                  <button
-                    onClick={() => togglePaymentMethod('cashOnPickup', !settings.paymentGateway.cashOnPickup?.enabled)}
-                    className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
-                      settings.paymentGateway.cashOnPickup?.enabled ? 'bg-green-600' : 'bg-gray-300'
-                    }`}
-                  >
-                    <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
-                      settings.paymentGateway.cashOnPickup?.enabled ? 'translate-x-6' : 'translate-x-1'
-                    }`} />
-                  </button>
-                </div>
-              </div>
-
-              <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
-                <div className="flex">
-                  <AlertTriangle className="h-5 w-5 text-yellow-600 mr-2 mt-0.5" />
-                  <div>
-                    <h4 className="font-semibold text-yellow-800 mb-1">Security Notice</h4>
-                    <p className="text-sm text-yellow-700">
-                      Keep your API keys secure and never share them publicly. Use test keys during development and switch to live keys only in production.
-                    </p>
-                  </div>
-                </div>
-              </div>
+            <div className="flex items-center justify-between p-3 border border-gray-200 rounded-lg">
+              <span className="font-medium">Maya</span>
+              <button className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
+                settings.paymentGateway.maya?.enabled ? 'bg-green-600' : 'bg-gray-300'
+              }`}>
+                <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+                  settings.paymentGateway.maya?.enabled ? 'translate-x-6' : 'translate-x-1'
+                }`} />
+              </button>
             </div>
-          )}
+            <div className="flex items-center justify-between p-3 border border-gray-200 rounded-lg">
+              <span className="font-medium">Cash on Pickup</span>
+              <button className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
+                settings.paymentGateway.cashOnPickup?.enabled ? 'bg-green-600' : 'bg-gray-300'
+              }`}>
+                <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+                  settings.paymentGateway.cashOnPickup?.enabled ? 'translate-x-6' : 'translate-x-1'
+                }`} />
+              </button>
+            </div>
+          </div>
         </div>
       </div>
     </div>
   );
 }
 
-// Google Map Preview Component
-function GoogleMapPreview({ apiKey, barangayName, barangayAddress }: { 
-  apiKey: string; 
-  barangayName: string; 
-  barangayAddress: string; 
-}) {
-  const [coordinates, setCoordinates] = useState<{lat: number, lng: number} | null>(null);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState('');
+function SecurityManagement() {
+  const [securitySettings, setSecuritySettings] = useState({
+    twoFactorAuth: false,
+    sessionTimeout: 30,
+    passwordPolicy: 'strong',
+    loginAttempts: 5,
+    auditLogging: true,
+    encryptionEnabled: true
+  });
 
-  // Default coordinates for common locations
-  const getDefaultCoordinates = (address: string) => {
-    const lowerAddress = address.toLowerCase();
-    
-    // Davao City locations
-    if (lowerAddress.includes('davao')) {
-      if (lowerAddress.includes('bucana')) {
-        return { lat: 7.0731, lng: 125.6128 }; // Bucana, Davao City
-      }
-      return { lat: 7.1907, lng: 125.4553 }; // Davao City center
+  const securityLogs = [
+    {
+      id: '1',
+      type: 'login',
+      user: 'admin@barangay.gov',
+      action: 'Successful login',
+      timestamp: '2024-03-18T10:30:00Z',
+      ip: '192.168.1.100',
+      severity: 'info'
+    },
+    {
+      id: '2',
+      type: 'failed_login',
+      user: 'unknown@email.com',
+      action: 'Failed login attempt',
+      timestamp: '2024-03-18T10:25:00Z',
+      ip: '192.168.1.200',
+      severity: 'warning'
     }
-    
-    // Metro Manila locations
-    if (lowerAddress.includes('metro manila') || lowerAddress.includes('manila')) {
-      if (lowerAddress.includes('san miguel')) {
-        return { lat: 14.5995, lng: 120.9842 }; // San Miguel, Manila
-      }
-      return { lat: 14.5995, lng: 120.9842 }; // Manila center
-    }
-    
-    // Cebu locations
-    if (lowerAddress.includes('cebu')) {
-      return { lat: 10.3157, lng: 123.8854 }; // Cebu City
-    }
-    
-    // Default to Philippines center
-    return { lat: 12.8797, lng: 121.7740 };
-  };
-
-  // Geocode the address using Google Maps API
-  const geocodeAddress = async (address: string) => {
-    if (!apiKey) return;
-    
-    setLoading(true);
-    setError('');
-    
-    try {
-      const response = await fetch(
-        `https://maps.googleapis.com/maps/api/geocode/json?address=${encodeURIComponent(address)}&key=${apiKey}`
-      );
-      const data = await response.json();
-      
-      if (data.status === 'OK' && data.results.length > 0) {
-        const location = data.results[0].geometry.location;
-        setCoordinates({ lat: location.lat, lng: location.lng });
-      } else {
-        // Fallback to default coordinates
-        const defaultCoords = getDefaultCoordinates(address);
-        setCoordinates(defaultCoords);
-        setError('Using approximate location');
-      }
-    } catch (err) {
-      // Fallback to default coordinates
-      const defaultCoords = getDefaultCoordinates(address);
-      setCoordinates(defaultCoords);
-      setError('Using approximate location');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  // Update coordinates when address changes
-  useEffect(() => {
-    if (barangayAddress) {
-      geocodeAddress(barangayAddress);
-    } else {
-      const defaultCoords = getDefaultCoordinates(barangayName);
-      setCoordinates(defaultCoords);
-    }
-  }, [barangayAddress, barangayName, apiKey]);
-
-  if (loading) {
-    return (
-      <div className="w-full h-64 bg-gray-100 flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-2"></div>
-          <p className="text-gray-500">Loading map...</p>
-        </div>
-      </div>
-    );
-  }
-
-  if (!coordinates) {
-    return (
-      <div className="w-full h-64 bg-gray-100 flex items-center justify-center">
-        <div className="text-center">
-          <MapPin className="h-12 w-12 text-gray-400 mx-auto mb-2" />
-          <p className="text-gray-500">Unable to load location</p>
-        </div>
-      </div>
-    );
-  }
-
-  const mapUrl = `https://maps.googleapis.com/maps/api/staticmap?center=${coordinates.lat},${coordinates.lng}&zoom=15&size=600x300&maptype=roadmap&markers=color:red%7Clabel:${barangayName.charAt(0)}%7C${coordinates.lat},${coordinates.lng}&key=${apiKey}`;
+  ];
 
   return (
-    <div className="space-y-4">
-      <div 
-        className="w-full h-64 bg-gray-100 bg-cover bg-center rounded-lg border"
-        style={{ backgroundImage: `url('${mapUrl}')` }}
-      >
+    <div className="space-y-6">
+      <h2 className="text-2xl font-semibold text-gray-900">Security Management</h2>
+      
+      {/* Security Settings */}
+      <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+        <h3 className="text-lg font-semibold text-gray-900 mb-6">Security Settings</h3>
+        <div className="space-y-4">
+          <div className="flex items-center justify-between p-4 border border-gray-200 rounded-lg">
+            <div>
+              <h4 className="font-medium text-gray-900">Two-Factor Authentication</h4>
+              <p className="text-sm text-gray-600">Require 2FA for admin accounts</p>
+            </div>
+            <button className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
+              securitySettings.twoFactorAuth ? 'bg-green-600' : 'bg-gray-300'
+            }`}>
+              <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+                securitySettings.twoFactorAuth ? 'translate-x-6' : 'translate-x-1'
+              }`} />
+            </button>
+          </div>
+          
+          <div className="flex items-center justify-between p-4 border border-gray-200 rounded-lg">
+            <div>
+              <h4 className="font-medium text-gray-900">Audit Logging</h4>
+              <p className="text-sm text-gray-600">Log all system activities</p>
+            </div>
+            <button className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
+              securitySettings.auditLogging ? 'bg-green-600' : 'bg-gray-300'
+            }`}>
+              <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+                securitySettings.auditLogging ? 'translate-x-6' : 'translate-x-1'
+              }`} />
+            </button>
+          </div>
+        </div>
       </div>
-      <div className="text-sm text-gray-600 bg-white p-3 rounded border">
-        <p><strong>Location:</strong> {barangayName}, {barangayAddress}</p>
-        <p><strong>Coordinates:</strong> {coordinates.lat.toFixed(4)}°N, {coordinates.lng.toFixed(4)}°E</p>
-        {error && <p className="text-yellow-600 mt-1"><strong>Note:</strong> {error}</p>}
+
+      {/* Security Logs */}
+      <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+        <h3 className="text-lg font-semibold text-gray-900 mb-6">Recent Security Events</h3>
+        <div className="space-y-3">
+          {securityLogs.map((log) => (
+            <div key={log.id} className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
+              <div className="flex items-center space-x-3">
+                <div className={`w-3 h-3 rounded-full ${
+                  log.severity === 'info' ? 'bg-blue-500' :
+                  log.severity === 'warning' ? 'bg-yellow-500' : 'bg-red-500'
+                }`}></div>
+                <div>
+                  <p className="font-medium text-gray-900">{log.action}</p>
+                  <p className="text-sm text-gray-600">{log.user} from {log.ip}</p>
+                </div>
+              </div>
+              <span className="text-xs text-gray-500">
+                {new Date(log.timestamp).toLocaleString()}
+              </span>
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function AnnouncementsManagement() {
+  const { announcements, addAnnouncement } = useData();
+  const [showAddForm, setShowAddForm] = useState(false);
+  const [newAnnouncement, setNewAnnouncement] = useState({
+    title: '',
+    content: '',
+    type: 'notice' as 'important' | 'event' | 'notice' | 'emergency' | 'health' | 'weather',
+    priority: 'medium' as 'low' | 'medium' | 'high',
+    targetAudience: 'all'
+  });
+
+  const handleAddAnnouncement = async () => {
+    if (newAnnouncement.title && newAnnouncement.content) {
+      try {
+        await addAnnouncement({
+          ...newAnnouncement,
+          status: 'published',
+          author: 'Super Admin'
+        });
+        setNewAnnouncement({
+          title: '',
+          content: '',
+          type: 'notice',
+          priority: 'medium',
+          targetAudience: 'all'
+        });
+        setShowAddForm(false);
+      } catch (error) {
+        console.error('Failed to add announcement:', error);
+      }
+    }
+  };
+
+  return (
+    <div className="space-y-6">
+      <div className="flex items-center justify-between">
+        <h2 className="text-2xl font-semibold text-gray-900">Announcements Management</h2>
+        <button
+          onClick={() => setShowAddForm(true)}
+          className="bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 flex items-center"
+        >
+          <Bell className="h-4 w-4 mr-2" />
+          New Announcement
+        </button>
+      </div>
+
+      {/* Announcements List */}
+      <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+        <div className="space-y-4">
+          {announcements.map((announcement) => (
+            <div key={announcement.id} className="border border-gray-200 rounded-lg p-4">
+              <div className="flex items-start justify-between">
+                <div className="flex-1">
+                  <h3 className="font-semibold text-gray-900 mb-2">{announcement.title}</h3>
+                  <p className="text-gray-600 mb-3">{announcement.content}</p>
+                  <div className="flex items-center space-x-4 text-sm text-gray-500">
+                    <span>By {announcement.author}</span>
+                    <span>{new Date(announcement.created_at).toLocaleDateString()}</span>
+                    <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+                      announcement.priority === 'high' ? 'bg-red-100 text-red-800' :
+                      announcement.priority === 'medium' ? 'bg-yellow-100 text-yellow-800' :
+                      'bg-green-100 text-green-800'
+                    }`}>
+                      {announcement.priority.toUpperCase()}
+                    </span>
+                  </div>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <button className="text-blue-600 hover:text-blue-800">
+                    <Eye className="h-4 w-4" />
+                  </button>
+                  <button className="text-red-600 hover:text-red-800">
+                    <X className="h-4 w-4" />
+                  </button>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Add Announcement Modal */}
+      {showAddForm && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+          <div className="bg-white rounded-xl max-w-2xl w-full p-6">
+            <div className="flex items-center justify-between mb-6">
+              <h3 className="text-xl font-semibold text-gray-900">Create New Announcement</h3>
+              <button
+                onClick={() => setShowAddForm(false)}
+                className="text-gray-400 hover:text-gray-600"
+              >
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+            
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Title</label>
+                <input
+                  type="text"
+                  value={newAnnouncement.title}
+                  onChange={(e) => setNewAnnouncement({ ...newAnnouncement, title: e.target.value })}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500"
+                  placeholder="Enter announcement title"
+                />
+              </div>
+              
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Content</label>
+                <textarea
+                  value={newAnnouncement.content}
+                  onChange={(e) => setNewAnnouncement({ ...newAnnouncement, content: e.target.value })}
+                  rows={4}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500"
+                  placeholder="Enter announcement content"
+                />
+              </div>
+              
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Type</label>
+                  <select
+                    value={newAnnouncement.type}
+                    onChange={(e) => setNewAnnouncement({ ...newAnnouncement, type: e.target.value as any })}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500"
+                  >
+                    <option value="notice">Notice</option>
+                    <option value="important">Important</option>
+                    <option value="event">Event</option>
+                    <option value="emergency">Emergency</option>
+                    <option value="health">Health</option>
+                    <option value="weather">Weather</option>
+                  </select>
+                </div>
+                
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Priority</label>
+                  <select
+                    value={newAnnouncement.priority}
+                    onChange={(e) => setNewAnnouncement({ ...newAnnouncement, priority: e.target.value as any })}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500"
+                  >
+                    <option value="low">Low</option>
+                    <option value="medium">Medium</option>
+                    <option value="high">High</option>
+                  </select>
+                </div>
+              </div>
+              
+              <div className="flex space-x-3 pt-4">
+                <button
+                  onClick={() => setShowAddForm(false)}
+                  className="flex-1 px-4 py-2 text-gray-700 border border-gray-300 rounded-lg hover:bg-gray-50"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={handleAddAnnouncement}
+                  className="flex-1 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700"
+                >
+                  Publish Announcement
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+function SystemHealthMonitor() {
+  const [healthData, setHealthData] = useState({
+    cpu: 45,
+    memory: 62,
+    storage: 38,
+    network: 95
+  });
+
+  const healthMetrics = [
+    { name: 'CPU Usage', value: healthData.cpu, unit: '%', color: 'text-blue-600', bgColor: 'bg-blue-50' },
+    { name: 'Memory Usage', value: healthData.memory, unit: '%', color: 'text-green-600', bgColor: 'bg-green-50' },
+    { name: 'Storage Usage', value: healthData.storage, unit: '%', color: 'text-purple-600', bgColor: 'bg-purple-50' },
+    { name: 'Network Health', value: healthData.network, unit: '%', color: 'text-orange-600', bgColor: 'bg-orange-50' }
+  ];
+
+  return (
+    <div className="space-y-6">
+      <h2 className="text-2xl font-semibold text-gray-900">System Health Monitor</h2>
+      
+      {/* Health Metrics */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        {healthMetrics.map((metric, index) => (
+          <div key={index} className={`${metric.bgColor} rounded-xl p-6 border border-gray-200`}>
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="font-medium text-gray-900">{metric.name}</h3>
+              <Monitor className={`h-5 w-5 ${metric.color}`} />
+            </div>
+            <div className="space-y-2">
+              <div className="flex items-end space-x-1">
+                <span className={`text-2xl font-bold ${metric.color}`}>{metric.value}</span>
+                <span className="text-sm text-gray-600">{metric.unit}</span>
+              </div>
+              <div className="w-full bg-gray-200 rounded-full h-2">
+                <div 
+                  className={`h-2 rounded-full ${
+                    metric.value > 80 ? 'bg-red-500' :
+                    metric.value > 60 ? 'bg-yellow-500' : 'bg-green-500'
+                  }`}
+                  style={{ width: `${metric.value}%` }}
+                ></div>
+              </div>
+            </div>
+          </div>
+        ))}
+      </div>
+
+      {/* System Services */}
+      <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+        <h3 className="text-lg font-semibold text-gray-900 mb-6">System Services</h3>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          {[
+            { name: 'Database Service', status: 'running', uptime: '99.9%' },
+            { name: 'Authentication Service', status: 'running', uptime: '100%' },
+            { name: 'File Storage Service', status: 'running', uptime: '99.8%' },
+            { name: 'Email Service', status: 'warning', uptime: '98.5%' },
+            { name: 'Backup Service', status: 'running', uptime: '99.7%' },
+            { name: 'Notification Service', status: 'running', uptime: '99.9%' }
+          ].map((service, index) => (
+            <div key={index} className="flex items-center justify-between p-4 border border-gray-200 rounded-lg">
+              <div className="flex items-center space-x-3">
+                <div className={`w-3 h-3 rounded-full ${
+                  service.status === 'running' ? 'bg-green-500' :
+                  service.status === 'warning' ? 'bg-yellow-500' : 'bg-red-500'
+                }`}></div>
+                <span className="font-medium text-gray-900">{service.name}</span>
+              </div>
+              <div className="text-right">
+                <p className="text-sm font-medium text-gray-900 capitalize">{service.status}</p>
+                <p className="text-xs text-gray-500">{service.uptime}</p>
+              </div>
+            </div>
+          ))}
+        </div>
       </div>
     </div>
   );
