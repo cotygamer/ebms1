@@ -101,27 +101,7 @@ export class DataService {
     
     const { data, error } = await supabase
       .from('residents')
-      .insert([{
-        user_id: residentData.user_id,
-        name: residentData.name,
-        email: residentData.email,
-        phone_number: residentData.phone_number,
-        address: residentData.address,
-        verification_status: residentData.verification_status || 'non-verified',
-        birth_date: residentData.birth_date,
-        gender: residentData.gender,
-        civil_status: residentData.civil_status,
-        emergency_contact: residentData.emergency_contact,
-        nationality: residentData.nationality || 'Filipino',
-        religion: residentData.religion,
-        occupation: residentData.occupation,
-        monthly_income: residentData.monthly_income,
-        date_registered: residentData.date_registered || new Date().toISOString().split('T')[0],
-        government_ids: residentData.government_ids || {},
-        profile_data: residentData.profile_data || {},
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString()
-      }])
+      .insert([residentData])
       .select()
       .single()
     
@@ -129,10 +109,10 @@ export class DataService {
       console.error('Supabase error creating resident:', error);
       
       // Provide more specific error messages
-      if (error.code === '42501' || error.message?.includes('row-level security')) {
-        throw new Error('Registration permission error. Please ensure you are logged in properly and try again.');
-      } else if (error.code === '23505') {
+      if (error.code === '23505') {
         throw new Error('An account with this email already exists.');
+      } else if (error.code === '42501' || error.message?.includes('row-level security')) {
+        throw new Error('Registration permission error. Please ensure you are logged in properly and try again.');
       } else {
         throw new Error(`Registration failed: ${error.message}`);
       }

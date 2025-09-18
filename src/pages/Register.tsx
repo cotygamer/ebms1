@@ -146,6 +146,32 @@ export default function Register() {
     try {
       console.log('Starting registration process...');
       
+      // First create the Supabase Auth user
+      const { data: authData, error: authError } = await supabase.auth.signUp({
+        email: formData.email,
+        password: formData.password,
+        options: {
+          emailRedirectTo: undefined, // Disable email confirmation
+          data: {
+            name: fullName
+          }
+        }
+      });
+
+      if (authError) {
+        console.error('Supabase auth error:', authError);
+        if (authError.message.includes('User already registered')) {
+          throw new Error('An account with this email already exists. Please try logging in instead.');
+        }
+        throw new Error(`Registration failed: ${authError.message}`);
+      }
+
+      if (!authData.user) {
+        throw new Error('Failed to create user account. Please try again.');
+      }
+
+      console.log('Auth user created successfully:', authData.user.id);
+      
       // Create complete name
       const fullName = [
         formData.firstName,
@@ -169,6 +195,8 @@ export default function Register() {
       const emergencyContact = `${formData.emergencyContactName} - ${formData.emergencyContactPhone} (${formData.emergencyContactRelation}) - ${formData.emergencyContactAddress}`;
       
       const residentData = {
+        id: authData.user.id, // Use the auth user ID
+        user_id: authData.user.id,
         name: fullName,
         email: formData.email,
         phone_number: formData.phoneNumber,
@@ -178,7 +206,10 @@ export default function Register() {
         gender: formData.gender,
         civil_status: formData.civilStatus,
         emergency_contact: emergencyContact,
-        date_registered: new Date().toISOString().split('T')[0]
+        date_registered: new Date().toISOString().split('T')[0],
+        verification_status: 'non-verified',
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString()
       };
 
       console.log('Creating resident with data:', residentData);
@@ -186,7 +217,7 @@ export default function Register() {
       console.log('Resident created successfully');
 
       // Show success message
-      alert('🎉 Registration successful! Welcome to our digital barangay community. You can now login with your email and password.');
+      alert('🎉 Registration successful! Welcome to our digital barangay community. You can now login with your email and password. Please wait while we redirect you to the login page.');
       navigate('/login');
     } catch (err: any) {
       console.error('Registration error:', err);
