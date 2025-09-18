@@ -18,11 +18,13 @@ export default function Login() {
     setIsLoading(true);
 
     try {
-      await login(email, password);
-      // Navigation will be handled by the AuthProvider
+      const success = await login(email, password);
+      if (success) {
+        // Navigation will be handled by the AuthProvider based on user role
+      }
     } catch (err) {
       console.error('Login error:', err);
-      setError(err.message || 'An error occurred. Please try again.');
+      setError(err.message || 'Login failed. Please try again.');
     } finally {
       setIsLoading(false);
     }
