@@ -380,41 +380,6 @@ export class DataService {
 
   // Projects Management
   static async getProjects() {
-    try {
-      const { data, error } = await supabase
-        .from('projects')
-        .select(`
-          *,
-          project_achievements (
-            id,
-            achievement,
-            date_achieved,
-            description
-          )
-        `)
-        .order('created_at', { ascending: false })
-      
-      if (error) {
-        // Handle missing table gracefully
-        if (error.code === 'PGRST205' || error.message?.includes('Could not find the table') || error.message?.includes('relation') && error.message?.includes('does not exist')) {
-          console.warn('Projects table not found, returning empty array')
-          return []
-        }
-        throw error
-      }
-      return data || []
-    } catch (error) {
-      // Handle network errors and other issues
-      if (error?.name === 'TypeError' && error?.message?.includes('Failed to fetch')) {
-        console.warn('Network error fetching projects, returning empty array')
-        return []
-      }
-      console.error('Error fetching projects:', error)
-      return []
-    }
-  }
-
-  static async getProjects_old() {
     const { data, error } = await supabase
       .from('projects')
       .select(`
@@ -800,77 +765,6 @@ export class DataService {
     await this.logAction('transaction.create', 'transaction', data.id, null, data)
     
     return data
-  }
-
-  // Resident-specific data fetching methods
-  static async getDocumentsByResident(residentId: string) {
-    const { data, error } = await supabase
-      .from('documents')
-      .select(`
-        *,
-        residents (
-          name,
-          email,
-          phone_number
-        )
-      `)
-      .eq('resident_id', residentId)
-      .order('created_at', { ascending: false })
-    
-    if (error) throw error
-    return data || []
-  }
-
-  static async getAppointmentsByResident(residentEmail: string) {
-    const { data, error } = await supabase
-      .from('appointments')
-      .select(`
-        *,
-        residents (
-          name,
-          email,
-          phone_number
-        )
-      `)
-      .eq('resident_email', residentEmail)
-      .order('appointment_date', { ascending: true })
-    
-    if (error) throw error
-    return data || []
-  }
-
-  static async getIncidentsByReporter(reporterEmail: string) {
-    try {
-      const { data, error } = await supabase
-        .from('incidents')
-        .select('*')
-        .eq('reporter_email', reporterEmail)
-        .order('created_at', { ascending: false })
-      
-      if (error) {
-        // Handle case where incidents table might not exist
-        if (error.code === 'PGRST205' || error.message?.includes('Could not find the table')) {
-          console.warn('Incidents table not found, returning empty array')
-          return []
-        }
-        throw error
-      }
-      return data || []
-    } catch (error) {
-      console.error('Error fetching incidents by reporter:', error)
-      return []
-    }
-  }
-
-  static async getFamilyMembersByResident(residentId: string) {
-    const { data, error } = await supabase
-      .from('family_members')
-      .select('*')
-      .eq('resident_id', residentId)
-      .order('created_at', { ascending: false })
-    
-    if (error) throw error
-    return data || []
   }
 
   // Real-time Subscriptions

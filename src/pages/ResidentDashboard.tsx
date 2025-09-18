@@ -1,957 +1,1212 @@
 import React, { useState, useEffect } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { useData } from '../contexts/DataContext';
 import { dataService } from '../services/dataService';
-import QRCodeDisplay from '../components/QRCodeDisplay';
+import { useOfflineSync } from '../hooks/useOfflineSync';
+import OfflineIndicator from '../components/OfflineIndicator';
+import OfflineDocumentForm from '../components/OfflineDocumentForm';
+import OfflineIncidentForm from '../components/OfflineIncidentForm';
 import VerificationStatus from '../components/VerificationStatus';
+import QRCodeDisplay from '../components/QRCodeDisplay';
 import FamilyTreeView from '../components/FamilyTreeView';
 import HouseholdMapPinning from '../components/HouseholdMapPinning';
-import {
-  Building2,
-  User,
-  FileText,
-  Calendar,
-  AlertTriangle,
-  MapPin,
-  Phone,
-  Mail,
-  Home,
-  Users,
-  Heart,
-  Briefcase,
-  DollarSign,
-  Globe,
-  Church,
-  Baby,
-  UserCheck,
-  Save,
-  Edit3,
-  LogOut,
-  Bell,
-  Settings,
-  Shield,
-  QrCode,
+import { 
+  Building2, 
+  User, 
+  Shield, 
+  QrCode, 
+  Users, 
+  FileText, 
+  LogOut, 
+  Edit, 
+  Save, 
+  X, 
+  MapPin, 
+  Phone, 
+  Mail, 
+  Calendar, 
+  Home, 
+  Plus,
+  Eye,
   Clock,
   CheckCircle,
-  XCircle,
-  Menu,
-  X
+  AlertTriangle,
+  Download,
+  Search,
+  Filter,
+  Send,
+  MessageSquare,
+  Flag,
+  Camera,
+  Upload,
+  Star,
+  Trash2
 } from 'lucide-react';
 
-interface Document {
-  id: string;
-  document_type: string;
-  status: string;
-  requested_date: string;
-  fee: number;
-  payment_status: string;
-  tracking_number?: string;
-}
-
-interface Appointment {
-  id: string;
-  service: string;
-  appointment_date: string;
-  appointment_time: string;
-  status: string;
-}
-
-interface Incident {
-  id: string;
-  incident_type: string;
-  subject: string;
-  status: string;
-  date_submitted: string;
-  priority: string;
-}
-
-interface FamilyMember {
-  id: string;
-  name: string;
-  relation: string;
-  age: number;
-  gender: string;
-  birth_date?: string;
-  occupation?: string;
-  education_level?: string;
-}
-
-const ResidentDashboard: React.FC = () => {
-  const { user, logout } = useAuth();
-  const { residents } = useData();
-  const [activeTab, setActiveTab] = useState('overview');
-  const [documents, setDocuments] = useState<Document[]>([]);
-  const [appointments, setAppointments] = useState<Appointment[]>([]);
-  const [incidents, setIncidents] = useState<Incident[]>([]);
-  const [familyMembers, setFamilyMembers] = useState<FamilyMember[]>([]);
-  const [loading, setLoading] = useState(true);
+export default function ResidentDashboard() {
+  const { user, updateUser, logout } = useAuth();
+  const { documents: contextDocuments, addDocument, complaints, addComplaint } = useData();
+  const { status: offlineStatus } = useOfflineSync();
+  const navigate = useNavigate();
+  const [activeTab, setActiveTab] = useState('profile');
   const [isEditing, setIsEditing] = useState(false);
-  const [editedResident, setEditedResident] = useState<any>(null);
-  const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [showDocumentRequest, setShowDocumentRequest] = useState(false);
+  const [showIncidentReport, setShowIncidentReport] = useState(false);
+  const [selectedDocument, setSelectedDocument] = useState<any>(null);
+  const [selectedComplaint, setSelectedComplaint] = useState<any>(null);
 
-  const resident = residents.find(r => r.email === user?.email);
-  const isVerified = resident?.verification_status === 'verified';
+  const [editData, setEditData] = useState({
+    firstName: user?.firstName || '',
+    middleName: user?.middleName || '',
+    lastName: user?.lastName || '',
+    suffix: user?.suffix || '',
+    phone: user?.phone || '',
+    birthDate: user?.birthDate || '',
+    gender: user?.gender || '',
+    civilStatus: user?.civilStatus || '',
+    nationality: user?.nationality || 'Filipino',
+    occupation: user?.occupation || '',
+    monthlyIncome: user?.monthlyIncome || '',
+    houseNumber: user?.houseNumber || '',
+    purok: user?.purok || '',
+    barangay: user?.barangay || 'San Miguel',
+    city: user?.city || 'Metro Manila',
+    province: user?.province || 'Metro Manila',
+    zipCode: user?.zipCode || '',
+    emergencyContactName: user?.emergencyContactName || '',
+    emergencyContactPhone: user?.emergencyContactPhone || '',
+    emergencyContactRelation: user?.emergencyContactRelation || '',
+    emergencyContactAddress: user?.emergencyContactAddress || ''
+  });
 
+  const [documentRequest, setDocumentRequest] = useState({
+    documentType: '',
+    purpose: '',
+    quantity: 1,
+    urgency: 'regular',
+    notes: ''
+  });
+
+  const [incidentReport, setIncidentReport] = useState({
+    type: '',
+    subject: '',
+    description: '',
+    location: '',
+    priority: 'medium',
+    evidence: [] as string[],
+    witnessName: '',
+    witnessContact: '',
+    dateOccurred: '',
+    timeOccurred: ''
+  });
+
+  // Use real-time documents from context
+  const documents = contextDocuments.filter(doc => 
+    doc.residentId === user?.id || doc.resident_id === user?.id
+  );
+
+  // Get user's incident reports
+  const [incidentReports, setIncidentReports] = useState([]);
+  
   useEffect(() => {
-    if (resident) {
-      setEditedResident({ ...resident });
-      fetchUserData();
-    }
-  }, [resident]);
-
-  const fetchUserData = async () => {
-    if (!resident) return;
-
-    try {
-      setLoading(true);
-      
-      // Fetch documents
-      const docsData = await dataService.getDocumentsByResident(resident.id);
-      setDocuments(docsData || []);
-
-      // Fetch appointments
-      const appointmentsData = await dataService.getAppointmentsByResident(resident.email);
-      setAppointments(appointmentsData || []);
-
-      // Fetch incidents
-      const incidentsData = await dataService.getIncidentsByReporter(resident.email);
-      setIncidents(incidentsData || []);
-
-      // Fetch family members
-      const familyData = await dataService.getFamilyMembersByResident(resident.id);
-      setFamilyMembers(familyData || []);
-    } catch (error) {
-      console.error('Error fetching user data:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleSaveProfile = async () => {
-    if (!editedResident || !resident) return;
-
-    try {
-      await dataService.updateResident(resident.id, editedResident);
-      setIsEditing(false);
-      // Refresh data
-      window.location.reload();
-    } catch (error) {
-      console.error('Error updating profile:', error);
-      alert('Failed to update profile. Please try again.');
-    }
-  };
-
-  const handleInputChange = (field: string, value: any) => {
-    setEditedResident(prev => ({
-      ...prev,
-      [field]: value
-    }));
-  };
-
-  const menuItems = [
-    { id: 'overview', label: 'Overview', icon: Home },
-    { id: 'profile', label: 'Profile & Location', icon: User },
-    { id: 'documents', label: 'Documents', icon: FileText },
-    { id: 'appointments', label: 'Appointments', icon: Calendar },
-    { id: 'incidents', label: 'Incidents', icon: AlertTriangle },
-    { id: 'family', label: 'Family Tree', icon: Users },
-    { id: 'qr-code', label: 'QR Code', icon: QrCode },
-  ];
-
-  const getStatusColor = (status: string) => {
-    switch (status.toLowerCase()) {
-      case 'pending': return 'text-yellow-600 bg-yellow-100';
-      case 'processing': return 'text-blue-600 bg-blue-100';
-      case 'ready': return 'text-green-600 bg-green-100';
-      case 'released': return 'text-gray-600 bg-gray-100';
-      case 'rejected': return 'text-red-600 bg-red-100';
-      case 'scheduled': return 'text-blue-600 bg-blue-100';
-      case 'confirmed': return 'text-green-600 bg-green-100';
-      case 'completed': return 'text-gray-600 bg-gray-100';
-      case 'cancelled': return 'text-red-600 bg-red-100';
-      case 'investigating': return 'text-blue-600 bg-blue-100';
-      case 'resolved': return 'text-green-600 bg-green-100';
-      case 'dismissed': return 'text-gray-600 bg-gray-100';
-      default: return 'text-gray-600 bg-gray-100';
-    }
-  };
-
-  const getVerificationStatusIcon = (status: string) => {
-    switch (status) {
-      case 'verified':
-        return <CheckCircle className="h-5 w-5 text-green-500" />;
-      case 'semi-verified':
-        return <Clock className="h-5 w-5 text-yellow-500" />;
-      case 'details-updated':
-        return <User className="h-5 w-5 text-blue-500" />;
-      case 'non-verified':
-        return <XCircle className="h-5 w-5 text-red-500" />;
-      default:
-        return <Clock className="h-5 w-5 text-gray-500" />;
-    }
-  };
-
-  const getVerificationStatusColor = (status: string) => {
-    switch (status) {
-      case 'verified':
-        return 'bg-green-50 border-green-200 text-green-800';
-      case 'semi-verified':
-        return 'bg-yellow-50 border-yellow-200 text-yellow-800';
-      case 'details-updated':
-        return 'bg-blue-50 border-blue-200 text-blue-800';
-      case 'non-verified':
-        return 'bg-red-50 border-red-200 text-red-800';
-      default:
-        return 'bg-gray-50 border-gray-200 text-gray-800';
-    }
-  };
-
-  const ResidentOverview = () => {
-    const stats = [
-      {
-        title: 'Documents',
-        value: documents.length,
-        subtitle: `${documents.filter(d => d.status === 'pending').length} pending`,
-        icon: FileText,
-        color: 'bg-blue-500'
-      },
-      {
-        title: 'Appointments',
-        value: appointments.length,
-        subtitle: `${appointments.filter(a => a.status === 'scheduled').length} scheduled`,
-        icon: Calendar,
-        color: 'bg-green-500'
-      },
-      {
-        title: 'Incidents',
-        value: incidents.length,
-        subtitle: `${incidents.filter(i => i.status === 'pending').length} pending`,
-        icon: AlertTriangle,
-        color: 'bg-red-500'
-      },
-      {
-        title: 'Family Members',
-        value: familyMembers.length,
-        subtitle: 'registered',
-        icon: Users,
-        color: 'bg-purple-500'
+    const fetchIncidents = async () => {
+      try {
+        const incidents = await dataService.getIncidents();
+        const userIncidents = incidents.filter(incident => 
+          incident.reporter_email === user?.email
+        );
+        setIncidentReports(userIncidents);
+      } catch (error) {
+        console.error('Failed to fetch incidents:', error);
       }
-    ];
+    };
+    
+    if (user?.email) {
+      fetchIncidents();
+    }
+  }, [user?.email]);
 
-    return (
-      <div className="space-y-6">
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900">Welcome back, {resident?.name}!</h1>
-          <p className="text-gray-600 mt-1">Here's an overview of your account and services</p>
-        </div>
+  const handleLogout = () => {
+    logout();
+    navigate('/');
+  };
 
-        {/* Verification Status Card */}
-        <div className={`rounded-lg border p-6 ${getVerificationStatusColor(resident?.verification_status || 'non-verified')}`}>
-          <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-3">
-              {getVerificationStatusIcon(resident?.verification_status || 'non-verified')}
+  const handleSaveProfile = () => {
+    updateUser(editData);
+    setIsEditing(false);
+  };
+
+  const handleDocumentRequest = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    if (documentRequest.documentType && documentRequest.purpose) {
+      try {
+        await addDocument({
+          resident_id: user?.id,
+          document_type: documentRequest.documentType,
+          status: 'pending',
+          fee: getDocumentFee(documentRequest.documentType),
+          payment_status: 'unpaid',
+          purpose: documentRequest.purpose,
+          notes: `Urgency: ${documentRequest.urgency}`
+        });
+        
+        setDocumentRequest({ documentType: '', purpose: '', quantity: 1, urgency: 'regular', notes: '' });
+        setShowDocumentRequest(false);
+        alert('Document request submitted successfully!');
+      } catch (error) {
+        console.error('Failed to submit document request:', error);
+        alert('Failed to submit document request. Please try again.');
+      }
+    }
+  };
+
+  const handleIncidentReport = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    if (incidentReport.type && incidentReport.subject && incidentReport.description) {
+      try {
+        await addComplaint({
+          residentName: user?.name || '',
+          residentEmail: user?.email || '',
+          type: incidentReport.type,
+          subject: incidentReport.subject,
+          description: incidentReport.description,
+          status: 'pending',
+          priority: incidentReport.priority,
+          dateSubmitted: new Date().toISOString().split('T')[0],
+          location: incidentReport.location,
+          dateOccurred: incidentReport.dateOccurred,
+          timeOccurred: incidentReport.timeOccurred,
+          witnessName: incidentReport.witnessName,
+          witnessContact: incidentReport.witnessContact,
+          assignedTo: '',
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString()
+        });
+        
+        setIncidentReport({
+          type: '',
+          subject: '',
+          description: '',
+          location: '',
+          priority: 'medium',
+          evidence: [],
+          witnessName: '',
+          witnessContact: '',
+          dateOccurred: '',
+          timeOccurred: ''
+        });
+        setShowIncidentReport(false);
+        alert('Incident report submitted successfully!');
+        
+        // Refresh incidents
+        const incidents = await dataService.getIncidents();
+        const userIncidents = incidents.filter(incident => 
+          incident.reporter_email === user?.email
+        );
+        setIncidentReports(userIncidents);
+      } catch (error) {
+        console.error('Failed to submit incident report:', error);
+        alert('Failed to submit incident report. Please try again.');
+      }
+    }
+  };
+
+  const getDocumentFee = (documentType: string) => {
+    const fees: { [key: string]: number } = {
+      'Barangay Clearance': 50,
+      'Certificate of Residency': 30,
+      'Certificate of Indigency': 25,
+      'Business Permit': 200,
+      'Building Permit': 500,
+      'Cedula': 35,
+      'Community Tax Certificate': 35,
+      'Barangay ID': 100
+    };
+    return fees[documentType] || 50;
+  };
+
+  const userDocuments = documents.filter(doc => doc.residentId === user?.id);
+  const userComplaints = complaints.filter(complaint => complaint.residentEmail === user?.email);
+
+  const renderProfile = () => (
+    <div className="space-y-6">
+      <div className="flex items-center justify-between">
+        <h2 className="text-2xl font-semibold text-gray-900">My Profile</h2>
+        <button
+          onClick={() => setIsEditing(!isEditing)}
+          className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 flex items-center"
+        >
+          <Edit className="h-4 w-4 mr-2" />
+          {isEditing ? 'Cancel' : 'Edit Profile'}
+        </button>
+      </div>
+
+      <div className="bg-white border rounded-lg p-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          {/* Personal Information */}
+          <div>
+            <h3 className="text-lg font-semibold text-gray-900 mb-4">Personal Information</h3>
+            <div className="space-y-4">
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">First Name</label>
+                  {isEditing ? (
+                    <input
+                      type="text"
+                      value={editData.firstName}
+                      onChange={(e) => setEditData({ ...editData, firstName: e.target.value })}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    />
+                  ) : (
+                    <p className="text-gray-900">{user?.firstName || 'Not provided'}</p>
+                  )}
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Last Name</label>
+                  {isEditing ? (
+                    <input
+                      type="text"
+                      value={editData.lastName}
+                      onChange={(e) => setEditData({ ...editData, lastName: e.target.value })}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    />
+                  ) : (
+                    <p className="text-gray-900">{user?.lastName || 'Not provided'}</p>
+                  )}
+                </div>
+              </div>
+
               <div>
-                <h3 className="font-semibold text-lg capitalize">
-                  {(resident?.verification_status || 'non-verified').replace('-', ' ')} Status
-                </h3>
-                <p className="text-sm opacity-80">
-                  {resident?.verification_status === 'verified' 
-                    ? 'Your account is fully verified. You have access to all services.'
-                    : resident?.verification_status === 'semi-verified'
-                    ? 'Your account is semi-verified. Awaiting final verification.'
-                    : resident?.verification_status === 'details-updated'
-                    ? 'Your profile is complete. Please submit documents for verification.'
-                    : 'Please complete your profile to begin verification.'
-                  }
-                </p>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Email</label>
+                <p className="text-gray-900">{user?.email}</p>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Phone Number</label>
+                {isEditing ? (
+                  <input
+                    type="tel"
+                    value={editData.phone}
+                    onChange={(e) => setEditData({ ...editData, phone: e.target.value })}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  />
+                ) : (
+                  <p className="text-gray-900">{user?.phone || 'Not provided'}</p>
+                )}
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Birth Date</label>
+                  {isEditing ? (
+                    <input
+                      type="date"
+                      value={editData.birthDate}
+                      onChange={(e) => setEditData({ ...editData, birthDate: e.target.value })}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    />
+                  ) : (
+                    <p className="text-gray-900">{user?.birthDate || 'Not provided'}</p>
+                  )}
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Gender</label>
+                  {isEditing ? (
+                    <select
+                      value={editData.gender}
+                      onChange={(e) => setEditData({ ...editData, gender: e.target.value })}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    >
+                      <option value="">Select gender</option>
+                      <option value="male">Male</option>
+                      <option value="female">Female</option>
+                    </select>
+                  ) : (
+                    <p className="text-gray-900 capitalize">{user?.gender || 'Not provided'}</p>
+                  )}
+                </div>
               </div>
             </div>
-            <button
-              onClick={() => setActiveTab('profile')}
-              className="px-4 py-2 bg-white bg-opacity-20 hover:bg-opacity-30 rounded-lg text-sm font-medium transition-colors"
-            >
-              View Profile
-            </button>
+          </div>
+
+          {/* Address Information */}
+          <div>
+            <h3 className="text-lg font-semibold text-gray-900 mb-4">Address Information</h3>
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">House Number/Street</label>
+                {isEditing ? (
+                  <input
+                    type="text"
+                    value={editData.houseNumber}
+                    onChange={(e) => setEditData({ ...editData, houseNumber: e.target.value })}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  />
+                ) : (
+                  <p className="text-gray-900">{user?.houseNumber || 'Not provided'}</p>
+                )}
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Purok/Sitio</label>
+                  {isEditing ? (
+                    <input
+                      type="text"
+                      value={editData.purok}
+                      onChange={(e) => setEditData({ ...editData, purok: e.target.value })}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    />
+                  ) : (
+                    <p className="text-gray-900">{user?.purok || 'Not provided'}</p>
+                  )}
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Barangay</label>
+                  {isEditing ? (
+                    <input
+                      type="text"
+                      value={editData.barangay}
+                      onChange={(e) => setEditData({ ...editData, barangay: e.target.value })}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    />
+                  ) : (
+                    <p className="text-gray-900">{user?.barangay || 'Not provided'}</p>
+                  )}
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">City</label>
+                  {isEditing ? (
+                    <input
+                      type="text"
+                      value={editData.city}
+                      onChange={(e) => setEditData({ ...editData, city: e.target.value })}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    />
+                  ) : (
+                    <p className="text-gray-900">{user?.city || 'Not provided'}</p>
+                  )}
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Province</label>
+                  {isEditing ? (
+                    <input
+                      type="text"
+                      value={editData.province}
+                      onChange={(e) => setEditData({ ...editData, province: e.target.value })}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    />
+                  ) : (
+                    <p className="text-gray-900">{user?.province || 'Not provided'}</p>
+                  )}
+                </div>
+              </div>
+            </div>
           </div>
         </div>
 
-        {/* Stats Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-          {stats.map((stat, index) => (
-            <div key={index} className="bg-white rounded-lg border border-gray-200 p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium text-gray-600">{stat.title}</p>
-                  <p className="text-2xl font-bold text-gray-900">{stat.value}</p>
-                  <p className="text-sm text-gray-500">{stat.subtitle}</p>
-                </div>
-                <div className={`${stat.color} p-3 rounded-lg`}>
-                  <stat.icon className="h-6 w-6 text-white" />
-                </div>
-              </div>
+        {isEditing && (
+          <div className="mt-6 flex space-x-3">
+            <button
+              onClick={handleSaveProfile}
+              className="bg-green-600 text-white px-6 py-2 rounded-lg hover:bg-green-700 flex items-center"
+            >
+              <Save className="h-4 w-4 mr-2" />
+              Save Changes
+            </button>
+            <button
+              onClick={() => setIsEditing(false)}
+              className="bg-gray-600 text-white px-6 py-2 rounded-lg hover:bg-gray-700"
+            >
+              Cancel
+            </button>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+
+  const renderDocuments = () => (
+    <div className="space-y-6">
+      <div className="flex items-center justify-between">
+        <h2 className="text-2xl font-semibold text-gray-900">My Documents</h2>
+        <button
+          onClick={() => setShowDocumentRequest(true)}
+          className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 flex items-center"
+        >
+          <Plus className="h-4 w-4 mr-2" />
+          Request Document
+        </button>
+      </div>
+
+      {/* Document Statistics */}
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+        <div className="bg-white rounded-lg shadow-sm p-6">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm font-medium text-gray-600">Total Requests</p>
+              <p className="text-3xl font-bold text-blue-600">{userDocuments.length}</p>
             </div>
-          ))}
+            <FileText className="h-12 w-12 text-blue-600" />
+          </div>
         </div>
 
-        {/* Recent Activity */}
-        <div className="bg-white rounded-lg border border-gray-200 p-6">
-          <h3 className="text-lg font-semibold text-gray-900 mb-4">Recent Activity</h3>
-          <div className="space-y-3">
-            {documents.slice(0, 3).map((doc) => (
-              <div key={doc.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-                <div className="flex items-center space-x-3">
-                  <FileText className="h-5 w-5 text-blue-500" />
-                  <div>
-                    <p className="font-medium text-gray-900">{doc.document_type}</p>
-                    <p className="text-sm text-gray-500">Requested on {new Date(doc.requested_date).toLocaleDateString()}</p>
+        <div className="bg-white rounded-lg shadow-sm p-6">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm font-medium text-gray-600">Pending</p>
+              <p className="text-3xl font-bold text-yellow-600">
+                {userDocuments.filter(d => d.status === 'pending').length}
+              </p>
+            </div>
+            <Clock className="h-12 w-12 text-yellow-600" />
+          </div>
+        </div>
+
+        <div className="bg-white rounded-lg shadow-sm p-6">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm font-medium text-gray-600">Ready</p>
+              <p className="text-3xl font-bold text-green-600">
+                {userDocuments.filter(d => d.status === 'ready').length}
+              </p>
+            </div>
+            <CheckCircle className="h-12 w-12 text-green-600" />
+          </div>
+        </div>
+
+        <div className="bg-white rounded-lg shadow-sm p-6">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm font-medium text-gray-600">Released</p>
+              <p className="text-3xl font-bold text-purple-600">
+                {userDocuments.filter(d => d.status === 'released').length}
+              </p>
+            </div>
+            <Download className="h-12 w-12 text-purple-600" />
+          </div>
+        </div>
+      </div>
+
+      {/* Documents List */}
+      <div className="bg-white rounded-lg shadow-sm overflow-hidden">
+        <div className="p-6 border-b border-gray-200">
+          <h3 className="text-lg font-semibold text-gray-900">Document Requests</h3>
+        </div>
+        
+        {userDocuments.length > 0 ? (
+          <div className="overflow-x-auto">
+            <table className="min-w-full divide-y divide-gray-200">
+              <thead className="bg-gray-50">
+                <tr>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Document</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Fee</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date Requested</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                </tr>
+              </thead>
+              <tbody className="bg-white divide-y divide-gray-200">
+                {userDocuments.map((document) => (
+                  <tr key={document.id} className="hover:bg-gray-50">
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <div>
+                        <div className="text-sm font-medium text-gray-900">{document.document_type || document.documentType}</div>
+                        <div className="text-sm text-gray-500">{document.purpose}</div>
+                      </div>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <span className={`px-2 py-1 text-xs font-semibold rounded-full ${
+                        document.status === 'ready' || document.status === 'released' ? 'bg-green-100 text-green-800' :
+                        document.status === 'processing' ? 'bg-blue-100 text-blue-800' :
+                        document.status === 'pending' ? 'bg-yellow-100 text-yellow-800' :
+                        'bg-red-100 text-red-800'
+                      }`}>
+                        {document.status.toUpperCase()}
+                      </span>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                      ₱{document.fee}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                      {document.requested_date || document.requestedDate}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                      <button
+                        onClick={() => setSelectedDocument(document)}
+                        className="text-blue-600 hover:text-blue-900"
+                      >
+                        <Eye className="h-4 w-4" />
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        ) : (
+          <div className="text-center py-12">
+            <FileText className="h-24 w-24 text-gray-300 mx-auto mb-4" />
+            <h3 className="text-lg font-semibold text-gray-900 mb-2">No Document Requests</h3>
+            <p className="text-gray-600 mb-4">You haven't requested any documents yet.</p>
+            <button
+              onClick={() => setShowDocumentRequest(true)}
+              className="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700"
+            >
+              Request Your First Document
+            </button>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+
+  const renderComplaints = () => (
+    <div className="space-y-6">
+      <div className="flex items-center justify-between">
+        <h2 className="text-2xl font-semibold text-gray-900">Incident Reports & Complaints</h2>
+        <button
+          onClick={() => setShowIncidentReport(true)}
+          className="bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 flex items-center"
+        >
+          <Plus className="h-4 w-4 mr-2" />
+          File Report
+        </button>
+      </div>
+
+      {/* Complaint Statistics */}
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+        <div className="bg-white rounded-lg shadow-sm p-6">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm font-medium text-gray-600">Total Reports</p>
+              <p className="text-3xl font-bold text-blue-600">{userComplaints.length}</p>
+            </div>
+            <MessageSquare className="h-12 w-12 text-blue-600" />
+          </div>
+        </div>
+
+        <div className="bg-white rounded-lg shadow-sm p-6">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm font-medium text-gray-600">Pending</p>
+              <p className="text-3xl font-bold text-yellow-600">
+                {userComplaints.filter(c => c.status === 'pending').length}
+              </p>
+            </div>
+            <Clock className="h-12 w-12 text-yellow-600" />
+          </div>
+        </div>
+
+        <div className="bg-white rounded-lg shadow-sm p-6">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm font-medium text-gray-600">Under Investigation</p>
+              <p className="text-3xl font-bold text-blue-600">
+                {userComplaints.filter(c => c.status === 'investigating').length}
+              </p>
+            </div>
+            <Search className="h-12 w-12 text-blue-600" />
+          </div>
+        </div>
+
+        <div className="bg-white rounded-lg shadow-sm p-6">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm font-medium text-gray-600">Resolved</p>
+              <p className="text-3xl font-bold text-green-600">
+                {userComplaints.filter(c => c.status === 'resolved').length}
+              </p>
+            </div>
+            <CheckCircle className="h-12 w-12 text-green-600" />
+          </div>
+        </div>
+      </div>
+
+      {/* Complaints List */}
+      <div className="bg-white rounded-lg shadow-sm overflow-hidden">
+        <div className="p-6 border-b border-gray-200">
+          <h3 className="text-lg font-semibold text-gray-900">My Reports & Complaints</h3>
+        </div>
+        
+        {userComplaints.length > 0 ? (
+          <div className="space-y-4 p-6">
+            {userComplaints.map((complaint) => (
+              <div key={complaint.id} className="border border-gray-200 rounded-lg p-4 hover:shadow-sm transition-shadow">
+                <div className="flex items-start justify-between">
+                  <div className="flex-1">
+                    <div className="flex items-center space-x-2 mb-2">
+                      <span className={`px-2 py-1 text-xs font-semibold rounded-full ${
+                        complaint.type === 'noise' ? 'bg-red-100 text-red-800' :
+                        complaint.type === 'garbage' ? 'bg-yellow-100 text-yellow-800' :
+                        complaint.type === 'road' ? 'bg-blue-100 text-blue-800' :
+                        complaint.type === 'water' ? 'bg-cyan-100 text-cyan-800' :
+                        complaint.type === 'electricity' ? 'bg-orange-100 text-orange-800' :
+                        complaint.type === 'security' ? 'bg-purple-100 text-purple-800' :
+                        'bg-gray-100 text-gray-800'
+                      }`}>
+                        {complaint.type.toUpperCase()}
+                      </span>
+                      <span className={`px-2 py-1 text-xs font-semibold rounded-full ${
+                        complaint.priority === 'high' ? 'bg-red-100 text-red-800' :
+                        complaint.priority === 'medium' ? 'bg-yellow-100 text-yellow-800' :
+                        'bg-green-100 text-green-800'
+                      }`}>
+                        {complaint.priority.toUpperCase()} PRIORITY
+                      </span>
+                      <span className={`px-2 py-1 text-xs font-semibold rounded-full ${
+                        complaint.status === 'resolved' ? 'bg-green-100 text-green-800' :
+                        complaint.status === 'investigating' ? 'bg-blue-100 text-blue-800' :
+                        'bg-yellow-100 text-yellow-800'
+                      }`}>
+                        {complaint.status.toUpperCase()}
+                      </span>
+                    </div>
+                    <h4 className="text-lg font-semibold text-gray-900 mb-2">{complaint.subject}</h4>
+                    <p className="text-gray-600 mb-2">{complaint.description}</p>
+                    <div className="text-sm text-gray-500 space-y-1">
+                      <p><strong>Location:</strong> {complaint.location}</p>
+                      <p><strong>Date Submitted:</strong> {complaint.dateSubmitted}</p>
+                      {complaint.assignedTo && <p><strong>Assigned to:</strong> {complaint.assignedTo}</p>}
+                    </div>
                   </div>
+                  <button
+                    onClick={() => setSelectedComplaint(complaint)}
+                    className="text-blue-600 hover:text-blue-800 ml-4"
+                  >
+                    <Eye className="h-5 w-5" />
+                  </button>
                 </div>
-                <span className={`px-2 py-1 text-xs font-medium rounded-full ${getStatusColor(doc.status)}`}>
-                  {doc.status}
-                </span>
               </div>
             ))}
-            {documents.length === 0 && (
-              <p className="text-gray-500 text-center py-4">No recent activity</p>
-            )}
           </div>
-        </div>
-      </div>
-    );
-  };
-
-  const ResidentProfile = () => {
-    if (!resident || !editedResident) return null;
-
-    return (
-      <div className="space-y-6">
-        {/* Header with Edit Button */}
-        <div className="flex justify-between items-center">
-          <div>
-            <h1 className="text-2xl font-bold text-gray-900">Profile Information</h1>
-            <p className="text-gray-600 mt-1">Manage your personal information and house location</p>
-          </div>
-          {!isVerified && (
+        ) : (
+          <div className="text-center py-12">
+            <MessageSquare className="h-24 w-24 text-gray-300 mx-auto mb-4" />
+            <h3 className="text-lg font-semibold text-gray-900 mb-2">No Reports Filed</h3>
+            <p className="text-gray-600 mb-4">You haven't filed any incident reports or complaints yet.</p>
             <button
-              onClick={() => isEditing ? handleSaveProfile() : setIsEditing(!isEditing)}
-              className={`flex items-center gap-2 px-4 py-2 rounded-lg font-medium transition-colors ${
-                isEditing 
-                  ? 'bg-green-600 hover:bg-green-700 text-white' 
-                  : 'bg-blue-600 hover:bg-blue-700 text-white'
-              }`}
+              onClick={() => setShowIncidentReport(true)}
+              className="bg-red-600 text-white px-6 py-2 rounded-lg hover:bg-red-700"
             >
-              {isEditing ? <Save className="w-4 h-4" /> : <Edit3 className="w-4 h-4" />}
-              {isEditing ? 'Save Changes' : 'Edit Profile'}
+              File Your First Report
             </button>
-          )}
-        </div>
-
-        {/* Verification Status */}
-        <div className={`rounded-lg border p-6 ${getVerificationStatusColor(resident?.verification_status || 'non-verified')}`}>
-          <div className="flex items-center space-x-3 mb-4">
-            {getVerificationStatusIcon(resident?.verification_status || 'non-verified')}
-            <h3 className="text-lg font-semibold capitalize">
-              {(resident?.verification_status || 'non-verified').replace('-', ' ')} Status
-            </h3>
           </div>
-          <p className="text-sm opacity-90">
-            {resident?.verification_status === 'verified' 
-              ? 'Your account is fully verified. You have complete access to all barangay services.'
-              : resident?.verification_status === 'semi-verified'
-              ? 'Your account is semi-verified. Awaiting final verification by barangay officials.'
-              : resident?.verification_status === 'details-updated'
-              ? 'Your profile is complete. Please submit required documents for verification.'
-              : 'Please complete your profile information to begin the verification process.'
-            }
-          </p>
-        </div>
-
-        {/* Personal Information */}
-        <div className="bg-white rounded-lg border border-gray-200 p-6">
-          <h3 className="text-lg font-semibold text-gray-900 mb-6 flex items-center gap-2">
-            <User className="w-5 h-5" />
-            Personal Information
-          </h3>
-          
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Full Name</label>
-              {isEditing && !isVerified ? (
-                <input
-                  type="text"
-                  value={editedResident.name || ''}
-                  onChange={(e) => handleInputChange('name', e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                />
-              ) : (
-                <p className="text-gray-900 py-2 px-3 bg-gray-50 rounded-lg">{resident.name}</p>
-              )}
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Email</label>
-              <div className="flex items-center gap-2 py-2 px-3 bg-gray-50 rounded-lg">
-                <Mail className="w-4 h-4 text-gray-500" />
-                <span className="text-gray-900">{resident.email}</span>
-              </div>
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Phone Number</label>
-              {isEditing && !isVerified ? (
-                <input
-                  type="tel"
-                  value={editedResident.phone_number || ''}
-                  onChange={(e) => handleInputChange('phone_number', e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                />
-              ) : (
-                <div className="flex items-center gap-2 py-2 px-3 bg-gray-50 rounded-lg">
-                  <Phone className="w-4 h-4 text-gray-500" />
-                  <span className="text-gray-900">{resident.phone_number}</span>
-                </div>
-              )}
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Birth Date</label>
-              {isEditing && !isVerified ? (
-                <input
-                  type="date"
-                  value={editedResident.birth_date || ''}
-                  onChange={(e) => handleInputChange('birth_date', e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                />
-              ) : (
-                <div className="flex items-center gap-2 py-2 px-3 bg-gray-50 rounded-lg">
-                  <Baby className="w-4 h-4 text-gray-500" />
-                  <span className="text-gray-900">
-                    {resident.birth_date ? new Date(resident.birth_date).toLocaleDateString() : 'Not provided'}
-                  </span>
-                </div>
-              )}
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Gender</label>
-              {isEditing && !isVerified ? (
-                <select
-                  value={editedResident.gender || ''}
-                  onChange={(e) => handleInputChange('gender', e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                >
-                  <option value="">Select Gender</option>
-                  <option value="male">Male</option>
-                  <option value="female">Female</option>
-                </select>
-              ) : (
-                <p className="text-gray-900 py-2 px-3 bg-gray-50 rounded-lg">{resident.gender || 'Not provided'}</p>
-              )}
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Civil Status</label>
-              {isEditing && !isVerified ? (
-                <select
-                  value={editedResident.civil_status || ''}
-                  onChange={(e) => handleInputChange('civil_status', e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                >
-                  <option value="">Select Civil Status</option>
-                  <option value="single">Single</option>
-                  <option value="married">Married</option>
-                  <option value="widowed">Widowed</option>
-                  <option value="separated">Separated</option>
-                  <option value="divorced">Divorced</option>
-                </select>
-              ) : (
-                <div className="flex items-center gap-2 py-2 px-3 bg-gray-50 rounded-lg">
-                  <Heart className="w-4 h-4 text-gray-500" />
-                  <span className="text-gray-900">{resident.civil_status || 'Not provided'}</span>
-                </div>
-              )}
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Nationality</label>
-              {isEditing && !isVerified ? (
-                <input
-                  type="text"
-                  value={editedResident.nationality || ''}
-                  onChange={(e) => handleInputChange('nationality', e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                />
-              ) : (
-                <div className="flex items-center gap-2 py-2 px-3 bg-gray-50 rounded-lg">
-                  <Globe className="w-4 h-4 text-gray-500" />
-                  <span className="text-gray-900">{resident.nationality || 'Not provided'}</span>
-                </div>
-              )}
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Religion</label>
-              {isEditing && !isVerified ? (
-                <input
-                  type="text"
-                  value={editedResident.religion || ''}
-                  onChange={(e) => handleInputChange('religion', e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                />
-              ) : (
-                <div className="flex items-center gap-2 py-2 px-3 bg-gray-50 rounded-lg">
-                  <Church className="w-4 h-4 text-gray-500" />
-                  <span className="text-gray-900">{resident.religion || 'Not provided'}</span>
-                </div>
-              )}
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Occupation</label>
-              {isEditing && !isVerified ? (
-                <input
-                  type="text"
-                  value={editedResident.occupation || ''}
-                  onChange={(e) => handleInputChange('occupation', e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                />
-              ) : (
-                <div className="flex items-center gap-2 py-2 px-3 bg-gray-50 rounded-lg">
-                  <Briefcase className="w-4 h-4 text-gray-500" />
-                  <span className="text-gray-900">{resident.occupation || 'Not provided'}</span>
-                </div>
-              )}
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Monthly Income</label>
-              {isEditing && !isVerified ? (
-                <input
-                  type="text"
-                  value={editedResident.monthly_income || ''}
-                  onChange={(e) => handleInputChange('monthly_income', e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                />
-              ) : (
-                <div className="flex items-center gap-2 py-2 px-3 bg-gray-50 rounded-lg">
-                  <DollarSign className="w-4 h-4 text-gray-500" />
-                  <span className="text-gray-900">{resident.monthly_income || 'Not provided'}</span>
-                </div>
-              )}
-            </div>
-          </div>
-
-          <div className="mt-6">
-            <label className="block text-sm font-medium text-gray-700 mb-2">Address</label>
-            {isEditing && !isVerified ? (
-              <textarea
-                value={editedResident.address || ''}
-                onChange={(e) => handleInputChange('address', e.target.value)}
-                rows={3}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-              />
-            ) : (
-              <div className="flex items-start gap-2 py-2 px-3 bg-gray-50 rounded-lg">
-                <Home className="w-4 h-4 text-gray-500 mt-1" />
-                <span className="text-gray-900">{resident.address}</span>
-              </div>
-            )}
-          </div>
-
-          <div className="mt-6">
-            <label className="block text-sm font-medium text-gray-700 mb-2">Emergency Contact</label>
-            {isEditing && !isVerified ? (
-              <input
-                type="text"
-                value={editedResident.emergency_contact || ''}
-                onChange={(e) => handleInputChange('emergency_contact', e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-              />
-            ) : (
-              <div className="flex items-center gap-2 py-2 px-3 bg-gray-50 rounded-lg">
-                <UserCheck className="w-4 h-4 text-gray-500" />
-                <span className="text-gray-900">{resident.emergency_contact || 'Not provided'}</span>
-              </div>
-            )}
-          </div>
-        </div>
-
-        {/* House Location */}
-        <div className="bg-white rounded-lg border border-gray-200 p-6">
-          <h3 className="text-lg font-semibold text-gray-900 mb-6 flex items-center gap-2">
-            <MapPin className="w-5 h-5" />
-            House Location
-          </h3>
-          
-          <HouseholdMapPinning readonly={isVerified} />
-        </div>
+        )}
       </div>
-    );
-  };
-
-  if (loading) {
-    return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
-          <p className="text-gray-600">Loading your dashboard...</p>
-        </div>
-      </div>
-    );
-  }
-
-  if (!resident) {
-    return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="text-center">
-          <h2 className="text-2xl font-bold text-gray-900 mb-4">Resident Profile Not Found</h2>
-          <p className="text-gray-600">Please complete your registration first.</p>
-        </div>
-      </div>
-    );
-  }
+    </div>
+  );
 
   return (
-    <div className="min-h-screen bg-gray-50 flex">
-      {/* Sidebar */}
-      <div className={`fixed inset-y-0 left-0 z-50 w-64 bg-white border-r border-gray-200 transform ${
-        sidebarOpen ? 'translate-x-0' : '-translate-x-full'
-      } transition-transform duration-300 ease-in-out lg:translate-x-0 lg:static lg:inset-0`}>
-        <div className="flex flex-col h-full">
-          {/* Sidebar Header */}
-          <div className="flex items-center justify-between p-6 border-b border-gray-200">
-            <div className="flex items-center space-x-3">
-              <div className="w-10 h-10 bg-blue-600 rounded-lg flex items-center justify-center">
-                <Building2 className="h-6 w-6 text-white" />
-              </div>
-              <div>
-                <h2 className="text-lg font-semibold text-gray-900">Resident Portal</h2>
-                <p className="text-sm text-gray-600">Barangay San Miguel</p>
-              </div>
+    <div className="min-h-screen bg-gradient-to-br from-purple-50 to-blue-50">
+      <OfflineIndicator />
+      
+      {/* Header */}
+      <div className="bg-gradient-to-r from-purple-600 to-purple-700 text-white shadow-lg">
+        <div className="max-w-7xl mx-auto">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between p-6 space-y-4 sm:space-y-0">
+            <div>
+              <h1 className="text-2xl sm:text-3xl font-bold flex items-center">
+                <Building2 className="mr-3 h-8 w-8" />
+                Resident Portal
+              </h1>
+              <p className="text-purple-100 mt-2 text-sm sm:text-base">Welcome back, {user?.name}</p>
             </div>
-            <button
-              onClick={() => setSidebarOpen(false)}
-              className="lg:hidden text-gray-400 hover:text-gray-600"
-            >
-              <X className="h-6 w-6" />
-            </button>
-          </div>
-
-          {/* User Info */}
-          <div className="p-6 border-b border-gray-200">
-            <div className="flex items-center space-x-3">
-              <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center">
-                <span className="text-lg font-semibold text-blue-700">
-                  {resident.name.charAt(0)}
-                </span>
+            <div className="flex items-center space-x-2 sm:space-x-4">
+              <div className="text-right hidden sm:block">
+                <p className="text-purple-100 text-sm">Verification Status</p>
+                <p className="text-xs text-purple-200 capitalize">{user?.verificationStatus?.replace('-', ' ')}</p>
               </div>
-              <div className="flex-1 min-w-0">
-                <p className="text-sm font-medium text-gray-900 truncate">{resident.name}</p>
-                <p className="text-xs text-gray-500 truncate">{resident.email}</p>
-                <div className="flex items-center mt-1">
-                  {getVerificationStatusIcon(resident.verification_status || 'non-verified')}
-                  <span className="text-xs text-gray-600 ml-1 capitalize">
-                    {(resident.verification_status || 'non-verified').replace('-', ' ')}
-                  </span>
-                </div>
+              <div className="w-10 h-10 bg-purple-500 rounded-full flex items-center justify-center">
+                <User className="h-5 w-5 text-white" />
               </div>
+              <button
+                onClick={handleLogout}
+                className="flex items-center px-3 py-2 text-purple-200 hover:text-white hover:bg-purple-700 rounded-lg transition-colors"
+                title="Logout"
+              >
+                <LogOut className="h-5 w-5" />
+              </button>
             </div>
           </div>
+        </div>
+      </div>
 
-          {/* Navigation */}
-          <nav className="flex-1 p-4 space-y-1">
-            {menuItems.map((item) => {
-              const Icon = item.icon;
-              return (
-                <button
-                  key={item.id}
-                  onClick={() => {
-                    setActiveTab(item.id);
-                    setSidebarOpen(false);
-                  }}
-                  className={`w-full flex items-center gap-3 px-3 py-2 text-left rounded-lg transition-colors ${
-                    activeTab === item.id
-                      ? 'bg-blue-50 text-blue-700 border border-blue-200'
-                      : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
-                  }`}
-                >
-                  <Icon className="w-5 h-5" />
-                  <span className="font-medium">{item.label}</span>
-                </button>
-              );
-            })}
+      {/* Navigation Tabs */}
+      <div className="bg-white border-b shadow-sm">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <nav className="flex space-x-8 overflow-x-auto">
+            {[
+              { id: 'profile', label: 'My Profile', icon: User },
+              { id: 'verification', label: 'Verification', icon: Shield },
+              { id: 'location', label: 'House Location', icon: MapPin },
+              { id: 'qr-code', label: 'QR Code', icon: QrCode },
+              { id: 'documents', label: 'Documents', icon: FileText },
+              { id: 'complaints', label: 'Reports & Complaints', icon: MessageSquare },
+              { id: 'family', label: 'Family Tree', icon: Users }
+            ].map((tab) => (
+              <button
+                key={tab.id}
+                onClick={() => setActiveTab(tab.id)}
+                className={`flex items-center px-3 py-4 text-sm font-medium border-b-2 whitespace-nowrap ${
+                  activeTab === tab.id
+                    ? 'border-purple-500 text-purple-600'
+                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                }`}
+              >
+                <tab.icon className="h-4 w-4 mr-2" />
+                {tab.label}
+              </button>
+            ))}
           </nav>
-
-          {/* Logout */}
-          <div className="p-4 border-t border-gray-200">
-            <button
-              onClick={logout}
-              className="w-full flex items-center gap-3 px-3 py-2 text-left rounded-lg text-red-600 hover:bg-red-50 transition-colors"
-            >
-              <LogOut className="w-5 h-5" />
-              <span className="font-medium">Logout</span>
-            </button>
-          </div>
         </div>
       </div>
 
       {/* Main Content */}
-      <div className="flex-1 lg:ml-0">
-        {/* Mobile Header */}
-        <div className="lg:hidden bg-white border-b border-gray-200 p-4">
-          <div className="flex items-center justify-between">
-            <button
-              onClick={() => setSidebarOpen(true)}
-              className="text-gray-600 hover:text-gray-900"
-            >
-              <Menu className="h-6 w-6" />
-            </button>
-            <h1 className="text-lg font-semibold text-gray-900">Resident Dashboard</h1>
-            <div className="w-6 h-6"></div>
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        {activeTab === 'profile' && renderProfile()}
+        {activeTab === 'verification' && <VerificationStatus />}
+        {activeTab === 'location' && <HouseholdMapPinning />}
+        {activeTab === 'qr-code' && <QRCodeDisplay />}
+        {activeTab === 'documents' && (
+          <div className="space-y-6">
+            <h2 className="text-2xl font-semibold text-gray-900">Document Requests</h2>
+            <OfflineDocumentForm />
           </div>
-        </div>
-
-        {/* Content Area */}
-        <div className="p-6">
-          {activeTab === 'overview' && <ResidentOverview />}
-          {activeTab === 'profile' && <ResidentProfile />}
-          
-          {activeTab === 'documents' && (
-            <div className="space-y-6">
-              <div>
-                <h1 className="text-2xl font-bold text-gray-900">My Documents</h1>
-                <p className="text-gray-600 mt-1">Track your document requests and status</p>
-              </div>
-              
-              <div className="bg-white rounded-lg border border-gray-200">
-                {documents.length === 0 ? (
-                  <div className="text-center py-12">
-                    <FileText className="h-12 w-12 text-gray-300 mx-auto mb-4" />
-                    <p className="text-gray-500">No documents found.</p>
-                  </div>
-                ) : (
-                  <div className="overflow-x-auto">
-                    <table className="min-w-full divide-y divide-gray-200">
-                      <thead className="bg-gray-50">
-                        <tr>
-                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                            Document Type
-                          </th>
-                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                            Status
-                          </th>
-                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                            Requested Date
-                          </th>
-                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                            Fee
-                          </th>
-                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                            Payment Status
-                          </th>
-                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                            Tracking Number
-                          </th>
-                        </tr>
-                      </thead>
-                      <tbody className="bg-white divide-y divide-gray-200">
-                        {documents.map((doc) => (
-                          <tr key={doc.id}>
-                            <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                              {doc.document_type}
-                            </td>
-                            <td className="px-6 py-4 whitespace-nowrap">
-                              <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getStatusColor(doc.status)}`}>
-                                {doc.status}
-                              </span>
-                            </td>
-                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                              {new Date(doc.requested_date).toLocaleDateString()}
-                            </td>
-                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                              ₱{doc.fee.toFixed(2)}
-                            </td>
-                            <td className="px-6 py-4 whitespace-nowrap">
-                              <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getStatusColor(doc.payment_status)}`}>
-                                {doc.payment_status}
-                              </span>
-                            </td>
-                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                              {doc.tracking_number || 'N/A'}
-                            </td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </div>
-                )}
-              </div>
-            </div>
-          )}
-
-          {activeTab === 'appointments' && (
-            <div className="space-y-6">
-              <div>
-                <h1 className="text-2xl font-bold text-gray-900">My Appointments</h1>
-                <p className="text-gray-600 mt-1">View and manage your scheduled appointments</p>
-              </div>
-              
-              <div className="bg-white rounded-lg border border-gray-200">
-                {appointments.length === 0 ? (
-                  <div className="text-center py-12">
-                    <Calendar className="h-12 w-12 text-gray-300 mx-auto mb-4" />
-                    <p className="text-gray-500">No appointments found.</p>
-                  </div>
-                ) : (
-                  <div className="overflow-x-auto">
-                    <table className="min-w-full divide-y divide-gray-200">
-                      <thead className="bg-gray-50">
-                        <tr>
-                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                            Service
-                          </th>
-                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                            Date
-                          </th>
-                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                            Time
-                          </th>
-                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                            Status
-                          </th>
-                        </tr>
-                      </thead>
-                      <tbody className="bg-white divide-y divide-gray-200">
-                        {appointments.map((appointment) => (
-                          <tr key={appointment.id}>
-                            <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                              {appointment.service}
-                            </td>
-                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                              {new Date(appointment.appointment_date).toLocaleDateString()}
-                            </td>
-                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                              {appointment.appointment_time}
-                            </td>
-                            <td className="px-6 py-4 whitespace-nowrap">
-                              <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getStatusColor(appointment.status)}`}>
-                                {appointment.status}
-                              </span>
-                            </td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </div>
-                )}
-              </div>
-            </div>
-          )}
-
-          {activeTab === 'incidents' && (
-            <div className="space-y-6">
-              <div>
-                <h1 className="text-2xl font-bold text-gray-900">My Incidents</h1>
-                <p className="text-gray-600 mt-1">Track your reported incidents and complaints</p>
-              </div>
-              
-              <div className="bg-white rounded-lg border border-gray-200">
-                {incidents.length === 0 ? (
-                  <div className="text-center py-12">
-                    <AlertTriangle className="h-12 w-12 text-gray-300 mx-auto mb-4" />
-                    <p className="text-gray-500">No incidents found.</p>
-                  </div>
-                ) : (
-                  <div className="overflow-x-auto">
-                    <table className="min-w-full divide-y divide-gray-200">
-                      <thead className="bg-gray-50">
-                        <tr>
-                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                            Type
-                          </th>
-                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                            Subject
-                          </th>
-                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                            Status
-                          </th>
-                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                            Priority
-                          </th>
-                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                            Date Submitted
-                          </th>
-                        </tr>
-                      </thead>
-                      <tbody className="bg-white divide-y divide-gray-200">
-                        {incidents.map((incident) => (
-                          <tr key={incident.id}>
-                            <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                              {incident.incident_type}
-                            </td>
-                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                              {incident.subject}
-                            </td>
-                            <td className="px-6 py-4 whitespace-nowrap">
-                              <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getStatusColor(incident.status)}`}>
-                                {incident.status}
-                              </span>
-                            </td>
-                            <td className="px-6 py-4 whitespace-nowrap">
-                              <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getStatusColor(incident.priority)}`}>
-                                {incident.priority}
-                              </span>
-                            </td>
-                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                              {new Date(incident.date_submitted).toLocaleDateString()}
-                            </td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </div>
-                )}
-              </div>
-            </div>
-          )}
-
-          {activeTab === 'family' && (
-            <div className="space-y-6">
-              <div>
-                <h1 className="text-2xl font-bold text-gray-900">Family Tree</h1>
-                <p className="text-gray-600 mt-1">Manage your family member information</p>
-              </div>
-              
-              <div className="bg-white rounded-lg border border-gray-200 p-6">
-                <FamilyTreeView />
-              </div>
-            </div>
-          )}
-
-          {activeTab === 'qr-code' && (
-            <div className="space-y-6">
-              <div>
-                <h1 className="text-2xl font-bold text-gray-900">My QR Code</h1>
-                <p className="text-gray-600 mt-1">Your digital identification for barangay services</p>
-              </div>
-              
-              <div className="bg-white rounded-lg border border-gray-200 p-6">
-                <QRCodeDisplay />
-              </div>
-            </div>
-          )}
-        </div>
+        )}
+        
+        {activeTab === 'incidents' && (
+          <div className="space-y-6">
+            <h2 className="text-2xl font-semibold text-gray-900">Report Incident</h2>
+            <OfflineIncidentForm />
+          </div>
+        )}
+        {activeTab === 'complaints' && renderComplaints()}
+        {activeTab === 'family' && <FamilyTreeView />}
       </div>
 
-      {/* Overlay for mobile */}
-      {sidebarOpen && (
-        <div 
-          className="fixed inset-0 bg-black bg-opacity-50 z-40 lg:hidden"
-          onClick={() => setSidebarOpen(false)}
-        />
+      {/* Document Request Modal */}
+      {showDocumentRequest && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-lg p-6 w-full max-w-2xl max-h-[90vh] overflow-y-auto">
+            <div className="flex items-center justify-between mb-6">
+              <h3 className="text-lg font-semibold">Request Document</h3>
+              <button
+                onClick={() => setShowDocumentRequest(false)}
+                className="text-gray-400 hover:text-gray-600"
+              >
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+            
+            <form onSubmit={handleDocumentRequest} className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Document Type</label>
+                <select
+                  value={documentRequest.documentType}
+                  onChange={(e) => setDocumentRequest({...documentRequest, documentType: e.target.value})}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  required
+                >
+                  <option value="">Select document type</option>
+                  <option value="Barangay Clearance">Barangay Clearance (₱50)</option>
+                  <option value="Certificate of Residency">Certificate of Residency (₱30)</option>
+                  <option value="Certificate of Indigency">Certificate of Indigency (₱25)</option>
+                  <option value="Business Permit">Business Permit (₱200)</option>
+                  <option value="Building Permit">Building Permit (₱500)</option>
+                  <option value="Cedula">Cedula (₱35)</option>
+                  <option value="Community Tax Certificate">Community Tax Certificate (₱35)</option>
+                  <option value="Barangay ID">Barangay ID (₱100)</option>
+                </select>
+              </div>
+              
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Purpose</label>
+                <input
+                  type="text"
+                  value={documentRequest.purpose}
+                  onChange={(e) => setDocumentRequest({...documentRequest, purpose: e.target.value})}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  placeholder="e.g., Employment requirement, School enrollment"
+                  required
+                />
+              </div>
+              
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Quantity</label>
+                  <input
+                    type="number"
+                    min="1"
+                    max="10"
+                    value={documentRequest.quantity}
+                    onChange={(e) => setDocumentRequest({...documentRequest, quantity: parseInt(e.target.value)})}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Urgency</label>
+                  <select
+                    value={documentRequest.urgency}
+                    onChange={(e) => setDocumentRequest({...documentRequest, urgency: e.target.value})}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  >
+                    <option value="regular">Regular (3-5 days)</option>
+                    <option value="rush">Rush (1-2 days) +₱20</option>
+                    <option value="express">Express (Same day) +₱50</option>
+                  </select>
+                </div>
+              </div>
+              
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Additional Notes</label>
+                <textarea
+                  value={documentRequest.notes}
+                  onChange={(e) => setDocumentRequest({...documentRequest, notes: e.target.value})}
+                  rows={3}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  placeholder="Any special instructions or requirements"
+                />
+              </div>
+              
+              <div className="bg-blue-50 p-4 rounded-lg">
+                <h4 className="font-semibold text-blue-800 mb-2">Fee Summary</h4>
+                <div className="text-sm text-blue-700">
+                  <p>Document Fee: ₱{documentRequest.documentType ? getDocumentFee(documentRequest.documentType) : 0}</p>
+                  <p>Quantity: {documentRequest.quantity}</p>
+                  <p>Urgency Fee: ₱{documentRequest.urgency === 'rush' ? 20 : documentRequest.urgency === 'express' ? 50 : 0}</p>
+                  <hr className="my-2 border-blue-200" />
+                  <p className="font-semibold">Total: ₱{
+                    (documentRequest.documentType ? getDocumentFee(documentRequest.documentType) : 0) * documentRequest.quantity +
+                    (documentRequest.urgency === 'rush' ? 20 : documentRequest.urgency === 'express' ? 50 : 0)
+                  }</p>
+                </div>
+              </div>
+              
+              <div className="flex justify-end space-x-3">
+                <button
+                  type="button"
+                  onClick={() => setShowDocumentRequest(false)}
+                  className="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+                >
+                  Submit Request
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Incident Report Modal */}
+      {showIncidentReport && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-lg p-6 w-full max-w-3xl max-h-[90vh] overflow-y-auto">
+            <div className="flex items-center justify-between mb-6">
+              <h3 className="text-lg font-semibold">File Incident Report</h3>
+              <button
+                onClick={() => setShowIncidentReport(false)}
+                className="text-gray-400 hover:text-gray-600"
+              >
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+            
+            <form onSubmit={handleIncidentReport} className="space-y-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Incident Type</label>
+                  <select
+                    value={incidentReport.type}
+                    onChange={(e) => setIncidentReport({...incidentReport, type: e.target.value})}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-red-500"
+                    required
+                  >
+                    <option value="">Select incident type</option>
+                    <option value="noise">Noise Complaint</option>
+                    <option value="garbage">Garbage/Sanitation</option>
+                    <option value="road">Road/Infrastructure</option>
+                    <option value="water">Water Issues</option>
+                    <option value="electricity">Electrical Problems</option>
+                    <option value="security">Security Concerns</option>
+                    <option value="dispute">Neighbor Dispute</option>
+                    <option value="vandalism">Vandalism</option>
+                    <option value="theft">Theft/Robbery</option>
+                    <option value="other">Other</option>
+                  </select>
+                </div>
+                
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Priority Level</label>
+                  <select
+                    value={incidentReport.priority}
+                    onChange={(e) => setIncidentReport({...incidentReport, priority: e.target.value})}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-red-500"
+                  >
+                    <option value="low">Low - Non-urgent</option>
+                    <option value="medium">Medium - Moderate concern</option>
+                    <option value="high">High - Urgent attention needed</option>
+                  </select>
+                </div>
+              </div>
+              
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Subject/Title</label>
+                <input
+                  type="text"
+                  value={incidentReport.subject}
+                  onChange={(e) => setIncidentReport({...incidentReport, subject: e.target.value})}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-red-500"
+                  placeholder="Brief description of the incident"
+                  required
+                />
+              </div>
+              
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Detailed Description</label>
+                <textarea
+                  value={incidentReport.description}
+                  onChange={(e) => setIncidentReport({...incidentReport, description: e.target.value})}
+                  rows={4}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-red-500"
+                  placeholder="Provide detailed information about the incident"
+                  required
+                />
+              </div>
+              
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Location</label>
+                <input
+                  type="text"
+                  value={incidentReport.location}
+                  onChange={(e) => setIncidentReport({...incidentReport, location: e.target.value})}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-red-500"
+                  placeholder="Exact location where incident occurred"
+                  required
+                />
+              </div>
+              
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Date Occurred</label>
+                  <input
+                    type="date"
+                    value={incidentReport.dateOccurred}
+                    onChange={(e) => setIncidentReport({...incidentReport, dateOccurred: e.target.value})}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-red-500"
+                    max={new Date().toISOString().split('T')[0]}
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Time Occurred</label>
+                  <input
+                    type="time"
+                    value={incidentReport.timeOccurred}
+                    onChange={(e) => setIncidentReport({...incidentReport, timeOccurred: e.target.value})}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-red-500"
+                  />
+                </div>
+              </div>
+              
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Witness Name (Optional)</label>
+                  <input
+                    type="text"
+                    value={incidentReport.witnessName}
+                    onChange={(e) => setIncidentReport({...incidentReport, witnessName: e.target.value})}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-red-500"
+                    placeholder="Name of witness"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Witness Contact (Optional)</label>
+                  <input
+                    type="tel"
+                    value={incidentReport.witnessContact}
+                    onChange={(e) => setIncidentReport({...incidentReport, witnessContact: e.target.value})}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-red-500"
+                    placeholder="Contact number of witness"
+                  />
+                </div>
+              </div>
+              
+              <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+                <h4 className="font-semibold text-yellow-800 mb-2">Important Notice</h4>
+                <ul className="text-sm text-yellow-700 space-y-1">
+                  <li>• All incident reports are reviewed by barangay officials</li>
+                  <li>• False reporting may result in legal consequences</li>
+                  <li>• You will be contacted for follow-up if needed</li>
+                  <li>• Emergency situations should be reported to authorities immediately</li>
+                </ul>
+              </div>
+              
+              <div className="flex justify-end space-x-3">
+                <button
+                  type="button"
+                  onClick={() => setShowIncidentReport(false)}
+                  className="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700"
+                >
+                  Submit Report
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Document Details Modal */}
+      {selectedDocument && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-lg p-6 w-full max-w-lg">
+            <div className="flex items-center justify-between mb-6">
+              <h3 className="text-lg font-semibold">Document Details</h3>
+              <button
+                onClick={() => setSelectedDocument(null)}
+                className="text-gray-400 hover:text-gray-600"
+              >
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+            
+            <div className="space-y-4">
+              <div>
+                <label className="text-sm font-medium text-gray-700">Document Type</label>
+                <p className="text-gray-900">{selectedDocument.documentType}</p>
+              </div>
+              <div>
+                <label className="text-sm font-medium text-gray-700">Purpose</label>
+                <p className="text-gray-900">{selectedDocument.purpose}</p>
+              </div>
+              <div>
+                <label className="text-sm font-medium text-gray-700">Status</label>
+                <span className={`px-2 py-1 text-xs font-semibold rounded-full ${
+                  selectedDocument.status === 'released' ? 'bg-purple-100 text-purple-800' :
+                  selectedDocument.status === 'ready' ? 'bg-green-100 text-green-800' :
+                  selectedDocument.status === 'processing' ? 'bg-blue-100 text-blue-800' :
+                  selectedDocument.status === 'pending' ? 'bg-yellow-100 text-yellow-800' :
+                  'bg-red-100 text-red-800'
+                }`}>
+                  {selectedDocument.status.toUpperCase()}
+                </span>
+              </div>
+              <div>
+                <label className="text-sm font-medium text-gray-700">Fee</label>
+                <p className="text-gray-900">₱{selectedDocument.fee}</p>
+              </div>
+              <div>
+                <label className="text-sm font-medium text-gray-700">Date Requested</label>
+                <p className="text-gray-900">{selectedDocument.requestedDate}</p>
+              </div>
+              {selectedDocument.notes && (
+                <div>
+                  <label className="text-sm font-medium text-gray-700">Notes</label>
+                  <p className="text-gray-900">{selectedDocument.notes}</p>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Complaint Details Modal */}
+      {selectedComplaint && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-lg p-6 w-full max-w-2xl">
+            <div className="flex items-center justify-between mb-6">
+              <h3 className="text-lg font-semibold">Incident Report Details</h3>
+              <button
+                onClick={() => setSelectedComplaint(null)}
+                className="text-gray-400 hover:text-gray-600"
+              >
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+            
+            <div className="space-y-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label className="text-sm font-medium text-gray-700">Type</label>
+                  <p className="text-gray-900 capitalize">{selectedComplaint.type}</p>
+                </div>
+                <div>
+                  <label className="text-sm font-medium text-gray-700">Priority</label>
+                  <span className={`px-2 py-1 text-xs font-semibold rounded-full ${
+                    selectedComplaint.priority === 'high' ? 'bg-red-100 text-red-800' :
+                    selectedComplaint.priority === 'medium' ? 'bg-yellow-100 text-yellow-800' :
+                    'bg-green-100 text-green-800'
+                  }`}>
+                    {selectedComplaint.priority.toUpperCase()}
+                  </span>
+                </div>
+              </div>
+              
+              <div>
+                <label className="text-sm font-medium text-gray-700">Subject</label>
+                <p className="text-gray-900">{selectedComplaint.subject}</p>
+              </div>
+              
+              <div>
+                <label className="text-sm font-medium text-gray-700">Description</label>
+                <p className="text-gray-900">{selectedComplaint.description}</p>
+              </div>
+              
+              <div>
+                <label className="text-sm font-medium text-gray-700">Location</label>
+                <p className="text-gray-900">{selectedComplaint.location}</p>
+              </div>
+              
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label className="text-sm font-medium text-gray-700">Date Submitted</label>
+                  <p className="text-gray-900">{selectedComplaint.dateSubmitted}</p>
+                </div>
+                <div>
+                  <label className="text-sm font-medium text-gray-700">Status</label>
+                  <span className={`px-2 py-1 text-xs font-semibold rounded-full ${
+                    selectedComplaint.status === 'resolved' ? 'bg-green-100 text-green-800' :
+                    selectedComplaint.status === 'investigating' ? 'bg-blue-100 text-blue-800' :
+                    'bg-yellow-100 text-yellow-800'
+                  }`}>
+                    {selectedComplaint.status.toUpperCase()}
+                  </span>
+                </div>
+              </div>
+              
+              {selectedComplaint.assignedTo && (
+                <div>
+                  <label className="text-sm font-medium text-gray-700">Assigned To</label>
+                  <p className="text-gray-900">{selectedComplaint.assignedTo}</p>
+                </div>
+              )}
+              
+              {selectedComplaint.resolution && (
+                <div className="bg-green-50 border border-green-200 rounded-lg p-4">
+                  <label className="text-sm font-medium text-green-800">Resolution</label>
+                  <p className="text-green-700 mt-1">{selectedComplaint.resolution}</p>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );
-};
-
-export default ResidentDashboard;
+}
