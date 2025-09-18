@@ -19,9 +19,14 @@ export function useRealTimeData<T>(
       setData(result)
       setLastSync(new Date())
     } catch (err: any) {
-      // Special handling for missing tables (like incidents)
-      if (err.code === 'PGRST205' || err.message?.includes('Could not find the table')) {
+      // Special handling for missing tables and connection errors
+      if (err.code === 'PGRST205' || err.message?.includes('Could not find the table') || err.message?.includes('relation') && err.message?.includes('does not exist')) {
         console.warn(`Table ${tableName} not found, using empty data`)
+        setData([])
+        setLastSync(new Date())
+        setError(null) // Clear error since we're handling it gracefully
+      } else if (err.name === 'TypeError' && err.message?.includes('Failed to fetch')) {
+        console.warn(`Network error fetching ${tableName}, using empty data`)
         setData([])
         setLastSync(new Date())
         setError(null) // Clear error since we're handling it gracefully

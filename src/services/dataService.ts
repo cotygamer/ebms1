@@ -380,6 +380,41 @@ export class DataService {
 
   // Projects Management
   static async getProjects() {
+    try {
+      const { data, error } = await supabase
+        .from('projects')
+        .select(`
+          *,
+          project_achievements (
+            id,
+            achievement,
+            date_achieved,
+            description
+          )
+        `)
+        .order('created_at', { ascending: false })
+      
+      if (error) {
+        // Handle missing table gracefully
+        if (error.code === 'PGRST205' || error.message?.includes('Could not find the table') || error.message?.includes('relation') && error.message?.includes('does not exist')) {
+          console.warn('Projects table not found, returning empty array')
+          return []
+        }
+        throw error
+      }
+      return data || []
+    } catch (error) {
+      // Handle network errors and other issues
+      if (error?.name === 'TypeError' && error?.message?.includes('Failed to fetch')) {
+        console.warn('Network error fetching projects, returning empty array')
+        return []
+      }
+      console.error('Error fetching projects:', error)
+      return []
+    }
+  }
+
+  static async getProjects_old() {
     const { data, error } = await supabase
       .from('projects')
       .select(`
