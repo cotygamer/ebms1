@@ -527,7 +527,7 @@ export class DataService {
 
     const { data, error } = await supabase
       .from('system_settings')
-      .upsert(updates)
+      .upsert(updates, { onConflict: 'key' })
       .select()
     
     if (error) throw error
