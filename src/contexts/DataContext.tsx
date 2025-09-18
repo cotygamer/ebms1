@@ -325,7 +325,6 @@ interface User {
   id: string;
   name: string;
   email: string;
-  role: 'super-admin' | 'barangay-official' | 'resident' | 'medical-portal' | 'accounting-portal' | 'disaster-portal';
   role: 'super-admin' | 'barangay-official' | 'resident' | 'medical-portal' | 'accounting-portal' | 'disaster-portal' | 'peace-order-portal';
   status: 'active' | 'inactive' | 'suspended';
   phone_number?: string;
