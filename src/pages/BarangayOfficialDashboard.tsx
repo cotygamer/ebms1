@@ -184,8 +184,6 @@ export default function BarangayOfficialDashboard() {
           </div>
         </div>
         
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
         <div className="bg-white rounded-lg shadow-sm p-6">
           <div className="flex items-center justify-between">
             <div>
@@ -594,6 +592,17 @@ export default function BarangayOfficialDashboard() {
             </div>
           </button>
           
+          <button
+            onClick={() => setActiveTab('location-verification')}
+            className="flex items-center p-4 bg-purple-50 rounded-lg hover:bg-purple-100 transition-colors"
+          >
+            <MapPin className="h-8 w-8 text-purple-600 mr-3" />
+            <div className="text-left">
+              <h4 className="font-semibold text-gray-900">Verify Locations</h4>
+              <p className="text-sm text-gray-600">Review house locations</p>
+            </div>
+          </button>
+          
           <button className="flex items-center p-4 bg-purple-50 rounded-lg hover:bg-purple-100 transition-colors">
             <FileText className="h-8 w-8 text-purple-600 mr-3" />
             <div className="text-left">
@@ -658,6 +667,18 @@ export default function BarangayOfficialDashboard() {
         return <ResidentManagement />;
       case 'kyc-verification':
         return <KYCVerificationCenter />;
+      case 'location-verification':
+        return (
+          <LocationVerificationMap
+            locations={[]}
+            onVerifyLocation={(locationId, status, notes) => {
+              console.log('Verify location:', locationId, status, notes);
+            }}
+            onViewDetails={(location) => {
+              console.log('View location details:', location);
+            }}
+          />
+        );
       case 'data-sync':
         return <DataSyncMonitor />;
       case 'complaints':
@@ -716,6 +737,7 @@ export default function BarangayOfficialDashboard() {
               { id: 'dashboard', label: 'Dashboard', icon: Activity },
               { id: 'residents', label: 'Residents', icon: Users },
               { id: 'kyc-verification', label: 'KYC Verification', icon: UserCheck },
+              { id: 'location-verification', label: 'Location Verification', icon: MapPin },
               { id: 'data-sync', label: 'Data Sync', icon: Database },
               { id: 'complaints', label: 'Complaints & Blotter', icon: AlertTriangle },
               { id: 'documents', label: 'Documents', icon: FileText },
