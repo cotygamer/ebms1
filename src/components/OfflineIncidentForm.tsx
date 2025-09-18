@@ -92,41 +92,39 @@ export default function OfflineIncidentForm() {
   };
 
   return (
-    <div className="bg-white rounded-lg shadow-md p-6">
-      <div className="flex items-center justify-between mb-4">
-        <h3 className="text-lg font-semibold text-gray-900 flex items-center">
-          <AlertTriangle className="h-5 w-5 mr-2" />
-          Report Incident
-        </h3>
-        {!isOnline && (
-          <div className="flex items-center text-red-600 text-sm">
-            <WifiOff className="h-4 w-4 mr-1" />
-            Offline Mode
-          </div>
-        )}
+    <div className="space-y-6">
+      <div className="text-center">
+        <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
+          <AlertTriangle className="h-8 w-8 text-red-600" />
+        </div>
+        <h3 className="text-xl font-semibold text-gray-900 mb-2">Report New Incident</h3>
+        <p className="text-gray-600">Help us maintain community safety by reporting incidents</p>
       </div>
 
       {!isOnline && (
-        <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3 mb-4">
+        <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 mb-6">
           <div className="flex items-center">
-            <AlertTriangle className="h-4 w-4 text-yellow-600 mr-2" />
-            <span className="text-sm text-yellow-800">
-              You're offline. Your report will be saved and submitted when connection is restored.
-            </span>
+            <WifiOff className="h-5 w-5 text-yellow-600 mr-3" />
+            <div>
+              <h4 className="font-medium text-yellow-800">Offline Mode</h4>
+              <p className="text-sm text-yellow-700">
+                Your report will be saved and submitted when connection is restored.
+              </p>
+            </div>
           </div>
         </div>
       )}
 
-      <form onSubmit={handleSubmit} className="space-y-4">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <form onSubmit={handleSubmit} className="space-y-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
+            <label className="block text-sm font-medium text-gray-700 mb-3">
               Incident Type *
             </label>
             <select
               value={formData.incidentType}
               onChange={(e) => setFormData({ ...formData, incidentType: e.target.value })}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
               required
             >
               <option value="">Select incident type</option>
@@ -137,13 +135,13 @@ export default function OfflineIncidentForm() {
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
+            <label className="block text-sm font-medium text-gray-700 mb-3">
               Priority
             </label>
             <select
               value={formData.priority}
               onChange={(e) => setFormData({ ...formData, priority: e.target.value as any })}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
             >
               <option value="low">Low</option>
               <option value="medium">Medium</option>
@@ -153,71 +151,71 @@ export default function OfflineIncidentForm() {
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">
+          <label className="block text-sm font-medium text-gray-700 mb-3">
             Subject *
           </label>
           <input
             type="text"
             value={formData.subject}
             onChange={(e) => setFormData({ ...formData, subject: e.target.value })}
-            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
             placeholder="Brief description of the incident"
             required
           />
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">
+          <label className="block text-sm font-medium text-gray-700 mb-3">
             Description *
           </label>
           <textarea
             value={formData.description}
             onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-            rows={4}
-            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-            placeholder="Detailed description of what happened"
+            rows={5}
+            className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+            placeholder="Provide a detailed description of what happened, including any relevant circumstances..."
             required
           />
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">
+          <label className="block text-sm font-medium text-gray-700 mb-3">
             Location
           </label>
           <div className="relative">
-            <MapPin className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
+            <MapPin className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400 h-5 w-5" />
             <input
               type="text"
               value={formData.location}
               onChange={(e) => setFormData({ ...formData, location: e.target.value })}
-              className="w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full pl-12 pr-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
               placeholder="Where did this incident occur?"
             />
           </div>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
+            <label className="block text-sm font-medium text-gray-700 mb-3">
               Date Occurred
             </label>
             <input
               type="date"
               value={formData.dateOccurred}
               onChange={(e) => setFormData({ ...formData, dateOccurred: e.target.value })}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
             />
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
+            <label className="block text-sm font-medium text-gray-700 mb-3">
               Time Occurred
             </label>
             <input
               type="time"
               value={formData.timeOccurred}
               onChange={(e) => setFormData({ ...formData, timeOccurred: e.target.value })}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
             />
           </div>
         </div>
@@ -225,29 +223,39 @@ export default function OfflineIncidentForm() {
         <button
           type="submit"
           disabled={isSubmitting || !formData.incidentType || !formData.subject || !formData.description}
-          className="w-full flex items-center justify-center px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed"
+          className="w-full flex items-center justify-center px-6 py-4 bg-red-600 text-white rounded-lg hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors font-medium text-lg"
         >
           {isSubmitting ? (
-            <Upload className="h-4 w-4 mr-2 animate-pulse" />
+            <>
+              <RefreshCw className="h-5 w-5 mr-3 animate-spin" />
+              Submitting Report...
+            </>
           ) : (
-            <Upload className="h-4 w-4 mr-2" />
+            <>
+              <Upload className="h-5 w-5 mr-3" />
+              {isOnline ? 'Submit Report' : 'Save Offline'}
+            </>
           )}
-          {isSubmitting ? 'Submitting...' : isOnline ? 'Submit Report' : 'Save Offline'}
         </button>
 
         {submitMessage && (
-          <div className={`p-3 rounded-lg ${
+          <div className={`p-4 rounded-lg ${
             submitMessage.includes('successfully') || submitMessage.includes('saved offline')
               ? 'bg-green-50 border border-green-200 text-green-700'
               : 'bg-red-50 border border-red-200 text-red-700'
           }`}>
-            <div className="flex items-center">
+            <div className="flex items-center space-x-3">
               {submitMessage.includes('successfully') || submitMessage.includes('saved offline') ? (
-                <CheckCircle className="h-4 w-4 mr-2" />
+                <CheckCircle className="h-5 w-5" />
               ) : (
-                <AlertTriangle className="h-4 w-4 mr-2" />
+                <AlertTriangle className="h-5 w-5" />
               )}
-              {submitMessage}
+              <div>
+                <h4 className="font-medium">
+                  {submitMessage.includes('successfully') || submitMessage.includes('saved offline') ? 'Success!' : 'Error'}
+                </h4>
+                <p className="text-sm">{submitMessage}</p>
+              </div>
             </div>
           </div>
         )}
