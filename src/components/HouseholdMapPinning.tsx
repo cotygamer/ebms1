@@ -1,7 +1,23 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { useData } from '../contexts/DataContext';
-import { MapPin, Save, Navigation, Target, Home, CheckCircle, AlertTriangle, Crosshair, RotateCcw, ZoomIn, ZoomOut, Layers, Satellite, Map as MapIcon, X, Camera, Upload, Eye } from 'lucide-react';
+import GoogleMapComponent from './GoogleMapComponent';
+import { 
+  MapPin, 
+  Save, 
+  Navigation, 
+  Target, 
+  Home, 
+  CheckCircle, 
+  AlertTriangle, 
+  RotateCcw, 
+  Crosshair,
+  Smartphone,
+  Edit,
+  Eye,
+  Clock,
+  Shield
+} from 'lucide-react';
 
 interface HouseLocation {
   lat: number;
@@ -13,30 +29,18 @@ interface HouseLocation {
   verificationDate?: string;
 }
 
-interface MapProps {
-  onLocationSelect: (location: HouseLocation) => void;
-  initialLocation?: HouseLocation;
-  readonly?: boolean;
-}
-
 export default function HouseholdMapPinning() {
   const { user, updateUser } = useAuth();
-  const { updateResident } = useData();
+  const { updateResident, systemSettings } = useData();
   const [selectedLocation, setSelectedLocation] = useState<HouseLocation | null>(
     user?.houseLocation || null
   );
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
-  const [mapType, setMapType] = useState<'roadmap' | 'satellite' | 'hybrid'>('roadmap');
-  const [zoom, setZoom] = useState(16);
   const [showConfirmation, setShowConfirmation] = useState(false);
   const [currentPosition, setCurrentPosition] = useState<{lat: number, lng: number} | null>(null);
-  const [addressSuggestions, setAddressSuggestions] = useState<string[]>([]);
   const [manualAddress, setManualAddress] = useState('');
-
-  // Default coordinates for Barangay San Miguel, Metro Manila
-  const defaultCenter = { lat: 14.5995, lng: 120.9842 };
 
   useEffect(() => {
     // Get user's current location for better map centering
@@ -50,20 +54,21 @@ export default function HouseholdMapPinning() {
         },
         (error) => {
           console.warn('Geolocation error:', error);
-          setCurrentPosition(defaultCenter);
         },
         { enableHighAccuracy: true, timeout: 10000, maximumAge: 300000 }
       );
-    } else {
-      setCurrentPosition(defaultCenter);
     }
   }, []);
 
-  const handleLocationSelect = useCallback((location: HouseLocation) => {
-    setSelectedLocation(location);
+  const handleLocationSelect = (location: { lat: number; lng: number; address: string }) => {
+    const locationData: HouseLocation = {
+      ...location,
+      timestamp: new Date().toISOString()
+    };
+    setSelectedLocation(locationData);
     setError('');
     setSuccess('');
-  }, []);
+  };
 
   const handleSaveLocation = async () => {
     if (!selectedLocation) {
@@ -111,10 +116,10 @@ export default function HouseholdMapPinning() {
       setIsLoading(true);
       navigator.geolocation.getCurrentPosition(
         async (position) => {
-          const location: HouseLocation = {
+          const location = {
             lat: position.coords.latitude,
             lng: position.coords.longitude,
-            address: await reverseGeocode(position.coords.latitude, position.coords.longitude),
+            address: `${position.coords.latitude.toFixed(6)}, ${position.coords.longitude.toFixed(6)}`,
             accuracy: position.coords.accuracy,
             timestamp: new Date().toISOString()
           };
@@ -130,16 +135,6 @@ export default function HouseholdMapPinning() {
     }
   };
 
-  const reverseGeocode = async (lat: number, lng: number): Promise<string> => {
-    try {
-      // In a real app, you would use Google Maps Geocoding API
-      // For demo purposes, we'll generate a realistic address
-      return `${Math.floor(Math.random() * 999) + 1} Main Street, Purok ${Math.floor(Math.random() * 8) + 1}, Barangay San Miguel, Metro Manila`;
-    } catch (error) {
-      return `Lat: ${lat.toFixed(6)}, Lng: ${lng.toFixed(6)}`;
-    }
-  };
-
   const getVerificationStatusColor = () => {
     if (selectedLocation) {
       return user?.verificationStatus === 'verified' ? 'border-green-500 bg-green-50' :
@@ -148,6 +143,26 @@ export default function HouseholdMapPinning() {
     }
     return 'border-red-500 bg-red-50';
   };
+
+  if (!systemSettings.googleMapsApiKey) {
+    return (
+      <div className="space-y-6">
+        <h2 className="text-2xl font-semibold text-gray-900">Household Location Mapping</h2>
+        <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-6">
+          <div className="flex items-center">
+            <AlertTriangle className="h-6 w-6 text-yellow-600 mr-3" />
+            <div>
+              <h3 className="font-semibold text-yellow-800">Google Maps Not Configured</h3>
+              <p className="text-yellow-700 mt-1">
+                The Google Maps API key has not been configured. Please contact the system administrator 
+                to enable location mapping features.
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
@@ -236,60 +251,16 @@ export default function HouseholdMapPinning() {
                 <Navigation className="h-4 w-4 mr-1" />
                 Use Current Location
               </button>
-              
-              <select
-                value={mapType}
-                onChange={(e) => setMapType(e.target.value as any)}
-                className="px-3 py-2 border border-gray-300 rounded-lg text-sm"
-              >
-                <option value="roadmap">Road Map</option>
-                <option value="satellite">Satellite</option>
-                <option value="hybrid">Hybrid</option>
-              </select>
             </div>
           </div>
         </div>
 
-        {/* Map Container */}
-        <div className="relative">
-          <InteractiveMap
-            onLocationSelect={handleLocationSelect}
-            initialLocation={selectedLocation}
-            currentPosition={currentPosition}
-            mapType={mapType}
-            zoom={zoom}
-          />
-          
-          {/* Map Controls */}
-          <div className="absolute top-4 right-4 bg-white rounded-lg shadow-lg p-2 space-y-2">
-            <button
-              onClick={() => setZoom(Math.min(zoom + 1, 20))}
-              className="w-8 h-8 flex items-center justify-center hover:bg-gray-100 rounded"
-              title="Zoom In"
-            >
-              <ZoomIn className="h-4 w-4" />
-            </button>
-            <button
-              onClick={() => setZoom(Math.max(zoom - 1, 10))}
-              className="w-8 h-8 flex items-center justify-center hover:bg-gray-100 rounded"
-              title="Zoom Out"
-            >
-              <ZoomOut className="h-4 w-4" />
-            </button>
-            <button
-              onClick={() => setMapType(mapType === 'roadmap' ? 'satellite' : 'roadmap')}
-              className="w-8 h-8 flex items-center justify-center hover:bg-gray-100 rounded"
-              title="Toggle Map Type"
-            >
-              <Layers className="h-4 w-4" />
-            </button>
-          </div>
-
-          {/* Crosshair for precise location selection */}
-          <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 pointer-events-none">
-            <Crosshair className="h-8 w-8 text-red-500 drop-shadow-lg" />
-          </div>
-        </div>
+        <GoogleMapComponent
+          onLocationSelect={handleLocationSelect}
+          initialLocation={selectedLocation ? { lat: selectedLocation.lat, lng: selectedLocation.lng } : currentPosition}
+          height="400px"
+          zoom={16}
+        />
 
         {/* Map Instructions */}
         <div className="p-4 bg-blue-50 border-t border-blue-200">
@@ -298,9 +269,9 @@ export default function HouseholdMapPinning() {
             <div>
               <h4 className="font-medium text-blue-900">How to Pin Your Location</h4>
               <ul className="text-sm text-blue-800 mt-2 space-y-1">
-                <li>• Click and drag the map to navigate to your house</li>
-                <li>• Use the crosshair in the center to precisely target your house</li>
-                <li>• Click "Pin This Location" when the crosshair is over your house</li>
+                <li>• Click anywhere on the map to pin your house location</li>
+                <li>• Use "Use Current Location" to automatically detect your position</li>
+                <li>• Zoom in for more precise location selection</li>
                 <li>• Verify the address is correct before saving</li>
               </ul>
             </div>
@@ -329,8 +300,8 @@ export default function HouseholdMapPinning() {
             onClick={() => {
               if (manualAddress.trim()) {
                 const location: HouseLocation = {
-                  lat: defaultCenter.lat + (Math.random() - 0.5) * 0.01,
-                  lng: defaultCenter.lng + (Math.random() - 0.5) * 0.01,
+                  lat: 14.5995 + (Math.random() - 0.5) * 0.01,
+                  lng: 120.9842 + (Math.random() - 0.5) * 0.01,
                   address: manualAddress.trim(),
                   timestamp: new Date().toISOString()
                 };
@@ -472,175 +443,16 @@ export default function HouseholdMapPinning() {
           </div>
         </div>
       </div>
-    </div>
-  );
-}
 
-// Interactive Map Component
-function InteractiveMap({ 
-  onLocationSelect, 
-  initialLocation, 
-  currentPosition, 
-  mapType, 
-  zoom 
-}: MapProps & { 
-  currentPosition: {lat: number, lng: number} | null;
-  mapType: string;
-  zoom: number;
-}) {
-  const [mapCenter, setMapCenter] = useState(initialLocation || currentPosition || { lat: 14.5995, lng: 120.9842 });
-  const [isDragging, setIsDragging] = useState(false);
-  const [selectedPoint, setSelectedPoint] = useState<{lat: number, lng: number} | null>(
-    initialLocation ? { lat: initialLocation.lat, lng: initialLocation.lng } : null
-  );
-
-  const handleMapClick = async (event: React.MouseEvent<HTMLDivElement>) => {
-    const rect = event.currentTarget.getBoundingClientRect();
-    const x = event.clientX - rect.left;
-    const y = event.clientY - rect.top;
-    
-    // Convert pixel coordinates to lat/lng (simplified calculation)
-    const lat = mapCenter.lat + (rect.height / 2 - y) * (0.01 / (rect.height / 2)) * (21 - zoom) / 10;
-    const lng = mapCenter.lng + (x - rect.width / 2) * (0.01 / (rect.width / 2)) * (21 - zoom) / 10;
-    
-    setSelectedPoint({ lat, lng });
-    
-    // Generate address for the selected location
-    const address = await reverseGeocode(lat, lng);
-    
-    const location: HouseLocation = {
-      lat,
-      lng,
-      address,
-      timestamp: new Date().toISOString()
-    };
-    
-    onLocationSelect(location);
-  };
-
-  const reverseGeocode = async (lat: number, lng: number): Promise<string> => {
-    // Simulate address generation based on coordinates
-    const houseNumber = Math.floor(Math.random() * 999) + 1;
-    const streets = ['Main Street', 'Rizal Avenue', 'Bonifacio Street', 'Luna Street', 'Mabini Street'];
-    const street = streets[Math.floor(Math.random() * streets.length)];
-    const purok = Math.floor(Math.random() * 8) + 1;
-    
-    return `${houseNumber} ${street}, Purok ${purok}, Barangay San Miguel, Metro Manila`;
-  };
-
-  // Generate static map URL (in real app, use Google Maps API)
-  const getMapImageUrl = () => {
-    const baseUrl = 'https://images.pexels.com/photos/1105766/pexels-photo-1105766.jpeg';
-    return baseUrl; // Placeholder - in real app, generate dynamic map
-  };
-
-  return (
-    <div className="relative">
-      <div
-        className="w-full h-96 bg-gray-200 cursor-crosshair relative overflow-hidden"
-        onClick={handleMapClick}
-        style={{
-          backgroundImage: `url('${getMapImageUrl()}')`,
-          backgroundSize: 'cover',
-          backgroundPosition: 'center'
-        }}
-      >
-        {/* Map Overlay */}
-        <div className="absolute inset-0 bg-blue-900 bg-opacity-20"></div>
-        
-        {/* Grid Lines for Better Precision */}
-        <div className="absolute inset-0 opacity-20">
-          <div className="grid grid-cols-10 grid-rows-10 h-full w-full">
-            {Array.from({ length: 100 }).map((_, i) => (
-              <div key={i} className="border border-white border-opacity-30"></div>
-            ))}
-          </div>
-        </div>
-
-        {/* Current Position Marker */}
-        {currentPosition && (
-          <div 
-            className="absolute w-4 h-4 bg-blue-500 rounded-full border-2 border-white shadow-lg transform -translate-x-1/2 -translate-y-1/2"
-            style={{
-              left: '45%',
-              top: '45%'
-            }}
-            title="Your Current Location"
-          >
-            <div className="absolute inset-0 bg-blue-500 rounded-full animate-ping opacity-75"></div>
-          </div>
-        )}
-
-        {/* Selected Location Marker */}
-        {selectedPoint && (
-          <div 
-            className="absolute w-6 h-6 transform -translate-x-1/2 -translate-y-1/2"
-            style={{
-              left: '50%',
-              top: '50%'
-            }}
-          >
-            <div className="w-6 h-6 bg-red-500 rounded-full border-2 border-white shadow-lg flex items-center justify-center">
-              <Home className="h-3 w-3 text-white" />
-            </div>
-            <div className="absolute top-6 left-1/2 transform -translate-x-1/2 bg-red-500 text-white px-2 py-1 rounded text-xs whitespace-nowrap">
-              Your House
-            </div>
-          </div>
-        )}
-
-        {/* Center Crosshair */}
-        <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2">
-          <div className="w-8 h-8 flex items-center justify-center">
-            <div className="w-6 h-0.5 bg-red-500 absolute"></div>
-            <div className="w-0.5 h-6 bg-red-500 absolute"></div>
-            <div className="w-2 h-2 border-2 border-red-500 rounded-full bg-white"></div>
-          </div>
-        </div>
-
-        {/* Map Info Overlay */}
-        <div className="absolute bottom-4 left-4 bg-white bg-opacity-90 rounded-lg p-3 text-sm">
-          <div className="space-y-1">
-            <p><strong>Map Type:</strong> {mapType}</p>
-            <p><strong>Zoom:</strong> {zoom}</p>
-            <p><strong>Center:</strong> {mapCenter.lat.toFixed(4)}, {mapCenter.lng.toFixed(4)}</p>
-          </div>
-        </div>
-
-        {/* Pin Location Button */}
-        <div className="absolute bottom-4 right-4">
-          <button
-            onClick={(e) => {
-              e.stopPropagation();
-              handleMapClick(e);
-            }}
-            className="bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 shadow-lg flex items-center"
-          >
-            <MapPin className="h-4 w-4 mr-2" />
-            Pin This Location
-          </button>
-        </div>
-      </div>
-
-      {/* Map Legend */}
-      <div className="p-4 bg-gray-50 border-t border-gray-200">
-        <div className="flex items-center justify-between text-sm">
-          <div className="flex items-center space-x-4">
-            <div className="flex items-center">
-              <div className="w-3 h-3 bg-blue-500 rounded-full mr-2"></div>
-              <span>Current Location</span>
-            </div>
-            <div className="flex items-center">
-              <div className="w-3 h-3 bg-red-500 rounded-full mr-2"></div>
-              <span>Selected House</span>
-            </div>
-            <div className="flex items-center">
-              <Crosshair className="h-4 w-4 text-red-500 mr-2" />
-              <span>Targeting Crosshair</span>
-            </div>
-          </div>
-          <div className="text-gray-600">
-            Click anywhere on the map to pin your house location
+      {/* Mobile Responsiveness Notice */}
+      <div className="bg-gray-50 border border-gray-200 rounded-lg p-4">
+        <div className="flex items-center">
+          <Smartphone className="h-5 w-5 text-gray-600 mr-2" />
+          <div>
+            <h4 className="font-medium text-gray-900">Mobile Friendly</h4>
+            <p className="text-sm text-gray-600">
+              This map works on all devices. Use touch gestures on mobile to navigate and tap to pin your location.
+            </p>
           </div>
         </div>
       </div>
