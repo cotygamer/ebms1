@@ -19,7 +19,8 @@ import {
   Eye,
   X,
   Star,
-  Info
+  Info,
+  AlertTriangle
 } from 'lucide-react';
 
 interface MapLocation {
