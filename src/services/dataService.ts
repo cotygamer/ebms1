@@ -767,6 +767,77 @@ export class DataService {
     return data
   }
 
+  // Resident-specific data fetching methods
+  static async getDocumentsByResident(residentId: string) {
+    const { data, error } = await supabase
+      .from('documents')
+      .select(`
+        *,
+        residents (
+          name,
+          email,
+          phone_number
+        )
+      `)
+      .eq('resident_id', residentId)
+      .order('created_at', { ascending: false })
+    
+    if (error) throw error
+    return data || []
+  }
+
+  static async getAppointmentsByResident(residentEmail: string) {
+    const { data, error } = await supabase
+      .from('appointments')
+      .select(`
+        *,
+        residents (
+          name,
+          email,
+          phone_number
+        )
+      `)
+      .eq('resident_email', residentEmail)
+      .order('appointment_date', { ascending: true })
+    
+    if (error) throw error
+    return data || []
+  }
+
+  static async getIncidentsByReporter(reporterEmail: string) {
+    try {
+      const { data, error } = await supabase
+        .from('incidents')
+        .select('*')
+        .eq('reporter_email', reporterEmail)
+        .order('created_at', { ascending: false })
+      
+      if (error) {
+        // Handle case where incidents table might not exist
+        if (error.code === 'PGRST205' || error.message?.includes('Could not find the table')) {
+          console.warn('Incidents table not found, returning empty array')
+          return []
+        }
+        throw error
+      }
+      return data || []
+    } catch (error) {
+      console.error('Error fetching incidents by reporter:', error)
+      return []
+    }
+  }
+
+  static async getFamilyMembersByResident(residentId: string) {
+    const { data, error } = await supabase
+      .from('family_members')
+      .select('*')
+      .eq('resident_id', residentId)
+      .order('created_at', { ascending: false })
+    
+    if (error) throw error
+    return data || []
+  }
+
   // Real-time Subscriptions
   static subscribeToTable(tableName: string, callback: (payload: any) => void) {
     const subscription = supabase
