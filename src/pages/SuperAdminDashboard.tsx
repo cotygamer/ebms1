@@ -64,7 +64,6 @@ import {
   Key,
   Mail,
   Phone,
-  Layers,
   TestTube
 } from 'lucide-react';
 
