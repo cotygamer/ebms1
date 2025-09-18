@@ -11,7 +11,6 @@ import VerificationStatus from '../components/VerificationStatus';
 import QRCodeDisplay from '../components/QRCodeDisplay';
 import FamilyTreeView from '../components/FamilyTreeView';
 import HouseholdMapPinning from '../components/HouseholdMapPinning';
-import HouseholdMapPinning from '../components/HouseholdMapPinning';
 import { 
   Building2, 
   User, 
