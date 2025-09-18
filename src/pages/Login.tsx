@@ -18,11 +18,14 @@ export default function Login() {
     setIsLoading(true);
 
     try {
-      await login(email, password);
-      // Navigation will be handled by the AuthProvider
+      const success = await login(email, password);
+      if (success) {
+        // Navigation will be handled by the AuthProvider
+      } else {
+        setError('Invalid email or password');
+      }
     } catch (err) {
-      console.error('Login error:', err);
-      setError(err.message || 'An error occurred. Please try again.');
+      setError('An error occurred. Please try again.');
     } finally {
       setIsLoading(false);
     }
@@ -118,14 +121,14 @@ export default function Login() {
 
           <div className="mt-6">
             <div className="text-sm text-gray-600 bg-gray-50 p-4 rounded-lg">
-              <h3 className="font-semibold mb-2">Resident Demo Account:</h3>
+              <h3 className="font-semibold mb-2">Demo Credentials:</h3>
               <div className="space-y-1">
+                <p><strong>Super Admin:</strong> superadmin@barangay.gov / password123</p>
+                <p><strong>Barangay Official:</strong> official@barangay.gov / password123</p>
                 <p><strong>Resident:</strong> resident@email.com / password123</p>
-              </div>
-              <div className="mt-3 pt-3 border-t border-gray-200">
-                <p className="text-xs text-gray-500">
-                  Staff and officials should use the <Link to="/bms" className="text-blue-600 hover:underline">BMS Portal</Link>
-                </p>
+                <p><strong>Medical Staff:</strong> medical@barangay.gov / password123</p>
+                <p><strong>Accounting Staff:</strong> accounting@barangay.gov / password123</p>
+                <p><strong>Disaster Staff:</strong> disaster@barangay.gov / password123</p>
               </div>
             </div>
           </div>
