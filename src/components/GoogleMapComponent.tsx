@@ -35,6 +35,9 @@ export default function GoogleMapComponent({
   // Default center for Barangay San Miguel, Metro Manila
   const defaultCenter = { lat: 14.5995, lng: 120.9842 };
 
+  // Global loading state to prevent multiple script loads
+  const isGoogleMapsLoading = useRef(false);
+
   useEffect(() => {
     const loadGoogleMaps = async () => {
       if (!systemSettings.googleMapsApiKey) {
@@ -42,22 +45,43 @@ export default function GoogleMapComponent({
         return;
       }
 
-      try {
-        // Check if Google Maps is already loaded
-        if (window.google && window.google.maps) {
-          initializeMap();
-          return;
-        }
+      // Check if script is already in the document
+      const existingScript = document.querySelector('script[src*="maps.googleapis.com"]');
+      if (existingScript) {
+        initializeMap();
+        return;
+      }
 
+      // Prevent multiple simultaneous loads
+      if (isGoogleMapsLoading.current) {
+        // Wait for the current load to complete
+        const checkLoaded = setInterval(() => {
+          if (window.google && window.google.maps) {
+            clearInterval(checkLoaded);
+            initializeMap();
+          }
+        }, 100);
+        return;
+      }
+
+      try {
+        isGoogleMapsLoading.current = true;
         // Load Google Maps script
         const script = document.createElement('script');
         script.src = `https://maps.googleapis.com/maps/api/js?key=${systemSettings.googleMapsApiKey}&libraries=places`;
         script.async = true;
         script.defer = true;
-        script.onload = initializeMap;
-        script.onerror = () => setError('Failed to load Google Maps. Please check your internet connection.');
+        script.onload = () => {
+          isGoogleMapsLoading.current = false;
+          initializeMap();
+        };
+        script.onerror = () => {
+          isGoogleMapsLoading.current = false;
+          setError('Failed to load Google Maps. Please check your internet connection.');
+        };
         document.head.appendChild(script);
       } catch (err) {
+        isGoogleMapsLoading.current = false;
         setError('Error loading Google Maps API');
         console.error('Google Maps loading error:', err);
       }
