@@ -1,7 +1,10 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { useData } from '../contexts/DataContext';
+import { useOfflineSync } from '../hooks/useOfflineSync';
+import OfflineIndicator from '../components/OfflineIndicator';
+import OfflineSyncStatus from '../components/OfflineSyncStatus';
 import Sidebar from '../components/Sidebar';
 import UserManagement from '../components/UserManagement';
 import ResidentManagement from '../components/ResidentManagement';
@@ -9,6 +12,8 @@ import ModuleControl from '../components/ModuleControl';
 import SystemSettings from '../components/SystemSettings';
 import Analytics from '../components/Analytics';
 import ProjectGallery from '../components/ProjectGallery';
+import KYCVerificationCenter from '../components/KYCVerificationCenter';
+import SyncTestPanel from '../components/SyncTestPanel';
 import { 
   Users, 
   Shield, 
@@ -23,12 +28,14 @@ import {
   Save,
   AlertTriangle,
   CheckCircle,
-  X
+  X,
+  UserCheck
 } from 'lucide-react';
 
 export default function SuperAdminDashboard() {
   const [activeTab, setActiveTab] = useState('overview');
   const { user, logout } = useAuth();
+  const { status: offlineStatus } = useOfflineSync();
   const navigate = useNavigate();
 
   const handleLogout = () => {
@@ -38,8 +45,11 @@ export default function SuperAdminDashboard() {
 
   const menuItems = [
     { id: 'overview', label: 'Overview', icon: Activity },
+    { id: 'offline-sync', label: 'Offline Sync', icon: Database },
     { id: 'users', label: 'User Management', icon: Users },
+    { id: 'sync-tests', label: 'Sync Tests', icon: Settings },
     { id: 'residents', label: 'Resident Management', icon: Users },
+    { id: 'kyc-verification', label: 'KYC Verification Center', icon: UserCheck },
     { id: 'modules', label: 'Module Control', icon: Database },
     { id: 'projects', label: 'Projects & Gallery', icon: Camera },
     { id: 'analytics', label: 'Analytics', icon: BarChart3 },
@@ -51,10 +61,16 @@ export default function SuperAdminDashboard() {
     switch (activeTab) {
       case 'overview':
         return <SuperAdminOverview />;
+      case 'offline-sync':
+        return <OfflineSyncStatus />;
       case 'users':
         return <UserManagement />;
+      case 'sync-tests':
+        return <SyncTestPanel />;
       case 'residents':
         return <ResidentManagement />;
+      case 'kyc-verification':
+        return <KYCVerificationCenter />;
       case 'modules':
         return <ModuleControl />;
       case 'projects':
@@ -72,6 +88,8 @@ export default function SuperAdminDashboard() {
 
   return (
     <div className="flex h-screen bg-gray-100">
+      <OfflineIndicator />
+      
       <Sidebar
         menuItems={menuItems}
         activeTab={activeTab}
@@ -201,7 +219,9 @@ function SuperAdminOverview() {
 
 function IntegrationsManagement() {
   const { systemSettings, updateSystemSettings } = useData();
-  const [settings, setSettings] = useState({
+  
+  // Initialize settings from systemSettings
+  const [settings, setSettings] = useState(() => ({
     googleMapsApiKey: systemSettings.googleMapsApiKey || '',
     paymentGateway: systemSettings.paymentGateway || {
       provider: 'PayPal',
@@ -212,10 +232,27 @@ function IntegrationsManagement() {
       dragonpay: { enabled: false, merchantId: '', password: '' },
       cashOnPickup: { enabled: true }
     }
-  });
+  }));
+  
   const [isLoading, setIsLoading] = useState(false);
   const [message, setMessage] = useState('');
   const [activeIntegration, setActiveIntegration] = useState('maps');
+
+  // Update local settings when systemSettings changes
+  React.useEffect(() => {
+    setSettings({
+      googleMapsApiKey: systemSettings.googleMapsApiKey || '',
+      paymentGateway: systemSettings.paymentGateway || {
+        provider: 'PayPal',
+        apiKey: '',
+        secretKey: '',
+        gcash: { enabled: false, merchantId: '', apiKey: '' },
+        maya: { enabled: false, publicKey: '', secretKey: '' },
+        dragonpay: { enabled: false, merchantId: '', password: '' },
+        cashOnPickup: { enabled: true }
+      }
+    });
+  }, [systemSettings]);
 
   const handleSave = async () => {
     setIsLoading(true);
@@ -224,8 +261,10 @@ function IntegrationsManagement() {
     try {
       await updateSystemSettings(settings);
       setMessage('Integration settings updated successfully!');
+      setTimeout(() => setMessage(''), 3000); // Clear message after 3 seconds
     } catch (error) {
       setMessage('Failed to update settings. Please try again.');
+      setTimeout(() => setMessage(''), 3000); // Clear message after 3 seconds
     } finally {
       setIsLoading(false);
     }
@@ -324,26 +363,11 @@ function IntegrationsManagement() {
                 {settings.googleMapsApiKey ? (
                   <div className="space-y-4">
                     <div className="bg-white border border-gray-300 rounded-lg overflow-hidden">
-                      <div 
-                        id="google-map-preview" 
-                        className="w-full h-64 bg-gray-100 flex items-center justify-center"
-                        style={{
-                          backgroundImage: `url('https://maps.googleapis.com/maps/api/staticmap?center=14.5995,120.9842&zoom=13&size=600x300&maptype=roadmap&markers=color:red%7Clabel:B%7C14.5995,120.9842&key=${settings.googleMapsApiKey}')`,
-                          backgroundSize: 'cover',
-                          backgroundPosition: 'center'
-                        }}
-                      >
-                        {!settings.googleMapsApiKey && (
-                          <div className="text-center">
-                            <MapPin className="h-12 w-12 text-gray-400 mx-auto mb-2" />
-                            <p className="text-gray-500">Enter API key to preview map</p>
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                    <div className="text-sm text-gray-600">
-                      <p><strong>Location:</strong> Barangay San Miguel, Metro Manila</p>
-                      <p><strong>Coordinates:</strong> 14.5995°N, 120.9842°E</p>
+                      <GoogleMapPreview 
+                        apiKey={settings.googleMapsApiKey}
+                        barangayName={systemSettings.barangayName}
+                        barangayAddress={systemSettings.barangayAddress}
+                      />
                     </div>
                   </div>
                 ) : (
@@ -568,6 +592,127 @@ function IntegrationsManagement() {
             </div>
           )}
         </div>
+      </div>
+    </div>
+  );
+}
+
+// Google Map Preview Component
+function GoogleMapPreview({ apiKey, barangayName, barangayAddress }: { 
+  apiKey: string; 
+  barangayName: string; 
+  barangayAddress: string; 
+}) {
+  const [coordinates, setCoordinates] = useState<{lat: number, lng: number} | null>(null);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
+
+  // Default coordinates for common locations
+  const getDefaultCoordinates = (address: string) => {
+    const lowerAddress = address.toLowerCase();
+    
+    // Davao City locations
+    if (lowerAddress.includes('davao')) {
+      if (lowerAddress.includes('bucana')) {
+        return { lat: 7.0731, lng: 125.6128 }; // Bucana, Davao City
+      }
+      return { lat: 7.1907, lng: 125.4553 }; // Davao City center
+    }
+    
+    // Metro Manila locations
+    if (lowerAddress.includes('metro manila') || lowerAddress.includes('manila')) {
+      if (lowerAddress.includes('san miguel')) {
+        return { lat: 14.5995, lng: 120.9842 }; // San Miguel, Manila
+      }
+      return { lat: 14.5995, lng: 120.9842 }; // Manila center
+    }
+    
+    // Cebu locations
+    if (lowerAddress.includes('cebu')) {
+      return { lat: 10.3157, lng: 123.8854 }; // Cebu City
+    }
+    
+    // Default to Philippines center
+    return { lat: 12.8797, lng: 121.7740 };
+  };
+
+  // Geocode the address using Google Maps API
+  const geocodeAddress = async (address: string) => {
+    if (!apiKey) return;
+    
+    setLoading(true);
+    setError('');
+    
+    try {
+      const response = await fetch(
+        `https://maps.googleapis.com/maps/api/geocode/json?address=${encodeURIComponent(address)}&key=${apiKey}`
+      );
+      const data = await response.json();
+      
+      if (data.status === 'OK' && data.results.length > 0) {
+        const location = data.results[0].geometry.location;
+        setCoordinates({ lat: location.lat, lng: location.lng });
+      } else {
+        // Fallback to default coordinates
+        const defaultCoords = getDefaultCoordinates(address);
+        setCoordinates(defaultCoords);
+        setError('Using approximate location');
+      }
+    } catch (err) {
+      // Fallback to default coordinates
+      const defaultCoords = getDefaultCoordinates(address);
+      setCoordinates(defaultCoords);
+      setError('Using approximate location');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Update coordinates when address changes
+  useEffect(() => {
+    if (barangayAddress) {
+      geocodeAddress(barangayAddress);
+    } else {
+      const defaultCoords = getDefaultCoordinates(barangayName);
+      setCoordinates(defaultCoords);
+    }
+  }, [barangayAddress, barangayName, apiKey]);
+
+  if (loading) {
+    return (
+      <div className="w-full h-64 bg-gray-100 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-2"></div>
+          <p className="text-gray-500">Loading map...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!coordinates) {
+    return (
+      <div className="w-full h-64 bg-gray-100 flex items-center justify-center">
+        <div className="text-center">
+          <MapPin className="h-12 w-12 text-gray-400 mx-auto mb-2" />
+          <p className="text-gray-500">Unable to load location</p>
+        </div>
+      </div>
+    );
+  }
+
+  const mapUrl = `https://maps.googleapis.com/maps/api/staticmap?center=${coordinates.lat},${coordinates.lng}&zoom=15&size=600x300&maptype=roadmap&markers=color:red%7Clabel:${barangayName.charAt(0)}%7C${coordinates.lat},${coordinates.lng}&key=${apiKey}`;
+
+  return (
+    <div className="space-y-4">
+      <div 
+        className="w-full h-64 bg-gray-100 bg-cover bg-center rounded-lg border"
+        style={{ backgroundImage: `url('${mapUrl}')` }}
+      >
+      </div>
+      <div className="text-sm text-gray-600 bg-white p-3 rounded border">
+        <p><strong>Location:</strong> {barangayName}, {barangayAddress}</p>
+        <p><strong>Coordinates:</strong> {coordinates.lat.toFixed(4)}°N, {coordinates.lng.toFixed(4)}°E</p>
+        {error && <p className="text-yellow-600 mt-1"><strong>Note:</strong> {error}</p>}
       </div>
     </div>
   );

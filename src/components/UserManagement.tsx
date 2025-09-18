@@ -13,12 +13,26 @@ export default function UserManagement() {
   const [filterStatus, setFilterStatus] = useState('all');
   const [showAddUser, setShowAddUser] = useState(false);
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
+  const [editingUser, setEditingUser] = useState<User | null>(null);
   const [newUser, setNewUser] = useState({
     name: '',
     email: '',
     role: 'resident' as 'super-admin' | 'barangay-official' | 'resident',
     status: 'active' as 'active' | 'inactive' | 'suspended',
-    permissions: [] as string[]
+    permissions: [] as string[],
+    phone_number: '',
+    address: '',
+    password: ''
+  });
+
+  const [editUserData, setEditUserData] = useState({
+    name: '',
+    email: '',
+    role: 'resident' as 'super-admin' | 'barangay-official' | 'resident',
+    status: 'active' as 'active' | 'inactive' | 'suspended',
+    phone_number: '',
+    address: '',
+    password: ''
   });
 
   // Filter users based on current user role
@@ -70,11 +84,45 @@ export default function UserManagement() {
     updateUser(userId, { status: newStatus });
   };
 
+  const handleEditUser = (user: User) => {
+    setEditingUser(user);
+    setEditUserData({
+      name: user.name,
+      email: user.email,
+      role: user.role,
+      status: user.status,
+      phone_number: user.phone_number || '',
+      address: user.address || '',
+      password: ''
+    });
+  };
+
+  const handleUpdateUser = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (editingUser) {
+      try {
+        await updateUser(editingUser.id, editUserData);
+        setEditingUser(null);
+        setEditUserData({
+          name: '',
+          email: '',
+          role: 'resident',
+          status: 'active',
+          phone_number: '',
+          address: '',
+          password: ''
+        });
+      } catch (error) {
+        console.error('Failed to update user:', error);
+      }
+    }
+  };
+
   const handleAddUser = (e: React.FormEvent) => {
     e.preventDefault();
     if (newUser.name && newUser.email) {
       addUser({ ...newUser, permissions: getDefaultPermissions(newUser.role) });
-      setNewUser({ name: '', email: '', role: 'resident', status: 'active', permissions: [] });
+      setNewUser({ name: '', email: '', role: 'resident', status: 'active', permissions: [], phone_number: '', address: '', password: '' });
       setShowAddUser(false);
     }
   };
@@ -187,6 +235,9 @@ export default function UserManagement() {
                     <div className="ml-4">
                       <div className="text-sm font-medium text-gray-900">{user.name}</div>
                       <div className="text-sm text-gray-500">{user.email}</div>
+                      {user.phone_number && (
+                        <div className="text-xs text-gray-400">{user.phone_number}</div>
+                      )}
                     </div>
                   </div>
                 </td>
@@ -201,16 +252,21 @@ export default function UserManagement() {
                   </span>
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                  {user.lastLogin}
+                  {user.last_login ? new Date(user.last_login).toLocaleDateString() : 'Never'}
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm font-medium space-x-2">
                   <button
                     onClick={() => setSelectedUser(user)}
                     className="text-blue-600 hover:text-blue-900"
+                    title="View Details"
                   >
                     <Eye className="h-4 w-4" />
                   </button>
-                  <button className="text-green-600 hover:text-green-900">
+                  <button 
+                    onClick={() => handleEditUser(user)}
+                    className="text-green-600 hover:text-green-900"
+                    title="Edit User"
+                  >
                     <Edit3 className="h-4 w-4" />
                   </button>
                   {user.status === 'active' ? (
@@ -265,6 +321,14 @@ export default function UserManagement() {
                       <p className="text-sm text-gray-900">{selectedUser.email}</p>
                     </div>
                     <div>
+                      <label className="text-sm font-medium text-gray-700">Phone</label>
+                      <p className="text-sm text-gray-900">{selectedUser.phone_number || 'Not provided'}</p>
+                    </div>
+                    <div>
+                      <label className="text-sm font-medium text-gray-700">Address</label>
+                      <p className="text-sm text-gray-900">{selectedUser.address || 'Not provided'}</p>
+                    </div>
+                    <div>
                       <label className="text-sm font-medium text-gray-700">Role</label>
                       <p className="text-sm text-gray-900 capitalize">{selectedUser.role.replace('-', ' ')}</p>
                     </div>
@@ -280,11 +344,15 @@ export default function UserManagement() {
                   <div className="space-y-3">
                     <div>
                       <label className="text-sm font-medium text-gray-700">Date Created</label>
-                      <p className="text-sm text-gray-900">{selectedUser.dateCreated}</p>
+                      <p className="text-sm text-gray-900">{new Date(selectedUser.created_at).toLocaleDateString()}</p>
                     </div>
                     <div>
                       <label className="text-sm font-medium text-gray-700">Last Login</label>
-                      <p className="text-sm text-gray-900">{selectedUser.lastLogin}</p>
+                      <p className="text-sm text-gray-900">{selectedUser.last_login ? new Date(selectedUser.last_login).toLocaleDateString() : 'Never'}</p>
+                    </div>
+                    <div>
+                      <label className="text-sm font-medium text-gray-700">Last Updated</label>
+                      <p className="text-sm text-gray-900">{new Date(selectedUser.updated_at).toLocaleDateString()}</p>
                     </div>
                   </div>
                 </div>
@@ -308,185 +376,232 @@ export default function UserManagement() {
         </div>
       )}
 
+      {/* Edit User Modal */}
+      {editingUser && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+          <div className="bg-white rounded-lg max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+            <div className="p-6 border-b border-gray-200">
+              <div className="flex items-center justify-between">
+                <h3 className="text-lg font-semibold text-gray-900">Edit User - Complete Profile</h3>
+                <button
+                  onClick={() => setEditingUser(null)}
+                  className="text-gray-400 hover:text-gray-600"
+                >
+                  <X className="h-5 w-5" />
+                </button>
+              </div>
+            </div>
+            
+            <form onSubmit={handleUpdateUser} className="p-6 space-y-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Full Name</label>
+                  <input
+                    type="text"
+                    value={editUserData.name}
+                    onChange={(e) => setEditUserData({ ...editUserData, name: e.target.value })}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    required
+                  />
+                </div>
+                
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Email</label>
+                  <input
+                    type="email"
+                    value={editUserData.email}
+                    onChange={(e) => setEditUserData({ ...editUserData, email: e.target.value })}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    required
+                  />
+                </div>
+                
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Phone Number</label>
+                  <input
+                    type="tel"
+                    value={editUserData.phone_number}
+                    onChange={(e) => setEditUserData({ ...editUserData, phone_number: e.target.value })}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    placeholder="+63 912 345 6789"
+                  />
+                </div>
+                
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Role</label>
+                  <select
+                    value={editUserData.role}
+                    onChange={(e) => setEditUserData({ ...editUserData, role: e.target.value as any })}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  >
+                    {currentUser?.role === 'super-admin' && <option value="super-admin">Super Admin</option>}
+                    <option value="barangay-official">Barangay Official</option>
+                    <option value="medical-portal">Medical Staff</option>
+                    <option value="accounting-portal">Accounting Staff</option>
+                    <option value="disaster-portal">Disaster Staff</option>
+                    <option value="resident">Resident</option>
+                  </select>
+                </div>
+                
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Status</label>
+                  <select
+                    value={editUserData.status}
+                    onChange={(e) => setEditUserData({ ...editUserData, status: e.target.value as any })}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  >
+                    <option value="active">Active</option>
+                    <option value="inactive">Inactive</option>
+                    <option value="suspended">Suspended</option>
+                  </select>
+                </div>
+              </div>
+              
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Address</label>
+                <textarea
+                  value={editUserData.address}
+                  onChange={(e) => setEditUserData({ ...editUserData, address: e.target.value })}
+                  rows={2}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  placeholder="Complete address"
+                />
+              </div>
+              
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">New Password (Optional)</label>
+                <input
+                  type="password"
+                  value={editUserData.password}
+                  onChange={(e) => setEditUserData({ ...editUserData, password: e.target.value })}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  placeholder="Leave blank to keep current password"
+                />
+                <p className="text-xs text-gray-500 mt-1">Only enter if you want to change the password</p>
+              </div>
+              
+              <div className="flex space-x-3">
+                <button
+                  type="button"
+                  onClick={() => setEditingUser(null)}
+                  className="flex-1 px-4 py-2 text-gray-700 border border-gray-300 rounded-lg hover:bg-gray-50"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+                >
+                  Update User
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
       {/* Add User Modal */}
       {showAddUser && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-          <div className="bg-white rounded-lg max-w-4xl w-full max-h-[90vh] overflow-y-auto p-6">
-            <div className="flex items-center justify-between mb-6">
-              <h3 className="text-xl font-semibold text-gray-900">Add New User - Complete Details</h3>
-              <button
-                onClick={() => setShowAddUser(false)}
-                className="text-gray-400 hover:text-gray-600"
-              >
-                <X className="h-5 w-5" />
-              </button>
+          <div className="bg-white rounded-lg max-w-md w-full max-h-[90vh] overflow-y-auto">
+            <div className="p-6 border-b border-gray-200">
+              <div className="flex items-center justify-between">
+                <h3 className="text-lg font-semibold text-gray-900">Add New User</h3>
+                <button
+                  onClick={() => setShowAddUser(false)}
+                  className="text-gray-400 hover:text-gray-600"
+                >
+                  <X className="h-5 w-5" />
+                </button>
+              </div>
             </div>
             
-            <form onSubmit={(e) => {
-              handleAddUser(e);
-            }} className="space-y-6">
-              {/* Basic Information */}
-              <div className="bg-gray-50 p-6 rounded-lg">
-                <h4 className="text-lg font-semibold text-gray-900 mb-4">Basic Information</h4>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">Full Name *</label>
-                    <input
-                      type="text"
-                      value={newUser.name}
-                      onChange={(e) => setNewUser({ ...newUser, name: e.target.value })}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                      placeholder="Enter full name"
-                      required
-                    />
-                  </div>
-                  
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">Email Address *</label>
-                    <input
-                      type="email"
-                      value={newUser.email}
-                      onChange={(e) => setNewUser({ ...newUser, email: e.target.value })}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                      placeholder="Enter email address"
-                      required
-                    />
-                  </div>
-                  
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">Phone Number</label>
-                    <input
-                      type="tel"
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                      placeholder="+63 912 345 6789"
-                    />
-                  </div>
-                  
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">Date of Birth</label>
-                    <input
-                      type="date"
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    />
-                  </div>
-                </div>
+            <form onSubmit={handleAddUser} className="p-6 space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Full Name *</label>
+                <input
+                  type="text"
+                  value={newUser.name}
+                  onChange={(e) => setNewUser({ ...newUser, name: e.target.value })}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  placeholder="Enter full name"
+                  required
+                />
               </div>
               
-              {/* Role & Access */}
-              <div className="bg-blue-50 p-6 rounded-lg">
-                <h4 className="text-lg font-semibold text-gray-900 mb-4">Role & Access Information</h4>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">Role *</label>
-                    <select
-                      value={newUser.role}
-                      onChange={(e) => setNewUser({ ...newUser, role: e.target.value as any })}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    >
-                      {currentUser?.role === 'super-admin' && <option value="super-admin">Super Admin</option>}
-                      <option value="barangay-official">Barangay Official</option>
-                      <option value="medical-portal">Medical Staff</option>
-                      <option value="accounting-portal">Accounting Staff</option>
-                      <option value="disaster-portal">Disaster Staff</option>
-                      <option value="resident">Resident</option>
-                    </select>
-                  </div>
-                  
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">Status</label>
-                    <select
-                      value={newUser.status}
-                      onChange={(e) => setNewUser({ ...newUser, status: e.target.value as any })}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    >
-                      <option value="active">Active</option>
-                      <option value="inactive">Inactive</option>
-                    </select>
-                  </div>
-                </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Email Address *</label>
+                <input
+                  type="email"
+                  value={newUser.email}
+                  onChange={(e) => setNewUser({ ...newUser, email: e.target.value })}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  placeholder="Enter email address"
+                  required
+                />
               </div>
               
-              {/* Address Information */}
-              <div className="bg-green-50 p-6 rounded-lg">
-                <h4 className="text-lg font-semibold text-gray-900 mb-4">Address Information</h4>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div className="md:col-span-2">
-                    <label className="block text-sm font-medium text-gray-700 mb-2">Complete Address</label>
-                    <textarea
-                      rows={3}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                      placeholder="Enter complete address"
-                    />
-                  </div>
-                  
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">City/Municipality</label>
-                    <input
-                      type="text"
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                      placeholder="Enter city/municipality"
-                    />
-                  </div>
-                  
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">Province</label>
-                    <input
-                      type="text"
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                      placeholder="Enter province"
-                    />
-                  </div>
-                </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Phone Number</label>
+                <input
+                  type="tel"
+                  value={newUser.phone_number || ''}
+                  onChange={(e) => setNewUser({ ...newUser, phone_number: e.target.value })}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  placeholder="+63 912 345 6789"
+                />
               </div>
               
-              {/* Emergency Contact */}
-              <div className="bg-yellow-50 p-6 rounded-lg">
-                <h4 className="text-lg font-semibold text-gray-900 mb-4">Emergency Contact</h4>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">Contact Name</label>
-                    <input
-                      type="text"
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                      placeholder="Emergency contact name"
-                    />
-                  </div>
-                  
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">Contact Number</label>
-                    <input
-                      type="tel"
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                      placeholder="Emergency contact number"
-                    />
-                  </div>
-                  
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">Relationship</label>
-                    <select className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
-                      <option value="">Select relationship</option>
-                      <option value="spouse">Spouse</option>
-                      <option value="parent">Parent</option>
-                      <option value="sibling">Sibling</option>
-                      <option value="child">Child</option>
-                      <option value="relative">Relative</option>
-                      <option value="friend">Friend</option>
-                    </select>
-                  </div>
-                </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Role *</label>
+                <select
+                  value={newUser.role}
+                  onChange={(e) => setNewUser({ ...newUser, role: e.target.value as any })}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                >
+                  {currentUser?.role === 'super-admin' && <option value="super-admin">Super Admin</option>}
+                  <option value="barangay-official">Barangay Official</option>
+                  <option value="medical-portal">Medical Staff</option>
+                  <option value="accounting-portal">Accounting Staff</option>
+                  <option value="disaster-portal">Disaster Staff</option>
+                  <option value="resident">Resident</option>
+                </select>
               </div>
               
-              {/* Additional Notes */}
-              <div className="bg-purple-50 p-6 rounded-lg">
-                <h4 className="text-lg font-semibold text-gray-900 mb-4">Additional Information</h4>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Notes/Comments</label>
-                  <textarea
-                    rows={4}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    placeholder="Any additional notes or comments about this user..."
-                  />
-                </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Status</label>
+                <select
+                  value={newUser.status}
+                  onChange={(e) => setNewUser({ ...newUser, status: e.target.value as any })}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                >
+                  <option value="active">Active</option>
+                  <option value="inactive">Inactive</option>
+                </select>
+              </div>
+              
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Address</label>
+                <textarea
+                  value={newUser.address || ''}
+                  onChange={(e) => setNewUser({ ...newUser, address: e.target.value })}
+                  rows={2}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  placeholder="Complete address"
+                />
+              </div>
+              
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Temporary Password *</label>
+                <input
+                  type="password"
+                  value={newUser.password || ''}
+                  onChange={(e) => setNewUser({ ...newUser, password: e.target.value })}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  placeholder="Set temporary password"
+                  required
+                />
+                <p className="text-xs text-gray-500 mt-1">User will be prompted to change this on first login</p>
               </div>
               
               <div className="flex space-x-3 pt-4">
@@ -501,7 +616,7 @@ export default function UserManagement() {
                   type="submit"
                   className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
                 >
-                  Create User Account
+                  Create User
                 </button>
               </div>
             </form>

@@ -4,7 +4,9 @@ import { Save, Building2, MapPin, Phone, Mail, Globe, Shield, Database, Bell, Pa
 
 export default function SystemSettings() {
   const { systemSettings, updateSystemSettings } = useData();
-  const [settings, setSettings] = useState({
+  
+  // Initialize settings from systemSettings and update when systemSettings changes
+  const [settings, setSettings] = useState(() => ({
     barangayName: systemSettings.barangayName || 'Barangay San Miguel',
     barangayAddress: systemSettings.barangayAddress || 'San Miguel, Metro Manila, Philippines',
     contactNumber: systemSettings.contactNumber || '+63 2 8123 4567',
@@ -31,11 +33,43 @@ export default function SystemSettings() {
     primaryColor: systemSettings.primaryColor || '#2563eb',
     secondaryColor: systemSettings.secondaryColor || '#059669',
     accentColor: systemSettings.accentColor || '#dc2626'
-  });
+  }));
 
   const [isLoading, setIsLoading] = useState(false);
   const [message, setMessage] = useState('');
   const [activeTab, setActiveTab] = useState('general');
+
+  // Update local settings when systemSettings changes
+  React.useEffect(() => {
+    setSettings({
+      barangayName: systemSettings.barangayName || 'Barangay San Miguel',
+      barangayAddress: systemSettings.barangayAddress || 'San Miguel, Metro Manila, Philippines',
+      contactNumber: systemSettings.contactNumber || '+63 2 8123 4567',
+      emailAddress: systemSettings.emailAddress || 'info@barangaysanmiguel.gov.ph',
+      website: systemSettings.website || 'https://barangaysanmiguel.gov.ph',
+      facebookPage: systemSettings.facebookPage || 'https://facebook.com/barangaysanmiguel',
+      operatingHours: systemSettings.operatingHours || '8:00 AM - 5:00 PM',
+      timezone: systemSettings.timezone || 'Asia/Manila',
+      language: systemSettings.language || 'English',
+      currency: systemSettings.currency || 'PHP',
+      dateFormat: systemSettings.dateFormat || 'MM/DD/YYYY',
+      timeFormat: systemSettings.timeFormat || '12-hour',
+      maxFileSize: systemSettings.maxFileSize || '10',
+      allowedFileTypes: systemSettings.allowedFileTypes || 'PDF, JPG, PNG, DOCX',
+      sessionTimeout: systemSettings.sessionTimeout || '30',
+      passwordPolicy: systemSettings.passwordPolicy || 'strong',
+      twoFactorAuth: systemSettings.twoFactorAuth || false,
+      emailNotifications: systemSettings.emailNotifications || true,
+      smsNotifications: systemSettings.smsNotifications || false,
+      pushNotifications: systemSettings.pushNotifications || true,
+      maintenanceMode: systemSettings.maintenanceMode || false,
+      debugMode: systemSettings.debugMode || false,
+      backupFrequency: systemSettings.backupFrequency || 'daily',
+      primaryColor: systemSettings.primaryColor || '#2563eb',
+      secondaryColor: systemSettings.secondaryColor || '#059669',
+      accentColor: systemSettings.accentColor || '#dc2626'
+    });
+  }, [systemSettings]);
 
   const handleSave = async () => {
     setIsLoading(true);
@@ -44,8 +78,17 @@ export default function SystemSettings() {
     try {
       await updateSystemSettings(settings);
       setMessage('Settings updated successfully!');
+      
+      // Trigger map refresh if Google Maps API key exists
+      if (settings.googleMapsApiKey) {
+        window.dispatchEvent(new CustomEvent('refreshGoogleMaps'));
+      }
+      
+      setTimeout(() => setMessage(''), 3000); // Clear message after 3 seconds
     } catch (error) {
-      setMessage('Failed to update settings. Please try again.');
+      console.error('Settings update error:', error);
+      setMessage(`Failed to update settings: ${error.message || 'Please try again.'}`);
+      setTimeout(() => setMessage(''), 3000); // Clear message after 3 seconds
     } finally {
       setIsLoading(false);
     }
@@ -63,6 +106,20 @@ export default function SystemSettings() {
 
   const renderGeneralSettings = () => (
     <div className="space-y-6">
+      <div>
+        <label className="block text-sm font-medium text-gray-700 mb-2">Google Maps API Key</label>
+        <input
+          type="text"
+          value={settings.googleMapsApiKey || ''}
+          onChange={(e) => setSettings({ ...settings, googleMapsApiKey: e.target.value })}
+          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+          placeholder="Enter Google Maps API key for location services"
+        />
+        <p className="text-sm text-gray-500 mt-1">
+          Required for house location mapping and verification features
+        </p>
+      </div>
+      
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-2">Barangay Name</label>
