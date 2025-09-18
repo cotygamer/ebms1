@@ -13,8 +13,19 @@ interface GoogleMapComponentProps {
     onClick?: () => void;
   }>;
   height?: string;
-  zoom?: number;
-  readonly?: boolean;
+// Global state to manage Google Maps API loading
+// This ensures the script is only loaded once across the entire application
+const googleMapsApiLoaded = {
+  current: false,
+  loading: false,
+  callbacks: [] as (() => void)[]
+};
+
+declare global {
+  interface Window {
+    google: any;
+    initMapCallback: () => void; // Declare the global callback
+  }
 }
 
 export default function GoogleMapComponent({
@@ -28,13 +39,13 @@ export default function GoogleMapComponent({
   const { systemSettings } = useData();
   const mapRef = useRef<HTMLDivElement>(null);
   const [map, setMap] = useState<google.maps.Map | null>(null);
-  const [isLoaded, setIsLoaded] = useState(false);
+  const [isMapInitialized, setIsMapInitialized] = useState(false); // Renamed from isLoaded to avoid confusion with API loaded
   const [error, setError] = useState('');
-  const [selectedMarker, setSelectedMarker] = useState<google.maps.Marker | null>(null);
-
+  // const [selectedMarker, setSelectedMarker] = useState<google.maps.Marker | null>(null); // Not used, can remove
+  
   // Default center for Barangay San Miguel, Metro Manila
   const defaultCenter = { lat: 14.5995, lng: 120.9842 };
-
+  
   // Global loading state to prevent multiple script loads
   const isGoogleMapsLoading = useRef(false);
 
@@ -44,48 +55,220 @@ export default function GoogleMapComponent({
         setError('Google Maps API key not configured. Please contact administrator.');
         return;
       }
+    
+    // If API is already loaded, initialize map directly
+    if (googleMapsApiLoaded.current) {
+      initializeMap();
+      return;
+    }
 
-      // Check if script is already in the document
+    // Add current component's initializeMap to callbacks
+    googleMapsApiLoaded.callbacks.push(initializeMap);
+
+    // If API is not loading, initiate load
+    if (!googleMapsApiLoaded.loading) {
+      googleMapsApiLoaded.loading = true;
+
       const existingScript = document.querySelector('script[src*="maps.googleapis.com"]');
       if (existingScript) {
-        initializeMap();
-        return;
-      }
-
-      // Prevent multiple simultaneous loads
-      if (isGoogleMapsLoading.current) {
-        // Wait for the current load to complete
-        const checkLoaded = setInterval(() => {
-          if (window.google && window.google.maps) {
-            clearInterval(checkLoaded);
-            initializeMap();
-          }
-        }, 100);
+        // If script exists but not yet loaded (e.g., another component initiated load)
+        // Wait for the global callback to fire
         return;
       }
 
       try {
-        isGoogleMapsLoading.current = true;
         // Load Google Maps script
         const script = document.createElement('script');
-        script.src = `https://maps.googleapis.com/maps/api/js?key=${systemSettings.googleMapsApiKey}&libraries=places`;
+        script.src = `https://maps.googleapis.com/maps/api/js?key=${systemSettings.googleMapsApiKey}&libraries=places&callback=initMapCallback`;
         script.async = true;
         script.defer = true;
         script.onload = () => {
-          isGoogleMapsLoading.current = false;
-          initializeMap();
+          // This onload fires when the script file is loaded, but not necessarily when the API is ready.
+          // The actual map initialization will happen via the global callback.
+          googleMapsApiLoaded.loading = false; // Mark script loading as complete
         };
         script.onerror = () => {
-          isGoogleMapsLoading.current = false;
+          googleMapsApiLoaded.loading = false;
           setError('Failed to load Google Maps. Please check your internet connection.');
         };
         document.head.appendChild(script);
       } catch (err) {
-        isGoogleMapsLoading.current = false;
         setError('Error loading Google Maps API');
         console.error('Google Maps loading error:', err);
       }
     };
+    
+    // Define global callback function
+    // This will be called by Google Maps API once it's fully loaded
+    window.initMapCallback = () => {
+      googleMapsApiLoaded.current = true;
+      googleMapsApiLoaded.loading = false;
+      // Execute all pending callbacks
+      googleMapsApiLoaded.callbacks.forEach(cb => cb());
+      googleMapsApiLoaded.callbacks = []; // Clear callbacks
+    };
+
+    // Cleanup function
+    return () => {
+      // Remove this component's initializeMap from callbacks if it hasn't fired yet
+      googleMapsApiLoaded.callbacks = googleMapsApiLoaded.callbacks.filter(cb => cb !== initializeMap);
+      // If this was the last component waiting and API is not loaded, reset state
+      if (googleMapsApiLoaded.callbacks.length === 0 && !googleMapsApiLoaded.current && googleMapsApiLoaded.loading) {
+        googleMapsApiLoaded.loading = false;
+      }
+    };
+  }, [systemSettings.googleMapsApiKey, initialLocation, zoom, readonly, onLocationSelect]);
+
+  // Add markers when map is initialized
+  useEffect(() => {
+    if (!map || !isMapInitialized) return;
+
+    // Clear existing markers (if any were added previously)
+    // For simplicity, we'll just re-add all markers. For dynamic updates,
+    // you'd manage marker instances.
+    // Note: This current implementation will add new markers on every re-render
+    // if `markers` array changes. For performance, manage marker objects.
+
+    const currentMarkers: google.maps.Marker[] = [];
+
+    markers.forEach(markerData => {
+      const marker = new window.google.maps.Marker({
+        position: { lat: markerData.lat, lng: markerData.lng },
+        map: map,
+        title: markerData.title,
+        icon: {
+          url: getMarkerIcon(markerData.status),
+          scaledSize: new window.google.maps.Size(32, 32)
+        }
+      });
+
+      currentMarkers.push(marker);
+
+      if (markerData.onClick) {
+        marker.addListener('click', markerData.onClick);
+      }
+
+      // Add info window
+      const infoWindow = new window.google.maps.InfoWindow({
+        content: `
+          <div style="padding: 8px;">
+            <h4 style="margin: 0 0 8px 0; font-weight: bold;">${markerData.title}</h4>
+            <p style="margin: 0; font-size: 12px; color: #666;">
+              Status: <span style="font-weight: bold; color: ${getStatusColor(markerData.status)};">
+                ${markerData.status.toUpperCase()}
+              </span>
+            </p>
+          </div>
+        `
+      });
+
+      marker.addListener('click', () => {
+        infoWindow.open(map, marker);
+      });
+    });
+
+    // Cleanup old markers if managing them
+    return () => {
+      currentMarkers.forEach(marker => marker.setMap(null));
+    };
+  }, [map, isMapInitialized, markers]); // Re-run when map or markers change
+
+  const initializeMap = () => {
+    if (!mapRef.current || !window.google || !window.google.maps) {
+      // API not fully ready or map container not available
+      return;
+    }
+
+    try {
+      const mapInstance = new window.google.maps.Map(mapRef.current, {
+        center: initialLocation || defaultCenter,
+        zoom: zoom,
+        mapTypeId: window.google.maps.MapTypeId.ROADMAP,
+        streetViewControl: false,
+        mapTypeControl: true,
+        fullscreenControl: true,
+        zoomControl: true,
+      });
+
+      setMap(mapInstance);
+      setIsMapInitialized(true); // Map instance successfully created
+
+      // Add click listener for location selection (only if not readonly)
+      if (!readonly) {
+        mapInstance.addListener('click', (event: google.maps.MapMouseEvent) => {
+          if (event.latLng) {
+            const lat = event.latLng.lat();
+            const lng = event.latLng.lng();
+            
+            // Reverse geocode to get address
+            const geocoder = new window.google.maps.Geocoder();
+            geocoder.geocode({ location: { lat, lng } }, (results, status) => {
+              if (status === 'OK' && results && results[0]) {
+                onLocationSelect({
+                  lat,
+                  lng,
+                  address: results[0].formatted_address
+                });
+              } else {
+                onLocationSelect({
+                  lat,
+                  lng,
+                  address: `${lat.toFixed(6)}, ${lng.toFixed(6)}`
+                });
+              }
+            });
+          }
+        });
+      }
+    } catch (err) {
+      setError('Error initializing map. Check API key and console for details.');
+      console.error('Map initialization error:', err);
+    }
+  };
+
+  // Add markers when map is loaded
+  /* Old useEffect for markers, replaced by the one above
+  useEffect(() => {
+    if (!map || !isLoaded) return;
+
+    // Clear existing markers
+    // In a real implementation, you'd track markers to clear them
+
+    markers.forEach(markerData => {
+      const marker = new google.maps.Marker({
+        position: { lat: markerData.lat, lng: markerData.lng },
+        map: map,
+        title: markerData.title,
+        icon: {
+          url: getMarkerIcon(markerData.status),
+          scaledSize: new google.maps.Size(32, 32)
+        }
+      });
+
+      if (markerData.onClick) {
+        marker.addListener('click', markerData.onClick);
+      }
+
+      // Add info window
+      const infoWindow = new google.maps.InfoWindow({
+        content: `
+          <div style="padding: 8px;">
+            <h4 style="margin: 0 0 8px 0; font-weight: bold;">${markerData.title}</h4>
+            <p style="margin: 0; font-size: 12px; color: #666;">
+              Status: <span style="font-weight: bold; color: ${getStatusColor(markerData.status)};">
+                ${markerData.status.toUpperCase()}
+              </span>
+            </p>
+          </div>
+        `
+      });
+
+      marker.addListener('click', () => {
+        infoWindow.open(map, marker);
+      });
+    });
+  }, [map, isLoaded, markers]);
+  */
 
     const initializeMap = () => {
       if (!mapRef.current) return;
@@ -205,7 +388,7 @@ export default function GoogleMapComponent({
             <circle cx="16" cy="16" r="12" fill="#F59E0B" stroke="white" stroke-width="2"/>
             <circle cx="16" cy="16" r="3" fill="white"/>
           </svg>
-        `);
+        `); // pending
     }
   };
 
@@ -215,7 +398,7 @@ export default function GoogleMapComponent({
         return '#10B981';
       case 'rejected':
         return '#EF4444';
-      default:
+      default: // pending
         return '#F59E0B';
     }
   };
@@ -231,7 +414,7 @@ export default function GoogleMapComponent({
     );
   }
 
-  if (!isLoaded) {
+  if (!isMapInitialized) { // Use isMapInitialized here
     return (
       <div className="w-full bg-gray-100 rounded-lg flex items-center justify-center" style={{ height }}>
         <div className="text-center">
@@ -248,10 +431,4 @@ export default function GoogleMapComponent({
     </div>
   );
 }
-
-// Extend Window interface for Google Maps
-declare global {
-  interface Window {
-    google: any;
-  }
-}
+```
