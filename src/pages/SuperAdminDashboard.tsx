@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
+import { useAuth } from '../contexts/AuthContext';
 import { useData } from '../contexts/DataContext';
 import { useOfflineSync } from '../hooks/useOfflineSync';
 import OfflineIndicator from '../components/OfflineIndicator';
@@ -327,6 +328,7 @@ export default function SuperAdminDashboard() {
 }
 
 function SuperAdminOverview() {
+  const { user } = useAuth();
   const { users, residents, documents, announcements, transactions } = useData();
   
   const stats = [
