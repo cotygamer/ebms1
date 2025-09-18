@@ -13,6 +13,7 @@ import Analytics from '../components/Analytics';
 import ProjectGallery from '../components/ProjectGallery';
 import KYCVerificationCenter from '../components/KYCVerificationCenter';
 import SyncTestPanel from '../components/SyncTestPanel';
+import DataSyncMonitor from '../components/DataSyncMonitor';
 import { 
   Users, 
   Shield, 
@@ -62,7 +63,9 @@ import {
   Cloud,
   Key,
   Mail,
-  Phone
+  Phone,
+  Layers,
+  TestTube
 } from 'lucide-react';
 
 export default function SuperAdminDashboard() {
@@ -91,6 +94,7 @@ export default function SuperAdminDashboard() {
     // System Section
     { id: 'modules', label: 'Module Control', icon: Layers, description: 'Enable/disable system modules', section: 'System' },
     { id: 'settings', label: 'System Settings', icon: Settings, description: 'Configure system preferences', section: 'System' },
+    { id: 'data-sync', label: 'Data Sync Monitor', icon: Database, description: 'Monitor data synchronization', section: 'System' },
     { id: 'integrations', label: 'Integrations', icon: Globe, description: 'Third-party integrations', section: 'System' },
     { id: 'security', label: 'Security', icon: Lock, description: 'Security settings and logs', section: 'System' },
     
@@ -100,7 +104,12 @@ export default function SuperAdminDashboard() {
     
     // Testing Section
     { id: 'sync-tests', label: 'Sync Tests', icon: TestTube, description: 'Test data synchronization', section: 'Testing' },
-    { id: 'system-health', label: 'System Health', icon: Activity, description: 'Monitor system performance', section: 'Testing' }
+    { id: 'system-health', label: 'System Health', icon: Activity, description: 'Monitor system performance', section: 'Testing' },
+    
+    // Portal Management Section
+    { id: 'portal-management', label: 'Portal Management', icon: Building2, description: 'Manage specialized portals', section: 'Portal Management' },
+    { id: 'user-roles', label: 'User Roles & Permissions', icon: Shield, description: 'Manage user access levels', section: 'Portal Management' },
+    { id: 'audit-logs', label: 'Audit Logs', icon: FileText, description: 'View system audit trail', section: 'Portal Management' }
   ];
 
   const getActiveMenuItem = () => {
@@ -125,6 +134,8 @@ export default function SuperAdminDashboard() {
         return <ModuleControl />;
       case 'settings':
         return <SystemSettings />;
+      case 'data-sync':
+        return <DataSyncMonitor />;
       case 'integrations':
         return <IntegrationsManagement />;
       case 'security':
@@ -137,6 +148,12 @@ export default function SuperAdminDashboard() {
         return <SyncTestPanel />;
       case 'system-health':
         return <SystemHealthMonitor />;
+      case 'portal-management':
+        return <PortalManagement />;
+      case 'user-roles':
+        return <UserRolesManagement />;
+      case 'audit-logs':
+        return <AuditLogsViewer />;
       default:
         return <SuperAdminOverview />;
     }
@@ -1046,6 +1063,326 @@ function SystemHealthMonitor() {
               </div>
             </div>
           ))}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function PortalManagement() {
+  const portals = [
+    {
+      id: 'medical-portal',
+      name: 'Medical Portal',
+      description: 'Health center management and medical records',
+      icon: Heart,
+      color: 'text-red-600',
+      bgColor: 'bg-red-50',
+      status: 'active',
+      users: 5,
+      lastActivity: '2 hours ago'
+    },
+    {
+      id: 'accounting-portal',
+      name: 'Accounting Portal',
+      description: 'Financial management and revenue tracking',
+      icon: Calculator,
+      color: 'text-blue-600',
+      bgColor: 'bg-blue-50',
+      status: 'active',
+      users: 3,
+      lastActivity: '1 hour ago'
+    },
+    {
+      id: 'disaster-portal',
+      name: 'Disaster Portal',
+      description: 'Emergency management and disaster response',
+      icon: AlertTriangle,
+      color: 'text-orange-600',
+      bgColor: 'bg-orange-50',
+      status: 'active',
+      users: 4,
+      lastActivity: '30 minutes ago'
+    },
+    {
+      id: 'peace-order-portal',
+      name: 'Peace & Order Portal',
+      description: 'Incident management and crime prevention',
+      icon: Shield,
+      color: 'text-purple-600',
+      bgColor: 'bg-purple-50',
+      status: 'active',
+      users: 6,
+      lastActivity: '15 minutes ago'
+    }
+  ];
+
+  return (
+    <div className="space-y-6">
+      <h2 className="text-2xl font-semibold text-gray-900">Portal Management</h2>
+      
+      {/* Portal Statistics */}
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+        <div className="bg-white rounded-lg shadow-sm p-6">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm font-medium text-gray-600">Active Portals</p>
+              <p className="text-3xl font-bold text-blue-600">{portals.length}</p>
+            </div>
+            <Building2 className="h-12 w-12 text-blue-600" />
+          </div>
+        </div>
+        
+        <div className="bg-white rounded-lg shadow-sm p-6">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm font-medium text-gray-600">Total Portal Users</p>
+              <p className="text-3xl font-bold text-green-600">
+                {portals.reduce((sum, portal) => sum + portal.users, 0)}
+              </p>
+            </div>
+            <Users className="h-12 w-12 text-green-600" />
+          </div>
+        </div>
+        
+        <div className="bg-white rounded-lg shadow-sm p-6">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm font-medium text-gray-600">System Uptime</p>
+              <p className="text-3xl font-bold text-purple-600">99.9%</p>
+            </div>
+            <Activity className="h-12 w-12 text-purple-600" />
+          </div>
+        </div>
+        
+        <div className="bg-white rounded-lg shadow-sm p-6">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm font-medium text-gray-600">Active Sessions</p>
+              <p className="text-3xl font-bold text-orange-600">24</p>
+            </div>
+            <Monitor className="h-12 w-12 text-orange-600" />
+          </div>
+        </div>
+      </div>
+
+      {/* Portal Cards */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        {portals.map((portal) => (
+          <div key={portal.id} className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+            <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center space-x-3">
+                <div className={`p-3 rounded-lg ${portal.bgColor}`}>
+                  <portal.icon className={`h-6 w-6 ${portal.color}`} />
+                </div>
+                <div>
+                  <h3 className="text-lg font-semibold text-gray-900">{portal.name}</h3>
+                  <p className="text-sm text-gray-600">{portal.description}</p>
+                </div>
+              </div>
+              <span className={`px-2 py-1 text-xs font-semibold rounded-full ${
+                portal.status === 'active' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
+              }`}>
+                {portal.status.toUpperCase()}
+              </span>
+            </div>
+            
+            <div className="grid grid-cols-2 gap-4 mb-4">
+              <div className="text-center p-3 bg-gray-50 rounded-lg">
+                <p className="text-2xl font-bold text-gray-900">{portal.users}</p>
+                <p className="text-sm text-gray-600">Active Users</p>
+              </div>
+              <div className="text-center p-3 bg-gray-50 rounded-lg">
+                <p className="text-sm font-medium text-gray-900">{portal.lastActivity}</p>
+                <p className="text-sm text-gray-600">Last Activity</p>
+              </div>
+            </div>
+            
+            <div className="flex space-x-2">
+              <button className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">
+                Manage Portal
+              </button>
+              <button className="px-4 py-2 text-gray-600 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors">
+                <Settings className="h-4 w-4" />
+              </button>
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function UserRolesManagement() {
+  const roles = [
+    {
+      id: 'super-admin',
+      name: 'Super Administrator',
+      description: 'Full system access and control',
+      permissions: ['all'],
+      userCount: 1,
+      color: 'text-red-600',
+      bgColor: 'bg-red-50'
+    },
+    {
+      id: 'barangay-official',
+      name: 'Barangay Official',
+      description: 'Resident management and verification',
+      permissions: ['residents', 'documents', 'reports', 'announcements'],
+      userCount: 3,
+      color: 'text-green-600',
+      bgColor: 'bg-green-50'
+    },
+    {
+      id: 'medical-portal',
+      name: 'Medical Staff',
+      description: 'Health center and medical records',
+      permissions: ['health', 'medical-records', 'appointments'],
+      userCount: 5,
+      color: 'text-blue-600',
+      bgColor: 'bg-blue-50'
+    },
+    {
+      id: 'accounting-portal',
+      name: 'Accounting Staff',
+      description: 'Financial management and reporting',
+      permissions: ['accounting', 'financial-reports', 'payments'],
+      userCount: 3,
+      color: 'text-purple-600',
+      bgColor: 'bg-purple-50'
+    }
+  ];
+
+  return (
+    <div className="space-y-6">
+      <h2 className="text-2xl font-semibold text-gray-900">User Roles & Permissions</h2>
+      
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        {roles.map((role) => (
+          <div key={role.id} className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+            <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center space-x-3">
+                <div className={`p-3 rounded-lg ${role.bgColor}`}>
+                  <Shield className={`h-6 w-6 ${role.color}`} />
+                </div>
+                <div>
+                  <h3 className="text-lg font-semibold text-gray-900">{role.name}</h3>
+                  <p className="text-sm text-gray-600">{role.description}</p>
+                </div>
+              </div>
+              <span className="text-2xl font-bold text-gray-900">{role.userCount}</span>
+            </div>
+            
+            <div className="space-y-3">
+              <h4 className="font-medium text-gray-900">Permissions</h4>
+              <div className="flex flex-wrap gap-2">
+                {role.permissions.map((permission, index) => (
+                  <span key={index} className="px-2 py-1 bg-gray-100 text-gray-700 text-xs rounded">
+                    {permission}
+                  </span>
+                ))}
+              </div>
+            </div>
+            
+            <button className="w-full mt-4 px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors">
+              Manage Role
+            </button>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function AuditLogsViewer() {
+  const auditLogs = [
+    {
+      id: '1',
+      action: 'User Login',
+      user: 'admin@barangay.gov',
+      resource: 'Authentication',
+      timestamp: '2024-03-18T10:30:00Z',
+      ip: '192.168.1.100',
+      status: 'success'
+    },
+    {
+      id: '2',
+      action: 'Resident Verified',
+      user: 'official@barangay.gov',
+      resource: 'Resident Management',
+      timestamp: '2024-03-18T10:25:00Z',
+      ip: '192.168.1.101',
+      status: 'success'
+    },
+    {
+      id: '3',
+      action: 'Document Processed',
+      user: 'official@barangay.gov',
+      resource: 'Document Management',
+      timestamp: '2024-03-18T10:20:00Z',
+      ip: '192.168.1.101',
+      status: 'success'
+    }
+  ];
+
+  return (
+    <div className="space-y-6">
+      <h2 className="text-2xl font-semibold text-gray-900">Audit Logs</h2>
+      
+      <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+        <div className="overflow-x-auto">
+          <table className="min-w-full divide-y divide-gray-200">
+            <thead className="bg-gray-50">
+              <tr>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Action
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  User
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Resource
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Timestamp
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  IP Address
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Status
+                </th>
+              </tr>
+            </thead>
+            <tbody className="bg-white divide-y divide-gray-200">
+              {auditLogs.map((log) => (
+                <tr key={log.id} className="hover:bg-gray-50">
+                  <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                    {log.action}
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                    {log.user}
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                    {log.resource}
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                    {new Date(log.timestamp).toLocaleString()}
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                    {log.ip}
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    <span className={`px-2 py-1 text-xs font-semibold rounded-full ${
+                      log.status === 'success' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
+                    }`}>
+                      {log.status.toUpperCase()}
+                    </span>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
         </div>
       </div>
     </div>
