@@ -21,7 +21,10 @@ import {
   Download,
   Eye,
   Plus,
-  ArrowRight
+  ArrowRight,
+  User,
+  QrCode,
+  Building2
 } from 'lucide-react';
 
 export default function ResidentDashboardOverview() {
