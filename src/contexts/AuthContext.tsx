@@ -107,7 +107,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
               email: resident.email,
               name: resident.name,
               role: 'resident',
-              verificationStatus: resident.verification_status || 'non-verified',
+             verificationStatus: resident.verification_status || 'non-verified',
               qrCode: resident.qr_code,
               phone: resident.phone_number,
               address: resident.address,
@@ -120,7 +120,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
               monthlyIncome: resident.monthly_income,
               emergencyContact: resident.emergency_contact,
               dateRegistered: resident.date_registered,
-              houseLocation: resident.house_location
+             houseLocation: resident.house_location,
+             // Map additional fields for complete profile
+             familyTree: resident.profile_data?.familyTree || [],
+             governmentIds: resident.government_ids || {},
+             auditTrail: resident.profile_data?.auditTrail || []
             };
             console.log('Loaded resident profile:', userProfile);
           }

@@ -129,6 +129,11 @@ export default function Login() {
                   Staff and officials should use the <Link to="/bms" className="text-blue-600 hover:underline">BMS Portal</Link>
                 </p>
               </div>
+              <div className="mt-3 pt-3 border-t border-gray-200">
+                <p className="text-xs text-gray-500">
+                  <strong>Note:</strong> If you just registered, please check your email for a confirmation link before logging in.
+                </p>
+              </div>
             </div>
           </div>
           

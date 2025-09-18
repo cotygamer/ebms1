@@ -201,13 +201,33 @@ export default function Register() {
         email: formData.email,
         phone_number: formData.phoneNumber,
         address: completeAddress,
-        verification_status: 'non-verified',
         birth_date: formData.birthDate,
+        birth_place: formData.birthPlace,
         gender: formData.gender,
         civil_status: formData.civilStatus,
+        nationality: formData.nationality,
+        religion: formData.religion,
+        occupation: formData.occupation,
+        monthly_income: formData.monthlyIncome,
         emergency_contact: emergencyContact,
         date_registered: new Date().toISOString().split('T')[0],
         verification_status: 'non-verified',
+        profile_data: {
+          specialStatus: {
+            pwdStatus: formData.pwdStatus,
+            seniorCitizenStatus: formData.seniorCitizenStatus,
+            indigentStatus: formData.indigentStatus,
+            voterStatus: formData.voterStatus
+          },
+          alternatePhone: formData.alternatePhone,
+          familyTree: [],
+          auditTrail: [{
+            timestamp: new Date().toISOString(),
+            action: 'Account Registration',
+            newStatus: 'non-verified',
+            approvedBy: 'System (Self-Registration)'
+          }]
+        },
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString()
       };
