@@ -30,7 +30,7 @@ import {
   Upload,
   Navigation,
   Target,
-  Crosshair
+  Crosshair,
   Navigation,
   Target,
   Crosshair
@@ -42,6 +42,10 @@ export default function ResidentProfileView() {
   const [isEditing, setIsEditing] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [message, setMessage] = useState('');
+  const [showLocationPinning, setShowLocationPinning] = useState(false);
+  const [selectedLocation, setSelectedLocation] = useState(null);
+  const [locationLoading, setLocationLoading] = useState(false);
+  const [systemSettings, setSystemSettings] = useState({ googleMapsApiKey: '' });
   
   const [formData, setFormData] = useState({
     name: user?.name || '',
@@ -58,6 +62,17 @@ export default function ResidentProfileView() {
     emergencyContact: user?.emergencyContact || ''
   });
 
+  const handleLocationSelect = (location) => {
+    setSelectedLocation(location);
+  };
+
+  const handleSaveLocation = async () => {
+    if (!selectedLocation) return;
+    
+    setLocationLoading(true);
+    try {
+      const locationData = {
+        ...selectedLocation,
         timestamp: new Date().toISOString(),
         verifiedBy: user?.name,
         verificationDate: new Date().toISOString()
@@ -77,7 +92,7 @@ export default function ResidentProfileView() {
       setMessage('House location saved successfully!');
       setShowLocationPinning(false);
       setTimeout(() => setMessage(''), 3000);
-    } catch (error: any) {
+    } catch (error) {
       setMessage(`Failed to save location: ${error.message}`);
       setTimeout(() => setMessage(''), 3000);
     } finally {
@@ -139,7 +154,7 @@ export default function ResidentProfileView() {
       setMessage('Profile updated successfully!');
       setIsEditing(false);
       setTimeout(() => setMessage(''), 3000);
-    } catch (error: any) {
+    } catch (error) {
       setMessage(`Failed to update profile: ${error.message}`);
       setTimeout(() => setMessage(''), 3000);
     } finally {
@@ -212,7 +227,7 @@ export default function ResidentProfileView() {
     }
   ];
 
-  const getIncomeLabel = (value: string) => {
+  const getIncomeLabel = (value) => {
     switch (value) {
       case 'below-10000': return 'Below ₱10,000';
       case '10000-25000': return '₱10,000 - ₱25,000';
@@ -298,41 +313,6 @@ export default function ResidentProfileView() {
             <div className="flex items-center">
               {message.includes('successfully') ? (
                 <CheckCircle className="h-5 w-5 mr-2" />
-                        <p className="font-medium text-gray-900">
-                          {selectedLocation ? 'Location Pinned' : 'No Location Set'}
-                        </p>
-                        <p className="text-sm text-gray-600">
-                          {selectedLocation ? selectedLocation.address : 'Click to pin your house location'}
-                        </p>
-                      </div>
-                    </div>
-                    <button
-                      type="button"
-                      onClick={() => setShowLocationPinning(true)}
-                      className="flex items-center px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
-                    >
-                      <MapPin className="h-4 w-4 mr-2" />
-                      {selectedLocation ? 'Update Location' : 'Pin Location'}
-                    </button>
-                  </div>
-                  {selectedLocation && (
-                    <div className="bg-green-50 p-3 rounded-lg border border-green-200">
-                      <div className="flex items-center text-green-800 mb-2">
-                        <CheckCircle className="h-4 w-4 mr-2" />
-                        <span className="font-medium">Location Successfully Pinned</span>
-                      </div>
-                      <p className="text-sm text-green-700 mb-1">
-                        <strong>Address:</strong> {selectedLocation.address}
-                      </p>
-                      <p className="text-xs text-green-600 font-mono">
-                        Coordinates: {selectedLocation.lat.toFixed(6)}, {selectedLocation.lng.toFixed(6)}
-                      </p>
-                      <p className="text-xs text-green-600">
-                        Pinned: {new Date(selectedLocation.timestamp).toLocaleDateString()}
-                      </p>
-                    </div>
-                  )}
-                </div>
               ) : (
                 <AlertTriangle className="h-5 w-5 mr-2" />
               )}
@@ -340,6 +320,50 @@ export default function ResidentProfileView() {
             </div>
           </div>
         )}
+
+        {/* House Location Section */}
+        <div className="bg-gray-50 rounded-lg p-6 border border-gray-200">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center space-x-4">
+              <div className="p-3 rounded-lg bg-green-50">
+                <MapPin className="h-6 w-6 text-green-600" />
+              </div>
+              <div>
+                <p className="font-medium text-gray-900">
+                  {selectedLocation ? 'Location Pinned' : 'No Location Set'}
+                </p>
+                <p className="text-sm text-gray-600">
+                  {selectedLocation ? selectedLocation.address : 'Click to pin your house location'}
+                </p>
+              </div>
+            </div>
+            <button
+              type="button"
+              onClick={() => setShowLocationPinning(true)}
+              className="flex items-center px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
+            >
+              <MapPin className="h-4 w-4 mr-2" />
+              {selectedLocation ? 'Update Location' : 'Pin Location'}
+            </button>
+          </div>
+          {selectedLocation && (
+            <div className="bg-green-50 p-3 rounded-lg border border-green-200">
+              <div className="flex items-center text-green-800 mb-2">
+                <CheckCircle className="h-4 w-4 mr-2" />
+                <span className="font-medium">Location Successfully Pinned</span>
+              </div>
+              <p className="text-sm text-green-700 mb-1">
+                <strong>Address:</strong> {selectedLocation.address}
+              </p>
+              <p className="text-xs text-green-600 font-mono">
+                Coordinates: {selectedLocation.lat.toFixed(6)}, {selectedLocation.lng.toFixed(6)}
+              </p>
+              <p className="text-xs text-green-600">
+                Pinned: {new Date(selectedLocation.timestamp).toLocaleDateString()}
+              </p>
+            </div>
+          )}
+        </div>
       </div>
 
       {/* Profile Sections */}
@@ -363,7 +387,7 @@ export default function ResidentProfileView() {
                   {isEditing ? (
                     field.type === 'select' ? (
                       <select
-                        value={formData[field.key as keyof typeof formData]}
+                        value={formData[field.key]}
                         onChange={(e) => setFormData({ ...formData, [field.key]: e.target.value })}
                         className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                       >
@@ -376,7 +400,7 @@ export default function ResidentProfileView() {
                       </select>
                     ) : field.type === 'textarea' ? (
                       <textarea
-                        value={formData[field.key as keyof typeof formData]}
+                        value={formData[field.key]}
                         onChange={(e) => setFormData({ ...formData, [field.key]: e.target.value })}
                         rows={3}
                         className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
@@ -387,7 +411,7 @@ export default function ResidentProfileView() {
                         <field.icon className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-5 w-5" />
                         <input
                           type={field.type}
-                          value={formData[field.key as keyof typeof formData]}
+                          value={formData[field.key]}
                           onChange={(e) => setFormData({ ...formData, [field.key]: e.target.value })}
                           className="w-full pl-12 pr-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                           placeholder={`Enter ${field.label.toLowerCase()}`}
@@ -399,11 +423,9 @@ export default function ResidentProfileView() {
                       <field.icon className="h-5 w-5 text-gray-400" />
                       <span className="text-gray-900">
                         {field.key === 'monthlyIncome' 
-                          ? getIncomeLabel(formData[field.key as keyof typeof formData])
-                          : formData[field.key as keyof typeof formData] || 'Not provided'
+                          ? getIncomeLabel(formData[field.key])
+                          : formData[field.key] || 'Not provided'
                         }
-                      : field.key === 'houseLocation'
-                      ? (selectedLocation ? selectedLocation.address : 'Not set')
                       </span>
                     </div>
                   )}
@@ -489,6 +511,17 @@ export default function ResidentProfileView() {
           </div>
         )}
       </div>
+
+      {/* Location Pinning Modal */}
+      {showLocationPinning && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-xl shadow-xl max-w-4xl w-full max-h-[90vh] overflow-hidden">
+            <div className="flex items-center justify-between p-6 border-b border-gray-200">
+              <div>
+                <h3 className="text-lg font-semibold text-gray-900">Pin Your House Location</h3>
+                <p className="text-sm text-gray-600 mt-1">Select your exact house location on the map</p>
+              </div>
+              <div className="flex items-center space-x-3">
                 <button
                   onClick={() => setShowLocationPinning(false)}
                   className="text-gray-400 hover:text-gray-600 p-2 rounded-lg hover:bg-gray-100"
