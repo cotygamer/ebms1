@@ -4,10 +4,6 @@ import { useData } from '../contexts/DataContext';
 import GoogleMapComponent from './GoogleMapComponent';
 import GoogleMapComponent from './GoogleMapComponent';
 import GoogleMapComponent from './GoogleMapComponent';
-import GoogleMapComponent from './GoogleMapComponent';
-import GoogleMapComponent from './GoogleMapComponent';
-import GoogleMapComponent from './GoogleMapComponent';
-import GoogleMapComponent from './GoogleMapComponent';
 import { 
   User, 
   Mail, 
@@ -30,25 +26,6 @@ import {
   Navigation,
   Target,
   Crosshair
-  Navigation,
-  Target,
-  Crosshair
-  Navigation,
-  Target,
-  Crosshair
-  Navigation,
-  Target,
-  Crosshair
-  Navigation,
-  Target,
-  Crosshair
-  Navigation,
-  Target,
-  Crosshair
-  const [locationLoading, setLocationLoading] = useState(false);
-  Navigation,
-  Target,
-  Crosshair
 } from 'lucide-react';
 
 export default function ResidentProfileView() {
@@ -57,6 +34,9 @@ export default function ResidentProfileView() {
   const [isEditing, setIsEditing] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [message, setMessage] = useState('');
+  const [locationLoading, setLocationLoading] = useState(false);
+  const [showLocationPinning, setShowLocationPinning] = useState(false);
+  const [selectedLocation, setSelectedLocation] = useState(null);
   
   const [formData, setFormData] = useState({
     name: user?.name || '',
@@ -73,6 +53,13 @@ export default function ResidentProfileView() {
     emergencyContact: user?.emergencyContact || ''
   });
 
+  const handleSaveLocation = async () => {
+    if (!selectedLocation) return;
+
+    setLocationLoading(true);
+    try {
+      const locationData = {
+        ...selectedLocation,
         timestamp: new Date().toISOString(),
         verifiedBy: user?.name,
         verificationDate: new Date().toISOString()
@@ -313,41 +300,6 @@ export default function ResidentProfileView() {
             <div className="flex items-center">
               {message.includes('successfully') ? (
                 <CheckCircle className="h-5 w-5 mr-2" />
-                        <p className="font-medium text-gray-900">
-                          {selectedLocation ? 'Location Pinned' : 'No Location Set'}
-                        </p>
-                        <p className="text-sm text-gray-600">
-                          {selectedLocation ? selectedLocation.address : 'Click to pin your house location'}
-                        </p>
-                      </div>
-                    </div>
-                    <button
-                      type="button"
-                      onClick={() => setShowLocationPinning(true)}
-                      className="flex items-center px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
-                    >
-                      <MapPin className="h-4 w-4 mr-2" />
-                      {selectedLocation ? 'Update Location' : 'Pin Location'}
-                    </button>
-                  </div>
-                  {selectedLocation && (
-                    <div className="bg-green-50 p-3 rounded-lg border border-green-200">
-                      <div className="flex items-center text-green-800 mb-2">
-                        <CheckCircle className="h-4 w-4 mr-2" />
-                        <span className="font-medium">Location Successfully Pinned</span>
-                      </div>
-                      <p className="text-sm text-green-700 mb-1">
-                        <strong>Address:</strong> {selectedLocation.address}
-                      </p>
-                      <p className="text-xs text-green-600 font-mono">
-                        Coordinates: {selectedLocation.lat.toFixed(6)}, {selectedLocation.lng.toFixed(6)}
-                      </p>
-                      <p className="text-xs text-green-600">
-                        Pinned: {new Date(selectedLocation.timestamp).toLocaleDateString()}
-                      </p>
-                    </div>
-                  )}
-                </div>
               ) : (
                 <AlertTriangle className="h-5 w-5 mr-2" />
               )}
@@ -417,8 +369,6 @@ export default function ResidentProfileView() {
                           ? getIncomeLabel(formData[field.key as keyof typeof formData])
                           : formData[field.key as keyof typeof formData] || 'Not provided'
                         }
-                      : field.key === 'houseLocation'
-                      ? (selectedLocation ? selectedLocation.address : 'Not set')
                       </span>
                     </div>
                   )}
@@ -504,118 +454,6 @@ export default function ResidentProfileView() {
           </div>
         )}
       </div>
-                <button
-                  onClick={() => setShowLocationPinning(false)}
-                  className="text-gray-400 hover:text-gray-600 p-2 rounded-lg hover:bg-gray-100"
-                >
-                  <X className="h-5 w-5" />
-                </button>
-              </div>
-            </div>
-            
-            <div className="p-6 space-y-6">
-              {/* Instructions */}
-              <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-                <div className="flex items-start space-x-3">
-                  <Target className="h-5 w-5 text-blue-600 mt-0.5" />
-                  <div>
-                    <h4 className="font-medium text-blue-800">How to Pin Your Location</h4>
-                    <ul className="text-sm text-blue-700 mt-2 space-y-1">
-                      <li>• Click anywhere on the map to pin your exact house location</li>
-                      <li>• Use "Current Location" button for automatic detection</li>
-                      <li>• Zoom in for more precise selection</li>
-                      <li>• This location will be verified by barangay officials</li>
-                    </ul>
-                  </div>
-                </div>
-              </div>
-
-              {/* Current Location Button */}
-              <div className="flex justify-center">
-                <button
-                  onClick={handleUseCurrentLocation}
-                  disabled={locationLoading}
-                  className="flex items-center px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 transition-colors"
-                >
-                  <Navigation className="h-4 w-4 mr-2" />
-                  {locationLoading ? 'Getting Location...' : 'Use Current Location'}
-                </button>
-              </div>
-
-              {/* Map */}
-              {systemSettings.googleMapsApiKey ? (
-                <div className="border border-gray-300 rounded-lg overflow-hidden">
-                  <GoogleMapComponent
-                    onLocationSelect={handleLocationSelect}
-                    initialLocation={selectedLocation ? { lat: selectedLocation.lat, lng: selectedLocation.lng } : undefined}
-                    height="400px"
-                    zoom={16}
-                  />
-                </div>
-              ) : (
-                <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-6 text-center">
-                  <AlertTriangle className="h-8 w-8 text-yellow-600 mx-auto mb-3" />
-                  <h4 className="font-medium text-yellow-800 mb-2">Google Maps Not Available</h4>
-                  <p className="text-sm text-yellow-700">
-                    The map feature is currently unavailable. Please contact the barangay office for assistance.
-                  </p>
-                </div>
-              )}
-
-              {/* Selected Location Display */}
-              {selectedLocation && (
-                <div className="bg-green-50 border border-green-200 rounded-lg p-4">
-                  <div className="flex items-center text-green-800 mb-3">
-                    <CheckCircle className="h-5 w-5 mr-2" />
-                    <span className="font-medium">Location Selected</span>
-                  </div>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
-                    <div>
-                      <label className="text-green-700 font-medium">Address:</label>
-                      <p className="text-green-800">{selectedLocation.address}</p>
-                    </div>
-                    <div>
-                      <label className="text-green-700 font-medium">Coordinates:</label>
-                      <p className="text-green-800 font-mono">
-                        {selectedLocation.lat.toFixed(6)}, {selectedLocation.lng.toFixed(6)}
-                      </p>
-                    </div>
-                  </div>
-                </div>
-              )}
-
-              {/* Action Buttons */}
-              <div className="flex justify-between items-center pt-4 border-t border-gray-200">
-                <button
-                  onClick={() => setSelectedLocation(null)}
-                  disabled={!selectedLocation}
-                  className="flex items-center px-4 py-2 text-gray-700 border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 transition-colors"
-                >
-                  <X className="h-4 w-4 mr-2" />
-                  Clear Location
-                </button>
-                
-                <div className="flex space-x-3">
-                  <button
-                    onClick={() => setShowLocationPinning(false)}
-                    className="px-6 py-2 text-gray-700 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
-                  >
-                    Cancel
-                  </button>
-                  <button
-                    onClick={handleSaveLocation}
-                    disabled={!selectedLocation || locationLoading}
-                    className="flex items-center px-6 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50 transition-colors"
-                  >
-                    <Save className="h-4 w-4 mr-2" />
-                    {locationLoading ? 'Saving...' : 'Save Location'}
-                  </button>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 }
