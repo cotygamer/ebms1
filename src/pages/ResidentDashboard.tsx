@@ -60,6 +60,7 @@ export default function ResidentDashboard() {
     { id: 'profile', label: 'My Profile', icon: User, description: 'Personal information and settings', section: 'Main' },
     { id: 'qr-code', label: 'My QR Code', icon: QrCode, description: 'Digital identification', section: 'Main' },
     { id: 'household', label: 'Household', icon: Users, description: 'Family members and household info', section: 'Main' },
+    { id: 'location', label: 'Pin Location', icon: MapPin, description: 'Set your house location', section: 'Main' },
     
     // Services Section
     { id: 'documents', label: 'Document Requests', icon: FileText, description: 'Request and track documents', section: 'Services' },
