@@ -8,6 +8,7 @@ import GoogleMapComponent from './GoogleMapComponent';
 import GoogleMapComponent from './GoogleMapComponent';
 import GoogleMapComponent from './GoogleMapComponent';
 import GoogleMapComponent from './GoogleMapComponent';
+import GoogleMapComponent from './GoogleMapComponent';
 import { 
   User, 
   Mail, 
@@ -30,22 +31,6 @@ import {
   Navigation,
   Target,
   Crosshair
-  Navigation,
-  Target,
-  Crosshair
-  Navigation,
-  Target,
-  Crosshair
-  Navigation,
-  Target,
-  Crosshair
-  Navigation,
-  Target,
-  Crosshair
-  Navigation,
-  Target,
-  Crosshair
-  const [locationLoading, setLocationLoading] = useState(false);
   Navigation,
   Target,
   Crosshair
@@ -257,9 +242,7 @@ export default function ResidentProfileView() {
             <div>
               <h1 className="text-2xl font-bold text-gray-900">{user?.name}</h1>
               <p className="text-gray-600">{user?.email}</p>
-              <div className="flex item
-  )
-}s-center mt-2 space-x-4">
+              <div className="flex items-center mt-2 space-x-4">
                 <div className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-medium ${
                   user?.verificationStatus === 'verified' ? 'bg-green-100 text-green-800' :
                   user?.verificationStatus === 'semi-verified' ? 'bg-yellow-100 text-yellow-800' :
