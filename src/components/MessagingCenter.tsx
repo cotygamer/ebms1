@@ -49,49 +49,7 @@ interface Message {
 
 export default function MessagingCenter() {
   const { user } = useAuth();
-  const [messages, setMessages] = useState<Message[]>([
-    {
-      id: '1',
-      senderName: 'Maria Santos',
-      senderEmail: 'maria.santos@email.com',
-      senderPhone: '+63 912 345 6789',
-      subject: 'Inquiry about Barangay Clearance',
-      message: 'Good day! I would like to inquire about the requirements for getting a barangay clearance. I need it for my job application. How long does the processing take and what documents do I need to bring? Thank you.',
-      category: 'inquiry',
-      priority: 'medium',
-      status: 'unread',
-      submittedAt: '2024-03-20T09:30:00Z',
-      source: 'website'
-    },
-    {
-      id: '2',
-      senderName: 'Juan Dela Cruz',
-      senderEmail: 'juan.delacruz@email.com',
-      subject: 'Suggestion for Community Garden',
-      message: 'Hello! I would like to suggest creating a community garden in the vacant lot near the health center. This could help promote healthy living and community bonding. I am willing to volunteer and help organize this project.',
-      category: 'suggestion',
-      priority: 'low',
-      status: 'read',
-      submittedAt: '2024-03-19T14:15:00Z',
-      source: 'website'
-    },
-    {
-      id: '3',
-      senderName: 'Ana Garcia',
-      senderEmail: 'ana.garcia@email.com',
-      senderPhone: '+63 917 123 4567',
-      subject: 'Street Light Not Working',
-      message: 'The street light on Main Street corner has been broken for a week now. It makes the area very dark and unsafe at night. Can someone please fix this as soon as possible?',
-      category: 'complaint',
-      priority: 'high',
-      status: 'replied',
-      submittedAt: '2024-03-18T20:45:00Z',
-      repliedAt: '2024-03-19T08:00:00Z',
-      repliedBy: 'Barangay Official',
-      reply: 'Thank you for reporting this issue. We have forwarded your concern to our maintenance team and they will fix the street light within 2-3 business days.',
-      source: 'website'
-    }
-  ]);
+  const { messages } = useData();
 
   const [selectedMessage, setSelectedMessage] = useState<Message | null>(null);
   const [showReplyModal, setShowReplyModal] = useState(false);
@@ -102,7 +60,7 @@ export default function MessagingCenter() {
   const [filterPriority, setFilterPriority] = useState('all');
 
   const filteredMessages = messages.filter(message => {
-    const matchesSearch = message.senderName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    const matchesSearch = message.sender_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          message.subject.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          message.message.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesStatus = filterStatus === 'all' || message.status === filterStatus;
@@ -112,22 +70,24 @@ export default function MessagingCenter() {
   });
 
   const handleMarkAsRead = (messageId: string) => {
-    setMessages(prev => prev.map(msg => 
-      msg.id === messageId ? { ...msg, status: 'read' } : msg
-    ));
+    // Update message status in database
+    updateMessage(messageId, { status: 'read' });
   };
 
-  const handleReply = (messageId: string) => {
+  const handleReply = async (messageId: string) => {
     if (replyText.trim()) {
-      setMessages(prev => prev.map(msg => 
-        msg.id === messageId ? {
-          ...msg,
+      try {
+        await updateMessage(messageId, {
           status: 'replied',
           reply: replyText,
-          repliedAt: new Date().toISOString(),
-          repliedBy: user?.name || 'Barangay Official'
-        } : msg
-      ));
+          replied_at: new Date().toISOString(),
+          replied_by: user?.name || 'Barangay Official'
+        });
+      } catch (error) {
+        console.error('Failed to send reply:', error);
+        alert('Failed to send reply. Please try again.');
+        return;
+      }
       setReplyText('');
       setShowReplyModal(false);
       setSelectedMessage(null);
@@ -135,9 +95,7 @@ export default function MessagingCenter() {
   };
 
   const handleArchive = (messageId: string) => {
-    setMessages(prev => prev.map(msg => 
-      msg.id === messageId ? { ...msg, status: 'archived' } : msg
-    ));
+    updateMessage(messageId, { status: 'archived' });
   };
 
   const getCategoryIcon = (category: string) => {
@@ -322,13 +280,13 @@ export default function MessagingCenter() {
                   <div className="flex items-start space-x-4 flex-1">
                     <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-purple-500 rounded-full flex items-center justify-center">
                       <span className="text-white font-semibold">
-                        {message.senderName.charAt(0)}
+                        {message.sender_name.charAt(0)}
                       </span>
                     </div>
                     <div className="flex-1">
                       <div className="flex items-center space-x-3 mb-2">
                         <h3 className={`font-semibold ${message.status === 'unread' ? 'text-gray-900' : 'text-gray-700'}`}>
-                          {message.senderName}
+                          {message.sender_name}
                         </h3>
                         <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${getCategoryColor(message.category)}`}>
                           {getCategoryIcon(message.category)}
@@ -350,16 +308,16 @@ export default function MessagingCenter() {
                       <div className="flex items-center space-x-4 text-xs text-gray-500">
                         <div className="flex items-center">
                           <Clock className="h-3 w-3 mr-1" />
-                          {new Date(message.submittedAt).toLocaleDateString()} at {new Date(message.submittedAt).toLocaleTimeString()}
+                          {new Date(message.created_at).toLocaleDateString()} at {new Date(message.created_at).toLocaleTimeString()}
                         </div>
                         <div className="flex items-center">
                           <Mail className="h-3 w-3 mr-1" />
-                          {message.senderEmail}
+                          {message.sender_email}
                         </div>
-                        {message.senderPhone && (
+                        {message.sender_phone && (
                           <div className="flex items-center">
                             <Phone className="h-3 w-3 mr-1" />
-                            {message.senderPhone}
+                            {message.sender_phone}
                           </div>
                         )}
                       </div>
@@ -419,16 +377,16 @@ export default function MessagingCenter() {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
                     <label className="text-sm font-medium text-blue-700">Name</label>
-                    <p className="text-blue-900 font-medium">{selectedMessage.senderName}</p>
+                    <p className="text-blue-900 font-medium">{selectedMessage.sender_name}</p>
                   </div>
                   <div>
                     <label className="text-sm font-medium text-blue-700">Email</label>
-                    <p className="text-blue-900">{selectedMessage.senderEmail}</p>
+                    <p className="text-blue-900">{selectedMessage.sender_email}</p>
                   </div>
-                  {selectedMessage.senderPhone && (
+                  {selectedMessage.sender_phone && (
                     <div>
                       <label className="text-sm font-medium text-blue-700">Phone</label>
-                      <p className="text-blue-900">{selectedMessage.senderPhone}</p>
+                      <p className="text-blue-900">{selectedMessage.sender_phone}</p>
                     </div>
                   )}
                   <div>
@@ -460,7 +418,7 @@ export default function MessagingCenter() {
                 
                 <div className="flex items-center text-sm text-gray-500 mt-4">
                   <Calendar className="h-4 w-4 mr-2" />
-                  Received on {new Date(selectedMessage.submittedAt).toLocaleDateString()} at {new Date(selectedMessage.submittedAt).toLocaleTimeString()}
+                  Received on {new Date(selectedMessage.created_at).toLocaleDateString()} at {new Date(selectedMessage.created_at).toLocaleTimeString()}
                 </div>
               </div>
 
@@ -474,7 +432,7 @@ export default function MessagingCenter() {
                   <p className="text-green-800 leading-relaxed mb-4">{selectedMessage.reply}</p>
                   <div className="flex items-center text-sm text-green-700">
                     <User className="h-4 w-4 mr-2" />
-                    Replied by {selectedMessage.repliedBy} on {selectedMessage.repliedAt ? new Date(selectedMessage.repliedAt).toLocaleDateString() : ''}
+                    Replied by {selectedMessage.replied_by} on {selectedMessage.replied_at ? new Date(selectedMessage.replied_at).toLocaleDateString() : ''}
                   </div>
                 </div>
               )}
@@ -525,7 +483,7 @@ export default function MessagingCenter() {
             <div className="p-6 space-y-6">
               <div className="bg-gray-50 p-4 rounded-xl">
                 <h4 className="font-medium text-gray-900 mb-2">Original Message</h4>
-                <p className="text-sm text-gray-700 mb-2"><strong>From:</strong> {selectedMessage.senderName}</p>
+                <p className="text-sm text-gray-700 mb-2"><strong>From:</strong> {selectedMessage.sender_name}</p>
                 <p className="text-sm text-gray-700 mb-2"><strong>Subject:</strong> {selectedMessage.subject}</p>
                 <p className="text-sm text-gray-600">{selectedMessage.message}</p>
               </div>
