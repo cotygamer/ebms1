@@ -876,7 +876,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
       addProject,
       updateProject,
       addBusinessPermit,
-      updateBusinessPermit
+      updateBusinessPermit,
     }}>
       {children}
     </DataContext.Provider>

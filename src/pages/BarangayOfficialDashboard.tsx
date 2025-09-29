@@ -7,51 +7,7 @@ import KYCVerificationCenter from '../components/KYCVerificationCenter';
 import ResidentManagement from '../components/ResidentManagement';
 import DataSyncMonitor from '../components/DataSyncMonitor';
 import MessagingCenter from '../components/MessagingCenter';
-import { 
-  Building2, 
-  Users, 
-  FileText, 
-  BarChart3, 
-  Settings, 
-  Heart, 
-  Calculator, 
-  AlertTriangle, 
-  LogOut, 
-  ArrowLeft,
-  Bell,
-  Calendar,
-  MapPin,
-  Shield,
-  Activity,
-  Camera,
-  Award,
-  TrendingUp,
-  CheckCircle,
-  Clock,
-  UserPlus,
-  Search,
-  Filter,
-  Download,
-  Eye,
-  Edit,
-  Trash2,
-  Plus,
-  UserCheck,
-  Home,
-  Phone,
-  Mail,
-  Database,
-  X,
-  MessageSquare,
-  Star,
-  Zap,
-  Target,
-  Sparkles,
-  ChevronRight,
-  Menu,
-  Sun,
-  Moon
-} from 'lucide-react';
+import { Building2, Users, FileText, BarChart3, Settings, Heart, Calculator, AlertTriangle, LogOut, ArrowLeft, Bell, Calendar, MapPin, Shield, Activity, Camera, Award, TrendingUp, CheckCircle, Clock, UserPlus, Search, Filter, Download, Eye, CreditCard as Edit, Trash2, Plus, UserCheck, Home, Phone, Mail, Database, X, MessageSquare, Star, Zap, Target, Sparkles, ChevronRight, Menu, Sun, Moon } from 'lucide-react';
 
 export default function BarangayOfficialDashboard() {
   const { user, logout } = useAuth();
