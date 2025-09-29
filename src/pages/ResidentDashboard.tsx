@@ -18,6 +18,7 @@ import AnnouncementsList from '../components/AnnouncementsList';
 import BarangayMap from '../components/BarangayMap';
 import CommunityChat from '../components/CommunityChat';
 import InfoCenter from '../components/InfoCenter';
+import ResidentMessaging from '../components/ResidentMessaging';
 import OfflineIndicator from '../components/OfflineIndicator';
 import { 
   Home,
@@ -75,6 +76,7 @@ export default function ResidentDashboard() {
     { id: 'barangay-map', label: 'Barangay Map', icon: MapPin, description: 'Interactive community map', section: 'Community' },
     { id: 'community-chat', label: 'Community Chat', icon: MessageSquare, description: 'Connect with neighbors', section: 'Community' },
     { id: 'info-center', label: 'Info Center', icon: Info, description: 'Helpful information and guides', section: 'Community' },
+    { id: 'messages', label: 'Messages', icon: MessageSquare, description: 'Send messages to barangay officials', section: 'Services' },
     
     // Emergency Section
     { id: 'call-911', label: 'Call 911', icon: PhoneCall, description: 'Emergency hotline', section: 'Emergency' }
@@ -118,6 +120,8 @@ export default function ResidentDashboard() {
         return <CommunityChat />;
       case 'info-center':
         return <InfoCenter />;
+      case 'messages':
+        return <ResidentMessaging />;
       case 'call-911':
         return <EmergencyCall />;
       default:

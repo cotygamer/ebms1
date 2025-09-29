@@ -119,15 +119,8 @@ export function useMessages() {
       setData(messages || [])
     } catch (err: any) {
       console.error('Error fetching messages:', err)
-      // If table doesn't exist, return empty array instead of throwing
-      if (err?.code === 'PGRST205' || err?.message?.includes('Could not find the table')) {
-        console.warn('Messages table not found, returning empty array')
-        setData([])
-        setError(null)
-      } else {
-        setError(err.message || 'Failed to fetch messages')
-        setData([])
-      }
+      setError(err.message || 'Failed to fetch messages')
+      setData([])
     } finally {
       setLoading(false)
     }
@@ -136,15 +129,36 @@ export function useMessages() {
   useEffect(() => {
     fetchData()
 
-    // Set up real-time subscription
-    const subscription = dataService.subscribeToTable('messages', (payload) => {
-      console.log('Messages real-time update:', payload)
-      fetchData() // Refresh data on any change
-    })
+    // Set up real-time subscription with error handling
+    let subscription: any = null
+    try {
+      subscription = dataService.subscribeToTable('messages', (payload) => {
+        console.log('Messages real-time update:', payload)
+        
+        // Update local state based on the change
+        if (payload.eventType === 'INSERT') {
+          setData(prev => [payload.new, ...prev])
+        } else if (payload.eventType === 'UPDATE') {
+          setData(prev => prev.map(item => 
+            item.id === payload.new.id ? payload.new : item
+          ))
+        } else if (payload.eventType === 'DELETE') {
+          setData(prev => prev.filter(item => 
+            item.id !== payload.old.id
+          ))
+        }
+      })
+    } catch (subscriptionError) {
+      console.warn('Failed to set up messages subscription:', subscriptionError)
+    }
 
     return () => {
       if (subscription) {
-        dataService.unsubscribeFromTable('messages')
+        try {
+          dataService.unsubscribeFromTable('messages')
+        } catch (cleanupError) {
+          console.warn('Failed to cleanup messages subscription:', cleanupError)
+        }
       }
     }
   }, [fetchData])

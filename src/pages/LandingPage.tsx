@@ -57,57 +57,38 @@ export default function LandingPage() {
     setContactMessage('');
 
     try {
-      // Try to use the data service to create the message
-      try {
-        const { addMessage } = await import('../contexts/DataContext');
-        // This won't work directly, so we'll use a direct API call with better error handling
-        
-        const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/rest/v1/messages`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'apikey': import.meta.env.VITE_SUPABASE_ANON_KEY,
-            'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`,
-            'Prefer': 'return=minimal'
-          },
-          body: JSON.stringify({
-            sender_name: `${contactForm.firstName} ${contactForm.lastName}`.trim(),
-            sender_email: contactForm.email,
-            sender_phone: contactForm.phone || null,
-            subject: contactForm.subject,
-            message: contactForm.message,
-            category: contactForm.category,
-            priority: 'medium',
-            status: 'unread',
-            source: 'website'
-          })
-        });
+      // Use the data service to create the message
+      const { dataService } = await import('../services/dataService');
+      
+      await dataService.createMessage({
+        sender_name: `${contactForm.firstName} ${contactForm.lastName}`.trim(),
+        sender_email: contactForm.email,
+        sender_phone: contactForm.phone || null,
+        subject: contactForm.subject,
+        message: contactForm.message,
+        category: contactForm.category,
+        priority: 'medium',
+        status: 'unread',
+        source: 'website'
+      });
 
-        if (response.ok) {
-          setContactMessage('Message sent successfully! We will get back to you soon.');
-          setContactForm({
-            firstName: '',
-            lastName: '',
-            email: '',
-            phone: '',
-            category: 'general',
-            subject: '',
-            message: ''
-          });
-        } else {
-          const errorData = await response.json();
-          if (errorData.code === 'PGRST205' || errorData.message?.includes('Could not find the table')) {
-            throw new Error('Our messaging system is currently being set up. Please contact us directly at our office or phone number.');
-          }
-          throw new Error(errorData.message || 'Failed to send message');
-        }
-      } catch (importError) {
-        // Fallback to direct API call
-        throw new Error('Messaging system is temporarily unavailable. Please contact us directly.');
-      }
+      setContactMessage('Message sent successfully! We will get back to you soon.');
+      setContactForm({
+        firstName: '',
+        lastName: '',
+        email: '',
+        phone: '',
+        category: 'general',
+        subject: '',
+        message: ''
+      });
     } catch (error) {
       console.error('Contact form error:', error);
-      setContactMessage(error.message || 'Failed to send message. Please try again or contact us directly.');
+      if (error.message?.includes('Could not find the table') || error.code === 'PGRST205') {
+        setContactMessage('Our messaging system is currently being set up. Please contact us directly at our office or phone number.');
+      } else {
+        setContactMessage(error.message || 'Failed to send message. Please try again or contact us directly.');
+      }
     } finally {
       setIsSubmittingContact(false);
       setTimeout(() => setContactMessage(''), 5000);

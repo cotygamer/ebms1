@@ -27,37 +27,33 @@ import {
   Flag,
   ArrowLeft,
   Download,
-  Paperclip
+  Paperclip,
+  RefreshCw
 } from 'lucide-react';
-
-interface Message {
-  id: string;
-  senderName: string;
-  senderEmail: string;
-  senderPhone?: string;
-  subject: string;
-  message: string;
-  category: 'general' | 'complaint' | 'suggestion' | 'inquiry' | 'emergency';
-  priority: 'low' | 'medium' | 'high';
-  status: 'unread' | 'read' | 'replied' | 'archived';
-  submittedAt: string;
-  repliedAt?: string;
-  repliedBy?: string;
-  reply?: string;
-  source: 'website' | 'portal' | 'phone' | 'walk-in';
-}
 
 export default function MessagingCenter() {
   const { user } = useAuth();
   const { messages, updateMessage } = useData();
 
-  const [selectedMessage, setSelectedMessage] = useState<Message | null>(null);
+  const [selectedMessage, setSelectedMessage] = useState<any>(null);
   const [showReplyModal, setShowReplyModal] = useState(false);
   const [replyText, setReplyText] = useState('');
   const [searchTerm, setSearchTerm] = useState('');
   const [filterStatus, setFilterStatus] = useState('all');
   const [filterCategory, setFilterCategory] = useState('all');
   const [filterPriority, setFilterPriority] = useState('all');
+  const [isRefreshing, setIsRefreshing] = useState(false);
+
+  // Auto-refresh messages every 30 seconds
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setIsRefreshing(true);
+      window.dispatchEvent(new CustomEvent('refreshAllData'));
+      setTimeout(() => setIsRefreshing(false), 1000);
+    }, 30000);
+
+    return () => clearInterval(interval);
+  }, []);
 
   const filteredMessages = messages.filter(message => {
     const matchesSearch = message.sender_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -69,33 +65,39 @@ export default function MessagingCenter() {
     return matchesSearch && matchesStatus && matchesCategory && matchesPriority;
   });
 
-  const handleMarkAsRead = (messageId: string) => {
-    // Update message status in database
-    updateMessage(messageId, { status: 'read' });
+  const handleMarkAsRead = async (messageId: string) => {
+    try {
+      await updateMessage(messageId, { status: 'read' });
+    } catch (error) {
+      console.error('Failed to mark message as read:', error);
+    }
   };
 
-  const handleReply = async (messageId: string) => {
-    if (replyText.trim()) {
+  const handleReply = async () => {
+    if (replyText.trim() && selectedMessage) {
       try {
-        await updateMessage(messageId, {
+        await updateMessage(selectedMessage.id, {
           status: 'replied',
           reply: replyText,
           replied_at: new Date().toISOString(),
           replied_by: user?.name || 'Barangay Official'
         });
+        setReplyText('');
+        setShowReplyModal(false);
+        setSelectedMessage(null);
       } catch (error) {
         console.error('Failed to send reply:', error);
         alert('Failed to send reply. Please try again.');
-        return;
       }
-      setReplyText('');
-      setShowReplyModal(false);
-      setSelectedMessage(null);
     }
   };
 
-  const handleArchive = (messageId: string) => {
-    updateMessage(messageId, { status: 'archived' });
+  const handleArchive = async (messageId: string) => {
+    try {
+      await updateMessage(messageId, { status: 'archived' });
+    } catch (error) {
+      console.error('Failed to archive message:', error);
+    }
   };
 
   const getCategoryIcon = (category: string) => {
@@ -195,6 +197,20 @@ export default function MessagingCenter() {
             Messaging Center
           </h2>
           <p className="text-gray-600 mt-2">Manage community messages and inquiries from residents</p>
+        </div>
+        <div className="flex items-center space-x-3">
+          <button
+            onClick={() => {
+              setIsRefreshing(true);
+              window.dispatchEvent(new CustomEvent('refreshAllData'));
+              setTimeout(() => setIsRefreshing(false), 1000);
+            }}
+            disabled={isRefreshing}
+            className="flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 transition-colors"
+          >
+            <RefreshCw className={`h-4 w-4 mr-2 ${isRefreshing ? 'animate-spin' : ''}`} />
+            {isRefreshing ? 'Refreshing...' : 'Refresh'}
+          </button>
         </div>
       </div>
 
@@ -320,6 +336,10 @@ export default function MessagingCenter() {
                             {message.sender_phone}
                           </div>
                         )}
+                        <div className="flex items-center">
+                          <Flag className="h-3 w-3 mr-1" />
+                          {message.source}
+                        </div>
                       </div>
                     </div>
                   </div>
@@ -509,7 +529,7 @@ export default function MessagingCenter() {
                   Cancel
                 </button>
                 <button
-                  onClick={() => handleReply(selectedMessage.id)}
+                  onClick={handleReply}
                   disabled={!replyText.trim()}
                   className="flex-1 px-6 py-3 bg-gradient-to-r from-blue-500 to-blue-600 text-white rounded-xl hover:from-blue-600 hover:to-blue-700 disabled:opacity-50 transition-all"
                 >

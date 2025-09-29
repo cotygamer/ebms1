@@ -767,17 +767,12 @@ export class DataService {
         .order('created_at', { ascending: false })
       
       if (error) {
-        // If table doesn't exist, return empty array
-        if (error.code === 'PGRST205' || error.message?.includes('Could not find the table')) {
-          console.warn('Messages table not found, returning empty array')
-          return []
-        }
         throw error
       }
       return data || []
     } catch (error) {
       console.error('Error fetching messages:', error)
-      return []
+      throw error
     }
   }
 
@@ -794,9 +789,6 @@ export class DataService {
         .single()
       
       if (error) {
-        if (error.code === 'PGRST205' || error.message?.includes('Could not find the table')) {
-          throw new Error('Messaging system is temporarily unavailable. Please contact the barangay office directly.')
-        }
         throw error
       }
       
@@ -830,9 +822,6 @@ export class DataService {
         .single()
       
       if (error) {
-        if (error.code === 'PGRST205' || error.message?.includes('Could not find the table')) {
-          throw new Error('Messaging system is temporarily unavailable.')
-        }
         throw error
       }
       
