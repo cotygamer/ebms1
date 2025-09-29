@@ -747,6 +747,58 @@ export class DataService {
     return data
   }
 
+  // Messages Management
+  static async getMessages() {
+    const { data, error } = await supabase
+      .from('messages')
+      .select('*')
+      .order('created_at', { ascending: false })
+    
+    if (error) throw error
+    return data
+  }
+
+  static async createMessage(messageData: any) {
+    const { data, error } = await supabase
+      .from('messages')
+      .insert([{
+        ...messageData,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString()
+      }])
+      .select()
+      .single()
+    
+    if (error) throw error
+    
+    // Log the action
+    await this.logAction('message.create', 'message', data.id, null, data)
+    
+    return data
+  }
+
+  static async updateMessage(id: string, updates: any) {
+    const { data: oldData } = await supabase
+      .from('messages')
+      .select('*')
+      .eq('id', id)
+      .single()
+
+    const { data, error } = await supabase
+      .from('messages')
+      .update({ ...updates, updated_at: new Date().toISOString() })
+      .eq('id', id)
+      .select()
+      .single()
+    
+    if (error) throw error
+    
+    // Log the action
+    await this.logAction('message.update', 'message', id, oldData, data)
+    
+    return data
+  }
+
   // Real-time Subscriptions
   static subscribeToTable(tableName: string, callback: (payload: any) => void) {
     const subscription = supabase

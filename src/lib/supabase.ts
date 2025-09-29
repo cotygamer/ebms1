@@ -513,5 +513,44 @@ export interface Database {
         }
       }
     }
+    messages: {
+      Row: {
+        id: string
+        sender_name: string
+        sender_email: string
+        sender_phone?: string
+        subject: string
+        message: string
+        category: string
+        priority: string
+        status: string
+        source: string
+        replied_at?: string
+        replied_by?: string
+        reply?: string
+        created_at: string
+        updated_at: string
+      }
+      Insert: {
+        sender_name: string
+        sender_email: string
+        sender_phone?: string
+        subject: string
+        message: string
+        category?: string
+        priority?: string
+        status?: string
+        source?: string
+        replied_at?: string
+        replied_by?: string
+        reply?: string
+      }
+      Update: {
+        status?: string
+        replied_at?: string
+        replied_by?: string
+        reply?: string
+      }
+    }
   }
 }
