@@ -165,90 +165,94 @@ export default function HouseholdMapPinning() {
   }
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <h2 className="text-2xl font-semibold text-gray-900">Household Location Mapping</h2>
-        <div className="flex items-center space-x-2 text-sm text-gray-600">
-          <MapPin className="h-4 w-4" />
-          <span>KYC Verification Required</span>
+    <div className="space-y-8">
+      {/* Header */}
+      <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-8">
+        <div className="text-center">
+          <div className="w-16 h-16 bg-gradient-to-br from-green-600 to-blue-600 rounded-full flex items-center justify-center mx-auto mb-4">
+            <MapPin className="h-8 w-8 text-white" />
+          </div>
+          <h1 className="text-2xl font-bold text-gray-900 mb-2">House Location Mapping</h1>
+          <p className="text-gray-600">Pin your exact house location for verification and official records</p>
         </div>
       </div>
 
       {/* Status Messages */}
       {error && (
-        <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg flex items-center">
+        <div className="bg-red-50 border border-red-200 text-red-700 px-6 py-4 rounded-xl flex items-center">
           <AlertTriangle className="h-5 w-5 mr-2" />
           {error}
         </div>
       )}
 
       {success && (
-        <div className="bg-green-50 border border-green-200 text-green-700 px-4 py-3 rounded-lg flex items-center">
+        <div className="bg-green-50 border border-green-200 text-green-700 px-6 py-4 rounded-xl flex items-center">
           <CheckCircle className="h-5 w-5 mr-2" />
           {success}
         </div>
       )}
 
       {/* Current Status */}
-      <div className={`border-2 rounded-lg p-6 ${getVerificationStatusColor()}`}>
-        <div className="flex items-center justify-between mb-4">
-          <h3 className="text-lg font-semibold text-gray-900">Location Verification Status</h3>
-          {selectedLocation && (
-            <div className="flex items-center text-green-600">
-              <MapPin className="h-5 w-5 mr-1" />
-              <span className="font-medium">Location Pinned</span>
-            </div>
-          )}
-        </div>
+      <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-8">
+        <h3 className="text-xl font-semibold text-gray-900 mb-6 text-center">Current Location Status</h3>
         
         {selectedLocation ? (
-          <div className="space-y-3">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <label className="text-sm font-medium text-gray-700">Pinned Address</label>
-                <p className="text-sm text-gray-900">{selectedLocation.address}</p>
+          <div className="bg-green-50 border border-green-200 rounded-xl p-6">
+            <div className="flex items-center justify-center mb-6">
+              <MapPin className="h-8 w-8 text-green-600 mr-3" />
+              <h4 className="text-xl font-semibold text-green-800">Location Successfully Pinned</h4>
+            </div>
+            
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="bg-white p-4 rounded-lg">
+                <label className="text-sm font-medium text-gray-700 mb-2 block">Pinned Address</label>
+                <p className="text-gray-900 font-medium">{selectedLocation.address}</p>
               </div>
-              <div>
-                <label className="text-sm font-medium text-gray-700">Coordinates</label>
-                <p className="text-sm text-gray-900 font-mono">
+              <div className="bg-white p-4 rounded-lg">
+                <label className="text-sm font-medium text-gray-700 mb-2 block">Coordinates</label>
+                <p className="text-gray-900 font-mono text-sm">
                   {selectedLocation.lat.toFixed(6)}, {selectedLocation.lng.toFixed(6)}
                 </p>
               </div>
-              <div>
-                <label className="text-sm font-medium text-gray-700">Date Pinned</label>
-                <p className="text-sm text-gray-900">
+              <div className="bg-white p-4 rounded-lg">
+                <label className="text-sm font-medium text-gray-700 mb-2 block">Date Pinned</label>
+                <p className="text-gray-900">
                   {new Date(selectedLocation.timestamp).toLocaleDateString()}
                 </p>
               </div>
               {selectedLocation.accuracy && (
-                <div>
-                  <label className="text-sm font-medium text-gray-700">Accuracy</label>
-                  <p className="text-sm text-gray-900">±{Math.round(selectedLocation.accuracy)}m</p>
+                <div className="bg-white p-4 rounded-lg">
+                  <label className="text-sm font-medium text-gray-700 mb-2 block">Accuracy</label>
+                  <p className="text-gray-900">±{Math.round(selectedLocation.accuracy)}m</p>
                 </div>
               )}
             </div>
           </div>
         ) : (
-          <div className="text-center py-8">
-            <Home className="h-16 w-16 text-gray-300 mx-auto mb-4" />
-            <h4 className="text-lg font-semibold text-gray-900 mb-2">No Location Pinned</h4>
-            <p className="text-gray-600">Pin your exact house location to complete your verification</p>
+          <div className="text-center py-12">
+            <div className="w-20 h-20 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-6">
+              <Home className="h-10 w-10 text-gray-400" />
+            </div>
+            <h4 className="text-xl font-semibold text-gray-900 mb-3">No Location Pinned</h4>
+            <p className="text-gray-600 max-w-md mx-auto">
+              Pin your exact house location on the map below to complete your verification process
+            </p>
           </div>
         )}
       </div>
 
       {/* Map Interface */}
-      <div className="bg-white rounded-lg shadow-lg overflow-hidden">
-        <div className="p-4 border-b border-gray-200">
+      <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+        <div className="p-6 border-b border-gray-200">
           <div className="flex items-center justify-between">
-            <h3 className="text-lg font-semibold text-gray-900">Interactive Map</h3>
+            <h3 className="text-xl font-semibold text-gray-900">Interactive Location Map</h3>
             <div className="flex items-center space-x-2">
               <button
                 onClick={handleUseCurrentLocation}
                 disabled={isLoading}
-                className="flex items-center px-3 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 text-sm"
+                className="flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 transition-colors"
               >
-                <Navigation className="h-4 w-4 mr-1" />
+                <Navigation className="h-4 w-4 mr-2" />
                 Use Current Location
               </button>
             </div>
@@ -263,26 +267,38 @@ export default function HouseholdMapPinning() {
         />
 
         {/* Map Instructions */}
-        <div className="p-4 bg-blue-50 border-t border-blue-200">
-          <div className="flex items-start space-x-3">
-            <Target className="h-5 w-5 text-blue-600 mt-0.5" />
+        <div className="p-6 bg-blue-50 border-t border-blue-200">
+          <div className="flex items-start space-x-4">
+            <Target className="h-6 w-6 text-blue-600 mt-1" />
             <div>
-              <h4 className="font-medium text-blue-900">How to Pin Your Location</h4>
-              <ul className="text-sm text-blue-800 mt-2 space-y-1">
-                <li>• Click anywhere on the map to pin your house location</li>
-                <li>• Use "Use Current Location" to automatically detect your position</li>
-                <li>• Zoom in for more precise location selection</li>
-                <li>• Verify the address is correct before saving</li>
-              </ul>
+              <h4 className="font-semibold text-blue-900 mb-3">How to Pin Your Location</h4>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-sm text-blue-800">
+                <div className="flex items-center">
+                  <CheckCircle className="h-4 w-4 mr-2 text-blue-600" />
+                  <span>Click anywhere on the map to pin location</span>
+                </div>
+                <div className="flex items-center">
+                  <CheckCircle className="h-4 w-4 mr-2 text-blue-600" />
+                  <span>Use "Current Location" for auto-detection</span>
+                </div>
+                <div className="flex items-center">
+                  <CheckCircle className="h-4 w-4 mr-2 text-blue-600" />
+                  <span>Zoom in for precise selection</span>
+                </div>
+                <div className="flex items-center">
+                  <CheckCircle className="h-4 w-4 mr-2 text-blue-600" />
+                  <span>Verify address before saving</span>
+                </div>
+              </div>
             </div>
           </div>
         </div>
       </div>
 
       {/* Manual Address Input */}
-      <div className="bg-white rounded-lg shadow-sm p-6">
-        <h3 className="text-lg font-semibold text-gray-900 mb-4">Manual Address Entry</h3>
-        <div className="space-y-4">
+      <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+        <h3 className="text-lg font-semibold text-gray-900 mb-6">Manual Address Entry</h3>
+        <div className="space-y-6">
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
               Complete House Address
@@ -291,7 +307,7 @@ export default function HouseholdMapPinning() {
               value={manualAddress}
               onChange={(e) => setManualAddress(e.target.value)}
               rows={3}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
               placeholder="Enter your complete house address (House #, Street, Purok, Barangay, City, Province)"
             />
           </div>
@@ -310,7 +326,7 @@ export default function HouseholdMapPinning() {
               }
             }}
             disabled={!manualAddress.trim()}
-            className="px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 disabled:opacity-50"
+            className="px-6 py-3 bg-gray-600 text-white rounded-lg hover:bg-gray-700 disabled:opacity-50 transition-colors"
           >
             Use Manual Address
           </button>
@@ -318,34 +334,42 @@ export default function HouseholdMapPinning() {
       </div>
 
       {/* Action Buttons */}
-      <div className="flex justify-between items-center">
-        <div className="text-sm text-gray-600">
-          {selectedLocation ? (
-            <span className="text-green-600">✓ Location selected and ready to save</span>
-          ) : (
-            <span className="text-red-600">⚠ Please pin your house location</span>
-          )}
-        </div>
-        
-        <div className="flex space-x-3">
-          {selectedLocation && (
-            <button
-              onClick={() => setSelectedLocation(null)}
-              className="px-4 py-2 text-gray-700 border border-gray-300 rounded-lg hover:bg-gray-50"
-            >
-              <RotateCcw className="h-4 w-4 mr-2 inline" />
-              Reset
-            </button>
-          )}
+      <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+        <div className="flex justify-between items-center">
+          <div className="text-gray-600">
+            {selectedLocation ? (
+              <div className="flex items-center text-green-600">
+                <CheckCircle className="h-5 w-5 mr-2" />
+                <span className="font-medium">Location selected and ready to save</span>
+              </div>
+            ) : (
+              <div className="flex items-center text-red-600">
+                <AlertTriangle className="h-5 w-5 mr-2" />
+                <span className="font-medium">Please pin your house location</span>
+              </div>
+            )}
+          </div>
           
-          <button
-            onClick={() => setShowConfirmation(true)}
-            disabled={!selectedLocation || isLoading}
-            className="px-6 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center"
-          >
-            <Save className="h-4 w-4 mr-2" />
-            {isLoading ? 'Saving...' : 'Save Location'}
-          </button>
+          <div className="flex space-x-3">
+            {selectedLocation && (
+              <button
+                onClick={() => setSelectedLocation(null)}
+                className="flex items-center px-6 py-3 text-gray-700 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+              >
+                <RotateCcw className="h-4 w-4 mr-2" />
+                Reset
+              </button>
+            )}
+            
+            <button
+              onClick={() => setShowConfirmation(true)}
+              disabled={!selectedLocation || isLoading}
+              className="flex items-center px-8 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors font-medium"
+            >
+              <Save className="h-4 w-4 mr-2" />
+              {isLoading ? 'Saving...' : 'Save Location'}
+            </button>
+          </div>
         </div>
       </div>
 

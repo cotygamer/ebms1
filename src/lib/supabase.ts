@@ -4,16 +4,7 @@ const supabaseUrl = import.meta.env.VITE_SUPABASE_URL
 const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY
 
 if (!supabaseUrl || !supabaseAnonKey) {
-  console.error('Missing Supabase environment variables. Please check your .env file.')
-  console.error('Required variables: VITE_SUPABASE_URL, VITE_SUPABASE_ANON_KEY')
-  throw new Error('Missing Supabase environment variables. Please check your .env file and ensure VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY are set correctly.')
-}
-
-// Validate URL format
-try {
-  new URL(supabaseUrl)
-} catch (error) {
-  throw new Error(`Invalid Supabase URL format: ${supabaseUrl}. Please check your VITE_SUPABASE_URL in .env file.`)
+  throw new Error('Missing Supabase environment variables')
 }
 
 export const supabase = createClient(supabaseUrl, supabaseAnonKey)
@@ -520,6 +511,45 @@ export interface Database {
           processed_by?: string
           approved_by?: string
         }
+      }
+    }
+    messages: {
+      Row: {
+        id: string
+        sender_name: string
+        sender_email: string
+        sender_phone?: string
+        subject: string
+        message: string
+        category: string
+        priority: string
+        status: string
+        source: string
+        replied_at?: string
+        replied_by?: string
+        reply?: string
+        created_at: string
+        updated_at: string
+      }
+      Insert: {
+        sender_name: string
+        sender_email: string
+        sender_phone?: string
+        subject: string
+        message: string
+        category?: string
+        priority?: string
+        status?: string
+        source?: string
+        replied_at?: string
+        replied_by?: string
+        reply?: string
+      }
+      Update: {
+        status?: string
+        replied_at?: string
+        replied_by?: string
+        reply?: string
       }
     }
   }

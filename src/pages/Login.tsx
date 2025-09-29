@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
-import { Building2, Eye, EyeOff } from 'lucide-react';
+import { Building2, Eye, EyeOff, AlertTriangle } from 'lucide-react';
 
 export default function Login() {
   const [email, setEmail] = useState('');
@@ -9,6 +9,7 @@ export default function Login() {
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [setupLoading, setSetupLoading] = useState(false);
   const { login } = useAuth();
   const navigate = useNavigate();
 
@@ -18,13 +19,42 @@ export default function Login() {
     setIsLoading(true);
 
     try {
-      await login(email, password);
-      // Navigation will be handled by the AuthProvider
+      const success = await login(email, password);
+      if (success) {
+        // Navigation will be handled by the AuthProvider based on user role
+      }
     } catch (err) {
       console.error('Login error:', err);
-      setError(err.message || 'An error occurred. Please try again.');
+      setError(err.message || 'Login failed. Please try again.');
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const handleSetupDemoUsers = async () => {
+    setSetupLoading(true);
+    try {
+      const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/setup-demo-users`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`,
+          'Content-Type': 'application/json',
+        },
+      });
+
+      const result = await response.json();
+      
+      if (response.ok) {
+        alert('Demo users created successfully! You can now login with the credentials shown below.');
+      } else {
+        console.error('Setup error:', result);
+        alert('Error setting up demo users. Check console for details.');
+      }
+    } catch (error) {
+      console.error('Setup error:', error);
+      alert('Error setting up demo users. Check console for details.');
+    } finally {
+      setSetupLoading(false);
     }
   };
 
@@ -117,15 +147,39 @@ export default function Login() {
           </form>
 
           <div className="mt-6">
-            <div className="text-sm text-gray-600 bg-gray-50 p-4 rounded-lg">
-              <h3 className="font-semibold mb-2">Resident Demo Account:</h3>
-              <div className="space-y-1">
-                <p><strong>Resident:</strong> resident@email.com / password123</p>
-              </div>
-              <div className="mt-3 pt-3 border-t border-gray-200">
-                <p className="text-xs text-gray-500">
-                  Staff and officials should use the <Link to="/bms" className="text-blue-600 hover:underline">BMS Portal</Link>
+            <div className="space-y-4">
+              <div className="bg-blue-50 p-4 rounded-lg border border-blue-200">
+                <h3 className="font-semibold mb-2 text-blue-900 flex items-center">
+                  <AlertTriangle className="h-4 w-4 mr-2" />
+                  First Time Setup Required
+                </h3>
+                <p className="text-sm text-blue-700 mb-3">
+                  If this is your first time using the system, click the button below to create demo user accounts.
                 </p>
+                <button
+                  onClick={handleSetupDemoUsers}
+                  disabled={setupLoading}
+                  className="w-full bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 text-white px-4 py-2 rounded-lg font-medium transition-colors"
+                >
+                  {setupLoading ? 'Setting up...' : 'Setup Demo Users'}
+                </button>
+              </div>
+              
+              <div className="text-sm text-gray-600 bg-gray-50 p-4 rounded-lg">
+                <h3 className="font-semibold mb-2">Resident Demo Account:</h3>
+                <div className="space-y-1">
+                  <p><strong>Resident:</strong> resident@email.com / password123</p>
+                </div>
+                <div className="mt-3 pt-3 border-t border-gray-200">
+                  <p className="text-xs text-gray-500">
+                    Staff and officials should use the <Link to="/bms" className="text-blue-600 hover:underline">BMS Portal</Link>
+                  </p>
+                </div>
+                <div className="mt-3 pt-3 border-t border-gray-200">
+                  <p className="text-xs text-gray-500">
+                    <strong>Note:</strong> Click "Setup Demo Users" above if you get login errors.
+                  </p>
+                </div>
               </div>
             </div>
           </div>
