@@ -2,29 +2,7 @@ import React, { useState } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { useData } from '../contexts/DataContext';
 import GoogleMapComponent from './GoogleMapComponent';
-import { 
-  User, 
-  Mail, 
-  Phone, 
-  MapPin, 
-  Calendar, 
-  Edit3, 
-  Save, 
-  X, 
-  Shield, 
-  Home,
-  Users,
-  Heart,
-  Briefcase,
-  Globe,
-  CheckCircle,
-  AlertTriangle,
-  Camera,
-  Upload,
-  Navigation,
-  Target,
-  Crosshair
-} from 'lucide-react';
+import { User, Mail, Phone, MapPin, Calendar, CreditCard as Edit3, Save, X, Shield, Home, Users, Heart, Briefcase, Globe, CheckCircle, AlertTriangle, Camera, Upload, Navigation, Target, Crosshair } from 'lucide-react';
 
 export default function ResidentProfileView() {
   const { user, updateUser } = useAuth();
