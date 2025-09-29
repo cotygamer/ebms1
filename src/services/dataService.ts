@@ -548,8 +548,9 @@ export class DataService {
       .select()
       .single()
     
+    if (error) {
       console.error('DataService - Error creating document:', error);
-    if (error) throw error
+      throw error
     }
     
     // Log the action
