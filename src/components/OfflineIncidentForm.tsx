@@ -41,26 +41,25 @@ export default function OfflineIncidentForm() {
 
     try {
       const incidentData = {
-        residentName: user?.name || 'Anonymous',
-        residentEmail: user?.email || '',
         reporter_name: user?.name || 'Anonymous',
         reporter_email: user?.email || '',
-        type: formData.incidentType,
+        reporter_phone: user?.phone || '',
         incident_type: formData.incidentType,
         subject: formData.subject,
         description: formData.description,
         location: formData.location,
+        location: formData.location,
         priority: formData.priority,
         status: 'pending',
-        dateOccurred: formData.dateOccurred,
         date_occurred: formData.dateOccurred,
-        timeOccurred: formData.timeOccurred,
         time_occurred: formData.timeOccurred,
-        dateSubmitted: new Date().toISOString().split('T')[0],
         date_submitted: new Date().toISOString().split('T')[0],
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString()
+        evidence_files: [],
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString()
       };
+
+      console.log('Submitting incident report:', incidentData);
 
       if (isOnline) {
         // Submit directly when online
@@ -82,9 +81,14 @@ export default function OfflineIncidentForm() {
         dateOccurred: '',
         timeOccurred: ''
       });
+      
+      // Trigger data refresh
+      setTimeout(() => {
+        window.dispatchEvent(new CustomEvent('refreshAllData'));
+      }, 1000);
     } catch (error) {
       console.error('Failed to submit incident report:', error);
-      setSubmitMessage('Failed to submit report. Please try again.');
+      setSubmitMessage(`Failed to submit report: ${error.message || 'Please try again.'}`);
     } finally {
       setIsSubmitting(false);
       setTimeout(() => setSubmitMessage(''), 5000);

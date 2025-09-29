@@ -52,9 +52,9 @@ export function useRealTimeData<T>(
     // Set up real-time subscription only if initial fetch succeeds
     let subscription: any = null
     
-    fetchData().then(() => {
-      // Only set up subscription if table exists and data was fetched successfully
-      if (!error) {
+    // Set up subscription after initial fetch
+    const setupSubscription = () => {
+      try {
         subscription = dataService.subscribeToTable(tableName, (payload) => {
           console.log(`Real-time update for ${tableName}:`, payload)
           
@@ -73,11 +73,24 @@ export function useRealTimeData<T>(
           
           setLastSync(new Date())
         })
+      } catch (subscriptionError) {
+        console.warn(`Failed to set up subscription for ${tableName}:`, subscriptionError)
       }
-    }).catch(() => {
-        console.error('Error fetching incidents:', error)
-        setData([])
-      })
+    }
+
+    // Set up subscription after a short delay to ensure table exists
+    setTimeout(setupSubscription, 1000)
+
+    // Cleanup subscription on unmount
+    return () => {
+      if (subscription) {
+        try {
+          dataService.unsubscribeFromTable(tableName)
+        } catch (cleanupError) {
+          console.warn(`Failed to cleanup subscription for ${tableName}:`, cleanupError)
+        }
+      }
+    }
   }, [tableName, fetchData])
 
   const refresh = useCallback(() => {

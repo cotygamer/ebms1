@@ -581,8 +581,11 @@ export function DataProvider({ children }: { children: ReactNode }) {
 
   const addDocument = async (documentData: Omit<Document, 'id'>) => {
     try {
+      console.log('DataContext - Adding document:', documentData);
       await dataService.createDocument(documentData);
+      console.log('DataContext - Document created, refreshing documents...');
       refreshDocuments();
+      console.log('DataContext - Documents refreshed');
     } catch (error) {
       console.error('Failed to add document:', error);
       throw error;

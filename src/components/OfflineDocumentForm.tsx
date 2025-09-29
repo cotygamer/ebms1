@@ -34,15 +34,18 @@ export default function OfflineDocumentForm() {
 
     try {
       const documentData = {
-        resident_id: user?.id,
+        resident_id: user?.id || '',
         document_type: formData.documentType,
         purpose: formData.purpose,
         notes: formData.notes,
         status: 'pending',
         fee: 50.00, // Default fee
         payment_status: 'unpaid',
-        requested_date: new Date().toISOString()
+        requested_date: new Date().toISOString().split('T')[0],
+        tracking_number: `DOC-${Date.now()}-${Math.random().toString(36).substr(2, 6).toUpperCase()}`
       };
+
+      console.log('Submitting document request:', documentData);
 
       if (isOnline) {
         // Submit directly when online
@@ -56,9 +59,14 @@ export default function OfflineDocumentForm() {
 
       // Reset form
       setFormData({ documentType: '', purpose: '', notes: '' });
+      
+      // Trigger data refresh
+      setTimeout(() => {
+        window.dispatchEvent(new CustomEvent('refreshAllData'));
+      }, 1000);
     } catch (error) {
       console.error('Failed to submit document request:', error);
-      setSubmitMessage('Failed to submit request. Please try again.');
+      setSubmitMessage(`Failed to submit request: ${error.message || 'Please try again.'}`);
     } finally {
       setIsSubmitting(false);
       setTimeout(() => setSubmitMessage(''), 5000);

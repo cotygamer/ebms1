@@ -536,20 +536,30 @@ export class DataService {
   }
 
   static async createDocument(documentData: any) {
+    console.log('DataService - Creating document:', documentData);
     const { data, error } = await supabase
       .from('documents')
       .insert([{
         ...documentData,
-        requested_date: new Date().toISOString()
+        requested_date: new Date().toISOString().split('T')[0],
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString()
       }])
       .select()
       .single()
     
+      console.error('DataService - Error creating document:', error);
     if (error) throw error
+    }
     
     // Log the action
-    await this.logAction('document.create', 'document', data.id, null, data)
+    try {
+      await this.logAction('document.create', 'document', data.id, null, data)
+    } catch (logError) {
+      console.warn('Failed to log document creation:', logError)
+    }
     
+    console.log('DataService - Document created successfully:', data);
     return data
   }
 
