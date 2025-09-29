@@ -2,13 +2,6 @@ import React, { useState } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { useData } from '../contexts/DataContext';
 import GoogleMapComponent from './GoogleMapComponent';
-import GoogleMapComponent from './GoogleMapComponent';
-import GoogleMapComponent from './GoogleMapComponent';
-import GoogleMapComponent from './GoogleMapComponent';
-import GoogleMapComponent from './GoogleMapComponent';
-import GoogleMapComponent from './GoogleMapComponent';
-import GoogleMapComponent from './GoogleMapComponent';
-import GoogleMapComponent from './GoogleMapComponent';
 import { 
   User, 
   Mail, 
@@ -28,9 +21,6 @@ import {
   AlertTriangle,
   Camera,
   Upload,
-  Navigation,
-  Target,
-  Crosshair,
   Navigation,
   Target,
   Crosshair
