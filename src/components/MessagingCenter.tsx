@@ -49,7 +49,7 @@ interface Message {
 
 export default function MessagingCenter() {
   const { user } = useAuth();
-  const { messages } = useData();
+  const { messages, updateMessage } = useData();
 
   const [selectedMessage, setSelectedMessage] = useState<Message | null>(null);
   const [showReplyModal, setShowReplyModal] = useState(false);

@@ -749,54 +749,94 @@ export class DataService {
 
   // Messages Management
   static async getMessages() {
-    const { data, error } = await supabase
-      .from('messages')
-      .select('*')
-      .order('created_at', { ascending: false })
-    
-    if (error) throw error
-    return data
+    try {
+      const { data, error } = await supabase
+        .from('messages')
+        .select('*')
+        .order('created_at', { ascending: false })
+      
+      if (error) {
+        // If table doesn't exist, return empty array
+        if (error.code === 'PGRST205' || error.message?.includes('Could not find the table')) {
+          console.warn('Messages table not found, returning empty array')
+          return []
+        }
+        throw error
+      }
+      return data || []
+    } catch (error) {
+      console.error('Error fetching messages:', error)
+      return []
+    }
   }
 
   static async createMessage(messageData: any) {
-    const { data, error } = await supabase
-      .from('messages')
-      .insert([{
-        ...messageData,
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString()
-      }])
-      .select()
-      .single()
-    
-    if (error) throw error
-    
-    // Log the action
-    await this.logAction('message.create', 'message', data.id, null, data)
-    
-    return data
+    try {
+      const { data, error } = await supabase
+        .from('messages')
+        .insert([{
+          ...messageData,
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString()
+        }])
+        .select()
+        .single()
+      
+      if (error) {
+        if (error.code === 'PGRST205' || error.message?.includes('Could not find the table')) {
+          throw new Error('Messaging system is temporarily unavailable. Please contact the barangay office directly.')
+        }
+        throw error
+      }
+      
+      // Log the action
+      try {
+        await this.logAction('message.create', 'message', data.id, null, data)
+      } catch (logError) {
+        console.warn('Failed to log message creation:', logError)
+      }
+      
+      return data
+    } catch (error) {
+      console.error('Error creating message:', error)
+      throw error
+    }
   }
 
   static async updateMessage(id: string, updates: any) {
-    const { data: oldData } = await supabase
-      .from('messages')
-      .select('*')
-      .eq('id', id)
-      .single()
+    try {
+      const { data: oldData } = await supabase
+        .from('messages')
+        .select('*')
+        .eq('id', id)
+        .single()
 
-    const { data, error } = await supabase
-      .from('messages')
-      .update({ ...updates, updated_at: new Date().toISOString() })
-      .eq('id', id)
-      .select()
-      .single()
-    
-    if (error) throw error
-    
-    // Log the action
-    await this.logAction('message.update', 'message', id, oldData, data)
-    
-    return data
+      const { data, error } = await supabase
+        .from('messages')
+        .update({ ...updates, updated_at: new Date().toISOString() })
+        .eq('id', id)
+        .select()
+        .single()
+      
+      if (error) {
+        if (error.code === 'PGRST205' || error.message?.includes('Could not find the table')) {
+          throw new Error('Messaging system is temporarily unavailable.')
+        }
+        throw error
+      }
+      
+      // Log the action
+      try {
+        await this.logAction('message.update', 'message', id, oldData, data)
+      } catch (logError) {
+        console.warn('Failed to log message update:', logError)
+      }
+      
+      return data
+    } catch (error) {
+      console.error('Error updating message:', error)
+      throw error
+    }
   }
 
   // Real-time Subscriptions

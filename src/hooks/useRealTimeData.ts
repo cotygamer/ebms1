@@ -93,6 +93,56 @@ export function useRealTimeData<T>(
   }
 }
 
+export function useMessages() {
+  const [data, setData] = useState<any[]>([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
+
+  const fetchData = useCallback(async () => {
+    try {
+      setLoading(true)
+      setError(null)
+      const messages = await dataService.getMessages()
+      setData(messages || [])
+    } catch (err: any) {
+      console.error('Error fetching messages:', err)
+      // If table doesn't exist, return empty array instead of throwing
+      if (err?.code === 'PGRST205' || err?.message?.includes('Could not find the table')) {
+        console.warn('Messages table not found, returning empty array')
+        setData([])
+        setError(null)
+      } else {
+        setError(err.message || 'Failed to fetch messages')
+        setData([])
+      }
+    } finally {
+      setLoading(false)
+    }
+  }, [])
+
+  useEffect(() => {
+    fetchData()
+
+    // Set up real-time subscription
+    const subscription = dataService.subscribeToTable('messages', (payload) => {
+      console.log('Messages real-time update:', payload)
+      fetchData() // Refresh data on any change
+    })
+
+    return () => {
+      if (subscription) {
+        dataService.unsubscribeFromTable('messages')
+      }
+    }
+  }, [fetchData])
+
+  const refresh = useCallback(() => {
+    fetchData()
+  }, [fetchData])
+
+  return { data, loading, error, refresh }
+}
+
 // Specific hooks for each data type
 export const useUsers = () => useRealTimeData('users', dataService.getUsers)
 export const useResidents = () => useRealTimeData('residents', dataService.getResidents)
