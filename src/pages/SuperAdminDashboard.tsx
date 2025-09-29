@@ -14,6 +14,7 @@ import DocumentProcessing from '../components/DocumentProcessing';
 import ComplaintManagement from '../components/ComplaintManagement';
 import AnnouncementManagement from '../components/AnnouncementManagement';
 import MessagingCenter from '../components/MessagingCenter';
+import MessagingCenter from '../components/MessagingCenter';
 import ProjectGallery from '../components/ProjectGallery';
 import { 
   Home,

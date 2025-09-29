@@ -867,6 +867,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
 
   const addMessage = async (messageData: Omit<Message, 'id'>) => {
     try {
+      console.log('DataContext - Adding message:', messageData);
       await dataService.createMessage({
         sender_name: messageData.sender_name,
         sender_email: messageData.sender_email,
@@ -878,7 +879,9 @@ export function DataProvider({ children }: { children: ReactNode }) {
         status: messageData.status || 'unread',
         source: messageData.source || 'website'
       });
+      console.log('DataContext - Message created, refreshing messages...');
       refreshMessages();
+      console.log('DataContext - Messages refreshed');
     } catch (error) {
       console.error('Failed to add message:', error);
       throw error;

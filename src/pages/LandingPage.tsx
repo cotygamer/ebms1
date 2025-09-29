@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { useData } from '../contexts/DataContext';
+import { supabase } from '../lib/supabase';
 import { 
   Building2, 
   Users, 
@@ -57,10 +58,10 @@ export default function LandingPage() {
     setContactMessage('');
 
     try {
-      // Use the data service to create the message
-      const { dataService } = await import('../services/dataService');
+      console.log('Submitting contact form:', contactForm);
       
-      await dataService.createMessage({
+      // Create message data
+      const messageData = {
         sender_name: `${contactForm.firstName} ${contactForm.lastName}`.trim(),
         sender_email: contactForm.email,
         sender_phone: contactForm.phone || null,
@@ -70,7 +71,23 @@ export default function LandingPage() {
         priority: 'medium',
         status: 'unread',
         source: 'website'
-      });
+      };
+
+      console.log('Message data to send:', messageData);
+
+      // Send directly to Supabase
+      const { data, error } = await supabase
+        .from('messages')
+        .insert([messageData])
+        .select()
+        .single();
+
+      if (error) {
+        console.error('Supabase error:', error);
+        throw new Error(`Failed to send message: ${error.message}`);
+      }
+
+      console.log('Message sent successfully:', data);
 
       setContactMessage('Message sent successfully! We will get back to you soon.');
       setContactForm({
@@ -84,11 +101,7 @@ export default function LandingPage() {
       });
     } catch (error) {
       console.error('Contact form error:', error);
-      if (error.message?.includes('Could not find the table') || error.code === 'PGRST205') {
-        setContactMessage('Our messaging system is currently being set up. Please contact us directly at our office or phone number.');
-      } else {
-        setContactMessage(error.message || 'Failed to send message. Please try again or contact us directly.');
-      }
+      setContactMessage(error.message || 'Failed to send message. Please try again or contact us directly.');
     } finally {
       setIsSubmittingContact(false);
       setTimeout(() => setContactMessage(''), 5000);
