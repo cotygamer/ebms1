@@ -42,8 +42,8 @@ export default function ResidentMessaging() {
   const userMessages = messages.filter(msg => msg.sender_email === user?.email);
   
   const filteredMessages = userMessages.filter(message => {
-    const matchesSearch = message.subject.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         message.message.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesSearch = (message.subject || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+                         (message.message || message.content || '').toLowerCase().includes(searchTerm.toLowerCase());
     const matchesStatus = filterStatus === 'all' || message.status === filterStatus;
     return matchesSearch && matchesStatus;
   });
@@ -243,17 +243,17 @@ export default function ResidentMessaging() {
                 <div className="flex items-start justify-between">
                   <div className="flex-1">
                     <div className="flex items-center space-x-3 mb-2">
-                      <h3 className="font-semibold text-gray-900">{message.subject}</h3>
+                      <h3 className="font-semibold text-gray-900">{message.subject || 'No Subject'}</h3>
                       <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${getCategoryColor(message.category)}`}>
-                        {message.category.toUpperCase()}
+                        {(message.category || 'general').toUpperCase()}
                       </span>
                       <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${getPriorityColor(message.priority)}`}>
-                        {message.priority.toUpperCase()}
+                        {(message.priority || 'medium').toUpperCase()}
                       </span>
                     </div>
                     
                     <p className="text-gray-600 text-sm line-clamp-2 mb-3">
-                      {message.message}
+                      {message.message || message.content || 'No content'}
                     </p>
                     
                     <div className="flex items-center space-x-4 text-xs text-gray-500">

@@ -113,14 +113,17 @@ export function useMessages() {
 
   const fetchData = useCallback(async () => {
     try {
+      console.log('useMessages - Fetching messages...');
       setLoading(true)
       setError(null)
       const messages = await dataService.getMessages()
+      console.log('useMessages - Messages loaded:', messages?.length || 0);
       setData(messages || [])
     } catch (err: any) {
       console.error('Error fetching messages:', err)
-      setError(err.message || 'Failed to fetch messages')
+      // Don't set error for missing table, just use empty array
       setData([])
+      setError(null)
     } finally {
       setLoading(false)
     }
@@ -128,6 +131,14 @@ export function useMessages() {
 
   useEffect(() => {
     fetchData()
+
+    // Listen for manual refresh events
+    const handleRefresh = () => {
+      console.log('useMessages - Manual refresh triggered');
+      fetchData()
+    }
+    
+    window.addEventListener('refreshAllData', handleRefresh)
 
     // Set up real-time subscription with error handling
     let subscription: any = null
@@ -153,6 +164,7 @@ export function useMessages() {
     }
 
     return () => {
+      window.removeEventListener('refreshAllData', handleRefresh)
       if (subscription) {
         try {
           dataService.unsubscribeFromTable('messages')

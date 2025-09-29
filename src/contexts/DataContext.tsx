@@ -868,17 +868,22 @@ export function DataProvider({ children }: { children: ReactNode }) {
   const addMessage = async (messageData: Omit<Message, 'id'>) => {
     try {
       console.log('DataContext - Adding message:', messageData);
-      await dataService.createMessage({
+      
+      // Ensure we have all required fields
+      const messageToCreate = {
         sender_name: messageData.sender_name,
         sender_email: messageData.sender_email,
         sender_phone: messageData.sender_phone,
         subject: messageData.subject,
         message: messageData.message,
+        content: messageData.message, // Backward compatibility
         category: messageData.category || 'general',
         priority: messageData.priority || 'medium',
         status: messageData.status || 'unread',
         source: messageData.source || 'website'
-      });
+      };
+      
+      await dataService.createMessage(messageToCreate);
       console.log('DataContext - Message created, refreshing messages...');
       refreshMessages();
       console.log('DataContext - Messages refreshed');
