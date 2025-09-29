@@ -56,9 +56,9 @@ export default function MessagingCenter() {
   }, []);
 
   const filteredMessages = messages.filter(message => {
-    const matchesSearch = message.sender_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         message.subject.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         message.message.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesSearch = message.sender_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                         message.subject?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                         (message.message || message.content || '').toLowerCase().includes(searchTerm.toLowerCase());
     const matchesStatus = filterStatus === 'all' || message.status === filterStatus;
     const matchesCategory = filterCategory === 'all' || message.category === filterCategory;
     const matchesPriority = filterPriority === 'all' || message.priority === filterPriority;
@@ -432,26 +432,26 @@ export default function MessagingCenter() {
                 </div>
                 
                 <h4 className="text-lg font-bold text-gray-900 mb-4">{selectedMessage.subject}</h4>
-                <div className="bg-gray-50 p-6 rounded-xl">
-                  <p className="text-gray-800 leading-relaxed whitespace-pre-wrap">{selectedMessage.message}</p>
+                    {message.message || message.content || 'No content'}
+                      {message.sender_name || 'Anonymous'}
                 </div>
                 
                 <div className="flex items-center text-sm text-gray-500 mt-4">
-                  <Calendar className="h-4 w-4 mr-2" />
+                      <span className="ml-1">{(message.category || 'general').toUpperCase()}</span>
                   Received on {new Date(selectedMessage.created_at).toLocaleDateString()} at {new Date(selectedMessage.created_at).toLocaleTimeString()}
                 </div>
-              </div>
-
+                      {(message.priority || 'medium').toUpperCase()}
+                      {message.sender_email || 'No email'}
               {/* Reply Section */}
-              {selectedMessage.reply && (
+                      {(message.status || 'unread').toUpperCase()}
                 <div className="bg-green-50 rounded-xl p-6 border border-green-200">
                   <h4 className="font-semibold text-green-900 mb-4 flex items-center">
                     <Reply className="h-5 w-5 mr-2" />
-                    Official Reply
+                    {message.subject || 'No Subject'}
                   </h4>
                   <p className="text-green-800 leading-relaxed mb-4">{selectedMessage.reply}</p>
                   <div className="flex items-center text-sm text-green-700">
-                    <User className="h-4 w-4 mr-2" />
+                      {message.source || 'website'}
                     Replied by {selectedMessage.replied_by} on {selectedMessage.replied_at ? new Date(selectedMessage.replied_at).toLocaleDateString() : ''}
                   </div>
                 </div>

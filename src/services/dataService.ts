@@ -761,34 +761,71 @@ export class DataService {
   // Messages Management
   static async getMessages() {
     try {
+      console.log('DataService - Fetching messages from database...');
       const { data, error } = await supabase
         .from('messages')
-        .select('*')
+        .select(`
+          id,
+          sender_name,
+          sender_email,
+          sender_phone,
+          subject,
+          message,
+          content,
+          category,
+          priority,
+          status,
+          source,
+          reply,
+          replied_by,
+          replied_at,
+          created_at,
+          updated_at
+        `)
         .order('created_at', { ascending: false })
       
       if (error) {
+        console.error('DataService - Error fetching messages:', error);
         throw error
       }
+      
+      console.log('DataService - Messages fetched successfully:', data?.length || 0);
       return data || []
     } catch (error) {
       console.error('Error fetching messages:', error)
-      throw error
+      // Return empty array if table doesn't exist yet
+      return []
     }
   }
 
   static async createMessage(messageData: any) {
     try {
+      console.log('DataService - Creating message:', messageData);
+      
+      // Ensure we have the required fields
+      const messageToInsert = {
+        sender_name: messageData.sender_name || 'Anonymous',
+        sender_email: messageData.sender_email || 'unknown@example.com',
+        sender_phone: messageData.sender_phone || null,
+        subject: messageData.subject || 'No Subject',
+        message: messageData.message || messageData.content || '',
+        content: messageData.message || messageData.content || '', // Backward compatibility
+        category: messageData.category || 'general',
+        priority: messageData.priority || 'medium',
+        status: messageData.status || 'unread',
+        source: messageData.source || 'website',
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString()
+      };
+      
       const { data, error } = await supabase
         .from('messages')
-        .insert([{
-          ...messageData,
-          created_at: new Date().toISOString(),
-          updated_at: new Date().toISOString()
-        }])
+        .insert([messageToInsert])
         .select()
         .single()
       
       if (error) {
+        console.error('DataService - Error creating message:', error);
         throw error
       }
       
@@ -799,6 +836,7 @@ export class DataService {
         console.warn('Failed to log message creation:', logError)
       }
       
+      console.log('DataService - Message created successfully:', data);
       return data
     } catch (error) {
       console.error('Error creating message:', error)
@@ -808,6 +846,8 @@ export class DataService {
 
   static async updateMessage(id: string, updates: any) {
     try {
+      console.log('DataService - Updating message:', id, updates);
+      
       const { data: oldData } = await supabase
         .from('messages')
         .select('*')
@@ -822,6 +862,7 @@ export class DataService {
         .single()
       
       if (error) {
+        console.error('DataService - Error updating message:', error);
         throw error
       }
       
@@ -832,6 +873,7 @@ export class DataService {
         console.warn('Failed to log message update:', logError)
       }
       
+      console.log('DataService - Message updated successfully:', data);
       return data
     } catch (error) {
       console.error('Error updating message:', error)

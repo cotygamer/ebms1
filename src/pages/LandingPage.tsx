@@ -67,6 +67,7 @@ export default function LandingPage() {
         sender_phone: contactForm.phone || null,
         subject: contactForm.subject,
         message: contactForm.message,
+        content: contactForm.message, // Backward compatibility
         category: contactForm.category,
         priority: 'medium',
         status: 'unread',
@@ -99,6 +100,11 @@ export default function LandingPage() {
         subject: '',
         message: ''
       });
+      
+      // Trigger data refresh across all portals
+      setTimeout(() => {
+        window.dispatchEvent(new CustomEvent('refreshAllData'));
+      }, 1000);
     } catch (error) {
       console.error('Contact form error:', error);
       setContactMessage(error.message || 'Failed to send message. Please try again or contact us directly.');
