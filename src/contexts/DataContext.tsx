@@ -12,7 +12,8 @@ import {
   useMedicalRecords,
   useInventoryItems,
   useProjects,
-  useBusinessPermits
+  useBusinessPermits,
+  useMessages
 } from '../hooks/useRealTimeData';
 
 interface Resident {
