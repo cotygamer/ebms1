@@ -1,30 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useData } from '../contexts/DataContext';
 import { useAuth } from '../contexts/AuthContext';
-import { 
-  FileText, 
-  Eye, 
-  Edit, 
-  CheckCircle, 
-  XCircle, 
-  Clock, 
-  DollarSign,
-  Search,
-  Filter,
-  Calendar,
-  User,
-  MapPin,
-  Phone,
-  Mail,
-  Download,
-  CreditCard,
-  Truck,
-  AlertTriangle,
-  RefreshCw,
-  X,
-  Save,
-  Plus
-} from 'lucide-react';
+import { FileText, Eye, CreditCard as Edit, CheckCircle, XCircle, Clock, DollarSign, Search, Filter, Calendar, User, MapPin, Phone, Mail, Download, CreditCard, Truck, AlertTriangle, RefreshCw, X, Save, Plus } from 'lucide-react';
 
 export default function DocumentProcessing() {
   const { documents, updateDocument } = useData();

@@ -1,28 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useData } from '../contexts/DataContext';
 import { useAuth } from '../contexts/AuthContext';
-import { 
-  AlertTriangle, 
-  Eye, 
-  Edit, 
-  CheckCircle, 
-  XCircle, 
-  Clock, 
-  User,
-  Search,
-  Filter,
-  Calendar,
-  MapPin,
-  Phone,
-  Mail,
-  FileText,
-  Shield,
-  RefreshCw,
-  X,
-  Save,
-  UserCheck,
-  MessageSquare
-} from 'lucide-react';
+import { AlertTriangle, Eye, CreditCard as Edit, CheckCircle, XCircle, Clock, User, Search, Filter, Calendar, MapPin, Phone, Mail, FileText, Shield, RefreshCw, X, Save, UserCheck, MessageSquare } from 'lucide-react';
 
 export default function ComplaintManagement() {
   const { complaints, updateComplaint } = useData();
