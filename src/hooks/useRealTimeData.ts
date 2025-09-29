@@ -156,4 +156,3 @@ export const useMedicalRecords = () => useRealTimeData('medical_records', dataSe
 export const useInventoryItems = () => useRealTimeData('inventory_items', dataService.getInventoryItems)
 export const useProjects = () => useRealTimeData('projects', dataService.getProjects)
 export const useBusinessPermits = () => useRealTimeData('business_permits', dataService.getBusinessPermits)
-export const useMessages = () => useRealTimeData('messages', dataService.getMessages)
