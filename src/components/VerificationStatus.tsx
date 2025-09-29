@@ -51,30 +51,17 @@ export default function VerificationStatus() {
   };
 
   return (
-    <div className="space-y-8">
-      {/* Header */}
-      <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-8">
-        <div className="text-center">
-          <div className="w-16 h-16 bg-gradient-to-br from-green-600 to-blue-600 rounded-full flex items-center justify-center mx-auto mb-4">
-            <Shield className="h-8 w-8 text-white" />
-          </div>
-          <h1 className="text-2xl font-bold text-gray-900 mb-2">Account Verification</h1>
-          <p className="text-gray-600">Track your verification progress and requirements</p>
-        </div>
-      </div>
+    <div className="space-y-4 sm:space-y-6">
+      <h2 className="text-2xl font-semibold text-gray-900">Verification Status</h2>
       
-      {/* Current Status */}
-      <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-8">
-        <div className="text-center mb-8">
-          <div className="flex items-center justify-center mb-4">
-            {getStatusIcon(user?.verificationStatus || 'non-verified')}
-            <h3 className={`text-2xl font-bold ml-4 capitalize ${getStatusColor(user?.verificationStatus || 'non-verified')}`}>
+      <div className="bg-white border rounded-lg p-4 sm:p-6">
+        <div className="flex flex-col sm:flex-row items-start sm:items-center space-y-4 sm:space-y-0 sm:space-x-4 mb-4">
+          {getStatusIcon(user?.verificationStatus || 'non-verified')}
+          <div>
+            <h3 className={`text-lg sm:text-xl font-semibold capitalize ${getStatusColor(user?.verificationStatus || 'non-verified')}`}>
               {user?.verificationStatus?.replace('-', ' ') || 'Non Verified'}
             </h3>
-          </div>
-          
-          <div className="max-w-2xl mx-auto">
-            <p className="text-gray-600 text-lg leading-relaxed">
+            <p className="text-gray-600 text-sm sm:text-base">
               {getStatusDescription(user?.verificationStatus || 'non-verified')}
             </p>
           </div>
@@ -82,127 +69,127 @@ export default function VerificationStatus() {
       </div>
 
       {/* Enhanced KYC Verification Process */}
-      <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-8">
-        <h3 className="text-xl font-semibold text-gray-900 mb-8 text-center">Verification Process</h3>
+      <div className="bg-white border rounded-lg p-4 sm:p-6">
+        <h3 className="text-lg font-semibold text-gray-900 mb-4">Verification Progress</h3>
         
-        <div className="space-y-8">
+        <div className="space-y-6">
           {/* Step 1: Initial Registration */}
-          <div className="flex items-start space-x-6">
-            <div className={`w-12 h-12 rounded-full flex items-center justify-center border-4 ${
+          <div className="flex items-start space-x-4">
+            <div className={`w-6 h-6 rounded-full flex items-center justify-center ${
               user?.verificationStatus !== 'non-verified' ? 'bg-green-500 text-white' : 'bg-gray-300 text-gray-600'
             }`}>
               {user?.verificationStatus !== 'non-verified' ? (
-                <CheckCircle className="h-6 w-6" />
+                <CheckCircle className="h-4 w-4" />
               ) : (
-                <span className="text-lg font-bold">1</span>
+                <span className="text-xs font-bold">1</span>
               )}
             </div>
             <div className="flex-1">
-              <div className="flex items-center space-x-3 mb-2">
-                <User className="h-5 w-5 text-gray-500" />
-                <h4 className="text-lg font-semibold text-gray-900">Initial Registration</h4>
+              <div className="flex items-center space-x-2 mb-1">
+                <User className="h-4 w-4 text-gray-500" />
+                <p className="font-medium text-gray-900">Initial Registration</p>
               </div>
-              <p className="text-gray-600 mb-3">Account created with basic information</p>
-              <div className="text-sm text-gray-500 bg-gray-50 px-3 py-2 rounded-lg">
-                <strong>Status:</strong> Newly Registered (Unverified)
+              <p className="text-sm text-gray-600 mb-2">Account created with basic information</p>
+              <div className="text-xs text-gray-500">
+                Status: <span className="font-medium">Newly Registered (Unverified)</span>
               </div>
             </div>
           </div>
           
           {/* Step 2: Details Updated */}
-          <div className="flex items-start space-x-6">
-            <div className={`w-12 h-12 rounded-full flex items-center justify-center border-4 ${
+          <div className="flex items-start space-x-4">
+            <div className={`w-6 h-6 rounded-full flex items-center justify-center ${
               ['details-updated', 'semi-verified', 'verified'].includes(user?.verificationStatus || '') ? 'bg-green-500 text-white' : 'bg-gray-300 text-gray-600'
             }`}>
               {['details-updated', 'semi-verified', 'verified'].includes(user?.verificationStatus || '') ? (
-                <CheckCircle className="h-6 w-6" />
+                <CheckCircle className="h-4 w-4" />
               ) : (
-                <span className="text-lg font-bold">2</span>
+                <span className="text-xs font-bold">2</span>
               )}
             </div>
             <div className="flex-1">
-              <div className="flex items-center space-x-3 mb-2">
-                <Mail className="h-5 w-5 text-gray-500" />
-                <h4 className="text-lg font-semibold text-gray-900">Profile Completion</h4>
+              <div className="flex items-center space-x-2 mb-1">
+                <Mail className="h-4 w-4 text-gray-500" />
+                <p className="font-medium text-gray-900">Profile Completion</p>
               </div>
-              <p className="text-gray-600 mb-3">Complete email, contact information, and personal details</p>
-              <div className="text-sm text-gray-500 bg-gray-50 px-3 py-2 rounded-lg mb-3">
-                <strong>Status:</strong> Details Updated (Non-verified to Semi-verified)
+              <p className="text-sm text-gray-600 mb-2">Complete email, contact information, and personal details</p>
+              <div className="text-xs text-gray-500">
+                Status: <span className="font-medium">Details Updated (Non-verified to Semi-verified)</span>
               </div>
-              <div className="space-y-2">
-                <div className="flex items-center text-sm text-gray-600">
-                  <Phone className="h-4 w-4 mr-2" />
-                  <span>Contact information required</span>
+              <div className="mt-2 space-y-1">
+                <div className="flex items-center text-xs text-gray-600">
+                  <Phone className="h-3 w-3 mr-1" />
+                  Contact information required
                 </div>
-                <div className="flex items-center text-sm text-gray-600">
-                  <Home className="h-4 w-4 mr-2" />
-                  <span>Complete address required</span>
+                <div className="flex items-center text-xs text-gray-600">
+                  <Home className="h-3 w-3 mr-1" />
+                  Complete address required
                 </div>
               </div>
             </div>
           </div>
           
           {/* Step 3: Semi-Verified */}
-          <div className="flex items-start space-x-6">
-            <div className={`w-12 h-12 rounded-full flex items-center justify-center border-4 ${
+          <div className="flex items-start space-x-4">
+            <div className={`w-6 h-6 rounded-full flex items-center justify-center ${
               ['semi-verified', 'verified'].includes(user?.verificationStatus || '') ? 'bg-green-500 text-white' : 'bg-gray-300 text-gray-600'
             }`}>
               {['semi-verified', 'verified'].includes(user?.verificationStatus || '') ? (
-                <CheckCircle className="h-6 w-6" />
+                <CheckCircle className="h-4 w-4" />
               ) : (
-                <span className="text-lg font-bold">3</span>
+                <span className="text-xs font-bold">3</span>
               )}
             </div>
             <div className="flex-1">
-              <div className="flex items-center space-x-3 mb-2">
-                <Shield className="h-5 w-5 text-gray-500" />
-                <h4 className="text-lg font-semibold text-gray-900">Semi-Verified Status</h4>
+              <div className="flex items-center space-x-2 mb-1">
+                <Shield className="h-4 w-4 text-gray-500" />
+                <p className="font-medium text-gray-900">Semi-Verified Status</p>
               </div>
-              <p className="text-gray-600 mb-3">Submit government ID and pin exact house location</p>
-              <div className="text-sm text-gray-500 bg-gray-50 px-3 py-2 rounded-lg mb-3">
-                <strong>Status:</strong> Semi-verified (Pending Physical Verification)
+              <p className="text-sm text-gray-600 mb-2">Submit government ID and pin exact house location</p>
+              <div className="text-xs text-gray-500 mb-2">
+                Status: <span className="font-medium">Semi-verified (Pending Physical Verification)</span>
               </div>
-              <div className="space-y-2">
-                <div className="flex items-center text-sm text-gray-600">
-                  <FileText className="h-4 w-4 mr-2" />
-                  <span>Government-issued ID required</span>
+              <div className="space-y-1">
+                <div className="flex items-center text-xs text-gray-600">
+                  <FileText className="h-3 w-3 mr-1" />
+                  Government-issued ID required
                 </div>
-                <div className="flex items-center text-sm text-gray-600">
-                  <MapPin className="h-4 w-4 mr-2" />
-                  <span>House location mapping mandatory</span>
+                <div className="flex items-center text-xs text-gray-600">
+                  <MapPin className="h-3 w-3 mr-1" />
+                  House location mapping mandatory
                 </div>
               </div>
             </div>
           </div>
           
           {/* Step 4: Full Verification */}
-          <div className="flex items-start space-x-6">
-            <div className={`w-12 h-12 rounded-full flex items-center justify-center border-4 ${
+          <div className="flex items-start space-x-4">
+            <div className={`w-6 h-6 rounded-full flex items-center justify-center ${
               user?.verificationStatus === 'verified' ? 'bg-green-500 text-white' : 'bg-gray-300 text-gray-600'
             }`}>
               {user?.verificationStatus === 'verified' ? (
-                <CheckCircle className="h-6 w-6" />
+                <CheckCircle className="h-4 w-4" />
               ) : (
-                <span className="text-lg font-bold">4</span>
+                <span className="text-xs font-bold">4</span>
               )}
             </div>
             <div className="flex-1">
-              <div className="flex items-center space-x-3 mb-2">
-                <CheckCircle className="h-5 w-5 text-gray-500" />
-                <h4 className="text-lg font-semibold text-gray-900">Full Verification</h4>
+              <div className="flex items-center space-x-2 mb-1">
+                <CheckCircle className="h-4 w-4 text-gray-500" />
+                <p className="font-medium text-gray-900">Full Verification</p>
               </div>
-              <p className="text-gray-600 mb-3">Physical verification by barangay officials completed</p>
-              <div className="text-sm text-gray-500 bg-gray-50 px-3 py-2 rounded-lg mb-3">
-                <strong>Status:</strong> Fully Verified (Complete Access)
+              <p className="text-sm text-gray-600 mb-2">Physical verification by barangay officials completed</p>
+              <div className="text-xs text-gray-500 mb-2">
+                Status: <span className="font-medium">Fully Verified (Complete Access)</span>
               </div>
-              <div className="space-y-2">
-                <div className="flex items-center text-sm text-gray-600">
-                  <Home className="h-4 w-4 mr-2" />
-                  <span>House location physically verified</span>
+              <div className="space-y-1">
+                <div className="flex items-center text-xs text-gray-600">
+                  <Home className="h-3 w-3 mr-1" />
+                  House location physically verified
                 </div>
-                <div className="flex items-center text-sm text-gray-600">
-                  <CheckCircle className="h-4 w-4 mr-2" />
-                  <span>QR code access enabled</span>
+                <div className="flex items-center text-xs text-gray-600">
+                  <CheckCircle className="h-3 w-3 mr-1" />
+                  QR code access enabled
                 </div>
               </div>
             </div>
@@ -211,81 +198,65 @@ export default function VerificationStatus() {
       </div>
 
       {/* Important Business Rules */}
-      <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-        <div className="flex items-center mb-6">
-          <AlertTriangle className="h-6 w-6 text-yellow-600 mr-3" />
-          <h3 className="text-lg font-semibold text-gray-900">Important Guidelines</h3>
-        </div>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <div className="space-y-4">
-            <div className="flex items-start space-x-3">
-              <Shield className="h-5 w-5 text-blue-600 mt-0.5 flex-shrink-0" />
-              <div>
-                <h4 className="font-medium text-gray-900">Permanent QR Code</h4>
-                <p className="text-sm text-gray-600">Your QR code ID is generated once and never changes. It's permanently linked to your account.</p>
-              </div>
-            </div>
-            <div className="flex items-start space-x-3">
-              <MapPin className="h-5 w-5 text-green-600 mt-0.5 flex-shrink-0" />
-              <div>
-                <h4 className="font-medium text-gray-900">House Location</h4>
-                <p className="text-sm text-gray-600">Pinning your exact house location is mandatory for verification and serves as your official digital address.</p>
-              </div>
-            </div>
+      <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 sm:p-6">
+        <h3 className="text-lg font-semibold text-yellow-800 mb-4 flex items-center">
+          <AlertTriangle className="h-5 w-5 mr-2" />
+          Important QR Code & Verification Rules
+        </h3>
+        <div className="space-y-3 text-sm text-yellow-700">
+          <div className="flex items-start space-x-2">
+            <Shield className="h-4 w-4 mt-0.5 flex-shrink-0" />
+            <p><strong>Permanent QR Code:</strong> Your QR code ID is generated once and never changes. It's permanently linked to your account for life.</p>
           </div>
-          <div className="space-y-4">
-            <div className="flex items-start space-x-3">
-              <User className="h-5 w-5 text-purple-600 mt-0.5 flex-shrink-0" />
-              <div>
-                <h4 className="font-medium text-gray-900">Profile Updates</h4>
-                <p className="text-sm text-gray-600">Profile changes may affect your verification status but your QR code ID remains permanent.</p>
-              </div>
-            </div>
-            <div className="flex items-start space-x-3">
-              <Shield className="h-5 w-5 text-red-600 mt-0.5 flex-shrink-0" />
-              <div>
-                <h4 className="font-medium text-gray-900">Approval Authority</h4>
-                <p className="text-sm text-gray-600">Only authorized barangay staff can approve final verification status.</p>
-              </div>
-            </div>
+          <div className="flex items-start space-x-2">
+            <AlertTriangle className="h-4 w-4 mt-0.5 flex-shrink-0" />
+            <p><strong>Profile Changes:</strong> Profile updates may affect your verification status but your QR code ID remains the same.</p>
+          </div>
+          <div className="flex items-start space-x-2">
+            <MapPin className="h-4 w-4 mt-0.5 flex-shrink-0" />
+            <p><strong>House Location:</strong> Pinning your exact house location is mandatory as this serves as your official digital address for all barangay services.</p>
+          </div>
+          <div className="flex items-start space-x-2">
+            <Shield className="h-4 w-4 mt-0.5 flex-shrink-0" />
+            <p><strong>Approval Authority:</strong> Only authorized barangay staff and system administrators can approve final verification status.</p>
           </div>
         </div>
       </div>
 
       {user?.verificationStatus !== 'verified' && (
-        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-          <h3 className="text-lg font-semibold text-gray-900 mb-6">Required Documents</h3>
+        <div className="bg-white border rounded-lg p-4 sm:p-6">
+          <h3 className="text-lg font-semibold text-gray-900 mb-4">Required Documents</h3>
           
-          <div className="space-y-4">
-            <div className="flex items-center justify-between p-6 border border-gray-200 rounded-xl hover:border-gray-300 transition-colors">
+          <div className="space-y-3 sm:space-y-4">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between p-4 border border-gray-200 rounded-lg space-y-3 sm:space-y-0">
               <div>
-                <h4 className="font-semibold text-gray-900 mb-1">Valid Government ID</h4>
+                <h4 className="font-medium text-gray-900">Valid Government ID</h4>
                 <p className="text-sm text-gray-600">Upload a clear photo of your government-issued ID</p>
               </div>
-              <button className="flex items-center px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">
-                <Upload className="h-5 w-5 mr-2" />
+              <button className="flex items-center px-4 py-2 text-blue-600 border border-blue-600 rounded-lg hover:bg-blue-50 text-sm">
+                <Upload className="h-4 w-4 mr-2" />
                 Upload
               </button>
             </div>
             
-            <div className="flex items-center justify-between p-6 border border-gray-200 rounded-xl hover:border-gray-300 transition-colors">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between p-4 border border-gray-200 rounded-lg space-y-3 sm:space-y-0">
               <div>
-                <h4 className="font-semibold text-gray-900 mb-1">Proof of Address</h4>
-                <p className="text-sm text-gray-600">Utility bill or document showing your current address</p>
+                <h4 className="font-medium text-gray-900">Proof of Address</h4>
+                <p className="text-sm text-gray-600">Utility bill or any document showing your current address</p>
               </div>
-              <button className="flex items-center px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">
-                <Upload className="h-5 w-5 mr-2" />
+              <button className="flex items-center px-4 py-2 text-blue-600 border border-blue-600 rounded-lg hover:bg-blue-50 text-sm">
+                <Upload className="h-4 w-4 mr-2" />
                 Upload
               </button>
             </div>
             
-            <div className="flex items-center justify-between p-6 border border-gray-200 rounded-xl hover:border-gray-300 transition-colors">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between p-4 border border-gray-200 rounded-lg space-y-3 sm:space-y-0">
               <div>
-                <h4 className="font-semibold text-gray-900 mb-1">House Location Mapping</h4>
+                <h4 className="font-medium text-gray-900">House Location Mapping</h4>
                 <p className="text-sm text-gray-600">Pin your exact house location on the interactive map</p>
               </div>
-              <button className="flex items-center px-6 py-3 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors">
-                <MapPin className="h-5 w-5 mr-2" />
+              <button className="flex items-center px-4 py-2 text-purple-600 border border-purple-600 rounded-lg hover:bg-purple-50 text-sm">
+                <MapPin className="h-4 w-4 mr-2" />
                 Pin Location
               </button>
             </div>
@@ -294,55 +265,27 @@ export default function VerificationStatus() {
       )}
       
       {/* Verification Benefits */}
-      <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-        <h3 className="text-lg font-semibold text-gray-900 mb-6">Verification Benefits</h3>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-          <div className="bg-yellow-50 p-6 rounded-xl">
-            <h4 className="font-semibold text-yellow-800 mb-4">Semi-Verified Access</h4>
-            <div className="space-y-3">
-              <div className="flex items-center text-sm text-yellow-700">
-                <CheckCircle className="h-4 w-4 mr-3 text-yellow-600" />
-                <span>Basic document requests</span>
-              </div>
-              <div className="flex items-center text-sm text-yellow-700">
-                <CheckCircle className="h-4 w-4 mr-3 text-yellow-600" />
-                <span>Profile management</span>
-              </div>
-              <div className="flex items-center text-sm text-yellow-700">
-                <CheckCircle className="h-4 w-4 mr-3 text-yellow-600" />
-                <span>Community announcements</span>
-              </div>
-              <div className="flex items-center text-sm text-yellow-700">
-                <CheckCircle className="h-4 w-4 mr-3 text-yellow-600" />
-                <span>Contact support services</span>
-              </div>
-            </div>
+      <div className="bg-green-50 border border-green-200 rounded-lg p-4 sm:p-6">
+        <h3 className="text-lg font-semibold text-green-800 mb-4">Verification Benefits</h3>
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div className="space-y-2">
+            <h4 className="font-medium text-green-800">Semi-Verified Access:</h4>
+            <ul className="text-sm text-green-700 space-y-1">
+              <li>• Basic document requests</li>
+              <li>• Profile management</li>
+              <li>• Community announcements</li>
+              <li>• Contact support services</li>
+            </ul>
           </div>
-          
-          <div className="bg-green-50 p-6 rounded-xl">
-            <h4 className="font-semibold text-green-800 mb-4">Fully Verified Access</h4>
-            <div className="space-y-3">
-              <div className="flex items-center text-sm text-green-700">
-                <CheckCircle className="h-4 w-4 mr-3 text-green-600" />
-                <span>All document services</span>
-              </div>
-              <div className="flex items-center text-sm text-green-700">
-                <CheckCircle className="h-4 w-4 mr-3 text-green-600" />
-                <span>QR code generation</span>
-              </div>
-              <div className="flex items-center text-sm text-green-700">
-                <CheckCircle className="h-4 w-4 mr-3 text-green-600" />
-                <span>Online payment options</span>
-              </div>
-              <div className="flex items-center text-sm text-green-700">
-                <CheckCircle className="h-4 w-4 mr-3 text-green-600" />
-                <span>Priority support</span>
-              </div>
-              <div className="flex items-center text-sm text-green-700">
-                <CheckCircle className="h-4 w-4 mr-3 text-green-600" />
-                <span>Complete service access</span>
-              </div>
-            </div>
+          <div className="space-y-2">
+            <h4 className="font-medium text-green-800">Fully Verified Access:</h4>
+            <ul className="text-sm text-green-700 space-y-1">
+              <li>• All document services</li>
+              <li>• QR code generation</li>
+              <li>• Online payment options</li>
+              <li>• Priority support</li>
+              <li>• Complete service access</li>
+            </ul>
           </div>
         </div>
       </div>

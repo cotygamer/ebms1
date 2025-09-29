@@ -19,9 +19,14 @@ export function useRealTimeData<T>(
       setData(result)
       setLastSync(new Date())
     } catch (err: any) {
-      // Special handling for missing tables (like incidents)
-      if (err.code === 'PGRST205' || err.message?.includes('Could not find the table')) {
+      // Special handling for missing tables and connection errors
+      if (err.code === 'PGRST205' || err.message?.includes('Could not find the table') || err.message?.includes('relation') && err.message?.includes('does not exist')) {
         console.warn(`Table ${tableName} not found, using empty data`)
+        setData([])
+        setLastSync(new Date())
+        setError(null) // Clear error since we're handling it gracefully
+      } else if (err.name === 'TypeError' && err.message?.includes('Failed to fetch')) {
+        console.warn(`Network error fetching ${tableName}, using empty data`)
         setData([])
         setLastSync(new Date())
         setError(null) // Clear error since we're handling it gracefully
@@ -52,9 +57,9 @@ export function useRealTimeData<T>(
     // Set up real-time subscription only if initial fetch succeeds
     let subscription: any = null
     
-    // Set up subscription after initial fetch
-    const setupSubscription = () => {
-      try {
+    fetchData().then(() => {
+      // Only set up subscription if table exists and data was fetched successfully
+      if (!error) {
         subscription = dataService.subscribeToTable(tableName, (payload) => {
           console.log(`Real-time update for ${tableName}:`, payload)
           
@@ -73,24 +78,11 @@ export function useRealTimeData<T>(
           
           setLastSync(new Date())
         })
-      } catch (subscriptionError) {
-        console.warn(`Failed to set up subscription for ${tableName}:`, subscriptionError)
       }
-    }
-
-    // Set up subscription after a short delay to ensure table exists
-    setTimeout(setupSubscription, 1000)
-
-    // Cleanup subscription on unmount
-    return () => {
-      if (subscription) {
-        try {
-          dataService.unsubscribeFromTable(tableName)
-        } catch (cleanupError) {
-          console.warn(`Failed to cleanup subscription for ${tableName}:`, cleanupError)
-        }
-      }
-    }
+    }).catch(() => {
+        console.error('Error fetching incidents:', error)
+        setData([])
+      })
   }, [tableName, fetchData])
 
   const refresh = useCallback(() => {
@@ -104,56 +96,6 @@ export function useRealTimeData<T>(
     lastSync,
     refresh
   }
-}
-
-export function useMessages() {
-  const [data, setData] = useState<any[]>([])
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
-
-  const fetchData = useCallback(async () => {
-    try {
-      setLoading(true)
-      setError(null)
-      const messages = await dataService.getMessages()
-      setData(messages || [])
-    } catch (err: any) {
-      console.error('Error fetching messages:', err)
-      // If table doesn't exist, return empty array instead of throwing
-      if (err?.code === 'PGRST205' || err?.message?.includes('Could not find the table')) {
-        console.warn('Messages table not found, returning empty array')
-        setData([])
-        setError(null)
-      } else {
-        setError(err.message || 'Failed to fetch messages')
-        setData([])
-      }
-    } finally {
-      setLoading(false)
-    }
-  }, [])
-
-  useEffect(() => {
-    fetchData()
-
-    // Set up real-time subscription
-    const subscription = dataService.subscribeToTable('messages', (payload) => {
-      console.log('Messages real-time update:', payload)
-      fetchData() // Refresh data on any change
-    })
-
-    return () => {
-      if (subscription) {
-        dataService.unsubscribeFromTable('messages')
-      }
-    }
-  }, [fetchData])
-
-  const refresh = useCallback(() => {
-    fetchData()
-  }, [fetchData])
-
-  return { data, loading, error, refresh }
 }
 
 // Specific hooks for each data type

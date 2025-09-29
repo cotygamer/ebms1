@@ -6,6 +6,7 @@ export interface User {
   id: string;
   email: string;
   name: string;
+  role: 'super-admin' | 'barangay-official' | 'resident' | 'medical-portal' | 'accounting-portal' | 'disaster-portal';
   role: 'super-admin' | 'barangay-official' | 'resident' | 'medical-portal' | 'accounting-portal' | 'disaster-portal' | 'peace-order-portal';
   verificationStatus?: 'non-verified' | 'details-updated' | 'semi-verified' | 'verified';
   qrCode?: string;
@@ -69,6 +70,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     try {
       console.log('Attempting login with email:', email);
       
+      // Determine if this is a resident or staff login based on email domain
+      const isResidentLogin = !email.includes('@barangay.gov');
+      
       // Authenticate with Supabase
       const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
         email,
@@ -77,7 +81,21 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
       if (authError) {
         console.error('Supabase auth error:', authError);
-        throw new Error('Invalid email or password. Please check your credentials and try again.');
+        
+        // Provide specific error messages
+        if (authError.message.includes('Invalid login credentials')) {
+          if (isResidentLogin) {
+            throw new Error('Invalid email or password. Please check your credentials and try again.');
+          } else {
+            throw new Error('Invalid staff credentials. Please verify your official email and password.');
+          }
+        } else if (authError.message.includes('Email not confirmed')) {
+          throw new Error('Please check your email and click the confirmation link before logging in.');
+        } else if (authError.message.includes('Too many requests')) {
+          throw new Error('Too many login attempts. Please wait a few minutes and try again.');
+        } else {
+          throw new Error(authError.message || 'Login failed. Please try again.');
+        }
       }
 
       if (!authData.user) {
@@ -85,9 +103,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
 
       console.log('Auth successful, loading user profile...');
-      
-      // Determine if this is a resident or staff login based on email domain
-      const isResidentLogin = !email.includes('@barangay.gov');
       
       let userProfile = null;
       
@@ -97,7 +112,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           const { data: residentData, error: residentError } = await supabase
             .from('residents')
             .select('*')
-            .or(`email.eq.${email},user_id.eq.${authData.user.id}`)
+            .eq('email', email)
             .limit(1);
             
           if (!residentError && residentData && residentData.length > 0) {
@@ -107,7 +122,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
               email: resident.email,
               name: resident.name,
               role: 'resident',
-             verificationStatus: resident.verification_status || 'non-verified',
+              verificationStatus: resident.verification_status,
               qrCode: resident.qr_code,
               phone: resident.phone_number,
               address: resident.address,
@@ -119,12 +134,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
               occupation: resident.occupation,
               monthlyIncome: resident.monthly_income,
               emergencyContact: resident.emergency_contact,
-              dateRegistered: resident.date_registered,
-             houseLocation: resident.house_location,
-             // Map additional fields for complete profile
-             familyTree: resident.profile_data?.familyTree || [],
-             governmentIds: resident.government_ids || {},
-             auditTrail: resident.profile_data?.auditTrail || []
+              dateRegistered: resident.date_registered
             };
             console.log('Loaded resident profile:', userProfile);
           }
@@ -134,23 +144,23 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       } else {
         // For staff/admin, check users table
         try {
-          const { data: userData, error: userError } = await supabase
-            .from('users')
-            .select('*')
-            .eq('email', email)
-            .limit(1);
-            
-          if (!userError && userData && userData.length > 0) {
-            const user = userData[0];
-            userProfile = {
-              id: user.id,
-              email: user.email,
-              name: user.name,
-              role: user.role,
-              phone: user.phone_number,
-              address: user.address
-            };
-            console.log('Loaded user profile from users table:', userProfile);
+        const { data: userData, error: userError } = await supabase
+          .from('users')
+          .select('*')
+          .eq('email', email)
+          .limit(1);
+          
+        if (!userError && userData && userData.length > 0) {
+          const user = userData[0];
+          userProfile = {
+            id: user.id,
+            email: user.email,
+            name: user.name,
+            role: user.role,
+            phone: user.phone_number,
+            address: user.address
+          };
+          console.log('Loaded user profile from users table:', userProfile);
           }
         } catch (error) {
           console.error('Error loading user profile:', error);
@@ -159,7 +169,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       
       if (!userProfile) {
         if (isResidentLogin) {
-          throw new Error('Account not found. Please check your email or register if you haven\'t already.');
+          throw new Error('Resident profile not found. Please register first or contact support.');
         } else {
           throw new Error('Staff profile not found. Please contact the system administrator.');
         }
@@ -171,11 +181,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           await supabase
             .from('users')
             .update({ last_login: new Date().toISOString() })
-            .eq('email', email);
-        } else {
-          await supabase
-            .from('residents')
-            .update({ updated_at: new Date().toISOString() })
             .eq('email', email);
         }
       } catch (error) {

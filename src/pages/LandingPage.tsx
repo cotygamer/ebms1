@@ -39,80 +39,6 @@ import {
 export default function LandingPage() {
   const { systemSettings, residents } = useData();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const [contactForm, setContactForm] = useState({
-    firstName: '',
-    lastName: '',
-    email: '',
-    phone: '',
-    category: 'general',
-    subject: '',
-    message: ''
-  });
-  const [isSubmittingContact, setIsSubmittingContact] = useState(false);
-  const [contactMessage, setContactMessage] = useState('');
-
-  const handleContactSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setIsSubmittingContact(true);
-    setContactMessage('');
-
-    try {
-      // Try to use the data service to create the message
-      try {
-        const { addMessage } = await import('../contexts/DataContext');
-        // This won't work directly, so we'll use a direct API call with better error handling
-        
-        const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/rest/v1/messages`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'apikey': import.meta.env.VITE_SUPABASE_ANON_KEY,
-            'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`,
-            'Prefer': 'return=minimal'
-          },
-          body: JSON.stringify({
-            sender_name: `${contactForm.firstName} ${contactForm.lastName}`.trim(),
-            sender_email: contactForm.email,
-            sender_phone: contactForm.phone || null,
-            subject: contactForm.subject,
-            message: contactForm.message,
-            category: contactForm.category,
-            priority: 'medium',
-            status: 'unread',
-            source: 'website'
-          })
-        });
-
-        if (response.ok) {
-          setContactMessage('Message sent successfully! We will get back to you soon.');
-          setContactForm({
-            firstName: '',
-            lastName: '',
-            email: '',
-            phone: '',
-            category: 'general',
-            subject: '',
-            message: ''
-          });
-        } else {
-          const errorData = await response.json();
-          if (errorData.code === 'PGRST205' || errorData.message?.includes('Could not find the table')) {
-            throw new Error('Our messaging system is currently being set up. Please contact us directly at our office or phone number.');
-          }
-          throw new Error(errorData.message || 'Failed to send message');
-        }
-      } catch (importError) {
-        // Fallback to direct API call
-        throw new Error('Messaging system is temporarily unavailable. Please contact us directly.');
-      }
-    } catch (error) {
-      console.error('Contact form error:', error);
-      setContactMessage(error.message || 'Failed to send message. Please try again or contact us directly.');
-    } finally {
-      setIsSubmittingContact(false);
-      setTimeout(() => setContactMessage(''), 5000);
-    }
-  };
   
   // Mock data for announcements
   const [announcements] = useState([
@@ -720,16 +646,12 @@ export default function LandingPage() {
             
             <div className="bg-white rounded-2xl p-8 text-gray-900">
               <h3 className="text-2xl font-bold mb-6">Send us a Message</h3>
-              <form className="space-y-6" onSubmit={handleContactSubmit}>
+              <form className="space-y-6">
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">First Name</label>
                     <input
                       type="text"
-                      name="firstName"
-                      value={contactForm.firstName}
-                      onChange={(e) => setContactForm({ ...contactForm, firstName: e.target.value })}
-                      required
                       className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                       placeholder="Your first name"
                     />
@@ -738,10 +660,6 @@ export default function LandingPage() {
                     <label className="block text-sm font-medium text-gray-700 mb-2">Last Name</label>
                     <input
                       type="text"
-                      name="lastName"
-                      value={contactForm.lastName}
-                      onChange={(e) => setContactForm({ ...contactForm, lastName: e.target.value })}
-                      required
                       className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                       placeholder="Your last name"
                     />
@@ -752,50 +670,15 @@ export default function LandingPage() {
                   <label className="block text-sm font-medium text-gray-700 mb-2">Email</label>
                   <input
                     type="email"
-                    name="email"
-                    value={contactForm.email}
-                    onChange={(e) => setContactForm({ ...contactForm, email: e.target.value })}
-                    required
                     className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                     placeholder="your.email@example.com"
                   />
                 </div>
                 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Phone Number</label>
-                  <input
-                    type="tel"
-                    name="phone"
-                    value={contactForm.phone}
-                    onChange={(e) => setContactForm({ ...contactForm, phone: e.target.value })}
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    placeholder="+63 912 345 6789"
-                  />
-                </div>
-                
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Category</label>
-                  <select
-                    name="category"
-                    value={contactForm.category}
-                    onChange={(e) => setContactForm({ ...contactForm, category: e.target.value })}
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  >
-                    <option value="general">General Inquiry</option>
-                    <option value="complaint">Complaint</option>
-                    <option value="suggestion">Suggestion</option>
-                    <option value="emergency">Emergency</option>
-                  </select>
-                </div>
-                
-                <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">Subject</label>
                   <input
                     type="text"
-                    name="subject"
-                    value={contactForm.subject}
-                    onChange={(e) => setContactForm({ ...contactForm, subject: e.target.value })}
-                    required
                     className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                     placeholder="What is this about?"
                   />
@@ -805,10 +688,6 @@ export default function LandingPage() {
                   <label className="block text-sm font-medium text-gray-700 mb-2">Message</label>
                   <textarea
                     rows={4}
-                    name="message"
-                    value={contactForm.message}
-                    onChange={(e) => setContactForm({ ...contactForm, message: e.target.value })}
-                    required
                     className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                     placeholder="Tell us how we can help you..."
                   />
@@ -816,28 +695,10 @@ export default function LandingPage() {
                 
                 <button
                   type="submit"
-                  disabled={isSubmittingContact}
                   className="w-full bg-gradient-to-r from-blue-600 to-blue-700 text-white py-4 rounded-lg hover:from-blue-700 hover:to-blue-800 transition-all shadow-lg hover:shadow-xl transform hover:scale-105 font-semibold"
                 >
-                  {isSubmittingContact ? 'Sending...' : 'Send Message'}
+                  Send Message
                 </button>
-                
-                {contactMessage && (
-                  <div className={`p-4 rounded-lg ${
-                    contactMessage.includes('successfully') 
-                      ? 'bg-green-50 border border-green-200 text-green-700' 
-                      : 'bg-red-50 border border-red-200 text-red-700'
-                  }`}>
-                    <div className="flex items-center">
-                      {contactMessage.includes('successfully') ? (
-                        <CheckCircle className="h-5 w-5 mr-2" />
-                      ) : (
-                        <AlertTriangle className="h-5 w-5 mr-2" />
-                      )}
-                      {contactMessage}
-                    </div>
-                  </div>
-                )}
               </form>
             </div>
           </div>

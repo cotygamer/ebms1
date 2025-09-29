@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import QRCode from 'qrcode';
-import { QrCode, Download, Copy, Check, Shield, User, Clock, XCircle, CheckCircle, Smartphone, Monitor, Tablet, Share2, Camera } from 'lucide-react';
+import { QrCode, Download, Copy, Check, Shield, User, Clock, XCircle, CheckCircle } from 'lucide-react';
 
 export default function QRCodeDisplay() {
   const { user } = useAuth();
@@ -103,226 +103,140 @@ export default function QRCodeDisplay() {
   };
 
   return (
-    <div className="space-y-8">
-      {/* Header */}
-      <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-8">
-        <div className="text-center">
-          <div className="w-16 h-16 bg-gradient-to-br from-purple-600 to-blue-600 rounded-full flex items-center justify-center mx-auto mb-4">
-            <QrCode className="h-8 w-8 text-white" />
-          </div>
-          <h1 className="text-2xl font-bold text-gray-900 mb-2">My Digital ID</h1>
-          <p className="text-gray-600">Your permanent QR code for all barangay services</p>
-        </div>
-      </div>
+    <div className="space-y-6">
+      <h2 className="text-2xl font-semibold text-gray-900">My QR Code</h2>
       
-      {/* QR Code Display */}
-      <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-8">
-        <div className="text-center">
-          <div className="flex items-center justify-center mb-6">
+      <div className={`border-2 rounded-lg p-6 ${getStatusColor(user?.verificationStatus || 'non-verified')}`}>
+        <div className="text-center space-y-4">
+          <div className="flex items-center justify-center mb-4">
             {getStatusIcon(user?.verificationStatus || 'non-verified')}
-            <h3 className="text-xl font-bold ml-3 capitalize">
+            <h3 className="text-lg font-semibold ml-2 capitalize">
               {user?.verificationStatus?.replace('-', ' ') || 'Non Verified'} Status
             </h3>
           </div>
           
-          <p className="text-gray-600 mb-8 max-w-2xl mx-auto">
+          <p className="text-gray-700 mb-4">
             {user?.verificationStatus === 'verified' 
-              ? 'Your QR code provides full access to all barangay services and can be used for official transactions.'
+              ? 'Your QR code provides full access to all barangay services.'
               : user?.verificationStatus === 'semi-verified'
-              ? 'Your QR code provides limited access while awaiting final verification from barangay officials.'
+              ? 'Your QR code provides limited access while awaiting final verification.'
               : user?.verificationStatus === 'details-updated'
-              ? 'Your QR code contains your updated profile information and basic identification data.'
-              : 'Your QR code contains basic registration information. Complete verification for full access.'
+              ? 'Your QR code shows updated profile information.'
+              : 'Your QR code shows basic registration information.'
             }
           </p>
           
-          <div className="max-w-md mx-auto">
+          <div className="bg-white rounded-lg p-6 mb-4 border-2 border-dashed border-gray-300">
             {showQR ? (
-              <div className="space-y-6">
-                <div className="bg-white p-8 rounded-2xl shadow-lg border-4 border-blue-500">
+              <div className="space-y-4">
+                <div className="w-64 h-64 mx-auto bg-white border-4 border-blue-500 rounded-lg flex items-center justify-center shadow-lg">
                   {qrCodeDataUrl ? (
                     <img 
                       src={qrCodeDataUrl} 
-                      alt="Digital ID QR Code" 
-                      className="w-full h-auto max-w-xs mx-auto"
+                      alt="QR Code" 
+                      className="w-full h-full object-contain p-4"
                     />
                   ) : (
-                    <div className="w-64 h-64 flex items-center justify-center">
-                      <div className="text-center">
-                        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
-                        <p className="text-gray-500">Generating QR Code...</p>
-                      </div>
+                    <div className="text-center">
+                      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-2"></div>
+                      <p className="text-gray-500 text-sm">Generating QR Code...</p>
                     </div>
                   )}
                 </div>
                 
-                <div className="bg-gray-50 p-6 rounded-xl text-left">
-                  <h4 className="font-semibold text-gray-900 mb-4">QR Code Information</h4>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
-                    <div>
-                      <p className="text-gray-600 mb-1">QR Code ID</p>
-                      <p className="font-mono text-blue-600 font-medium">{getPermanentQRCode()}</p>
-                    </div>
-                    <div>
-                      <p className="text-gray-600 mb-1">Resident ID</p>
-                      <p className="font-mono text-gray-900">{user?.id}</p>
-                    </div>
-                    <div>
-                      <p className="text-gray-600 mb-1">Full Name</p>
-                      <p className="text-gray-900 font-medium">{user?.name}</p>
-                    </div>
-                    <div>
-                      <p className="text-gray-600 mb-1">Email Address</p>
-                      <p className="text-gray-900">{user?.email}</p>
-                    </div>
-                    <div>
-                      <p className="text-gray-600 mb-1">Verification Status</p>
-                      <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
-                        user?.verificationStatus === 'verified' ? 'bg-green-100 text-green-800' :
-                        user?.verificationStatus === 'semi-verified' ? 'bg-yellow-100 text-yellow-800' :
-                        user?.verificationStatus === 'details-updated' ? 'bg-blue-100 text-blue-800' :
-                        'bg-red-100 text-red-800'
+                <div className="bg-gray-50 p-4 rounded-lg">
+                  <h4 className="font-semibold text-gray-900 mb-2">QR Code Information</h4>
+                  <div className="text-sm text-gray-600 space-y-1 text-left">
+                    <p><strong>QR Code ID:</strong> <span className="font-mono text-blue-600">{getPermanentQRCode()}</span></p>
+                    <p><strong>Resident ID:</strong> {user?.id}</p>
+                    <p><strong>Name:</strong> {user?.name}</p>
+                    <p><strong>Email:</strong> {user?.email}</p>
+                    <p><strong>Status:</strong> 
+                      <span className={`ml-1 font-semibold capitalize ${
+                        user?.verificationStatus === 'verified' ? 'text-green-600' :
+                        user?.verificationStatus === 'semi-verified' ? 'text-yellow-600' :
+                        user?.verificationStatus === 'details-updated' ? 'text-blue-600' :
+                        'text-red-600'
                       }`}>
                         {user?.verificationStatus?.replace('-', ' ') || 'Non Verified'}
                         {user?.verificationStatus === 'verified' && ' ✓'}
                       </span>
-                    </div>
-                    <div>
-                      <p className="text-gray-600 mb-1">Date Generated</p>
-                      <p className="text-gray-900">{user?.dateRegistered || new Date().toLocaleDateString()}</p>
-                    </div>
+                    </p>
+                    <p><strong>Generated:</strong> {user?.dateRegistered || new Date().toLocaleDateString()}</p>
+                    <p><strong>Barangay:</strong> San Miguel</p>
                   </div>
-                </div>
-                
-                <div className="flex flex-wrap gap-3 justify-center">
-                  <button 
-                    onClick={handleDownloadQR}
-                    className="flex items-center px-6 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
-                  >
-                    <Download className="h-4 w-4 mr-2" />
-                    Download
-                  </button>
-                  <button 
-                    onClick={handleCopyQRCode}
-                    className="flex items-center px-6 py-3 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors"
-                  >
-                    {copied ? <Check className="h-4 w-4 mr-2" /> : <Copy className="h-4 w-4 mr-2" />}
-                    {copied ? 'Copied!' : 'Copy Data'}
-                  </button>
-                  <button className="flex items-center px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">
-                    <Share2 className="h-4 w-4 mr-2" />
-                    Share
-                  </button>
                 </div>
               </div>
             ) : (
-              <div className="py-16">
-                <div className="w-32 h-32 bg-gray-100 rounded-2xl flex items-center justify-center mx-auto mb-6">
-                  <QrCode className="h-16 w-16 text-gray-400" />
-                </div>
-                <h3 className="text-lg font-semibold text-gray-900 mb-2">Your Digital ID QR Code</h3>
-                <p className="text-gray-600 mb-6">Click below to display your permanent identification QR code</p>
-                <p className="text-sm text-gray-500 font-mono bg-gray-100 px-4 py-2 rounded-lg inline-block">
-                  ID: {getPermanentQRCode()}
-                </p>
+              <div className="py-12">
+                <QrCode className="h-16 w-16 sm:h-24 sm:w-24 text-gray-400 mx-auto mb-4" />
+                <p className="text-gray-600">Click below to display your permanent QR code</p>
+                <p className="text-sm text-gray-500 mt-2">QR Code ID: {getPermanentQRCode()}</p>
               </div>
             )}
-            
+          </div>
+          
+          <div className="flex flex-col sm:flex-row gap-2 sm:gap-3 justify-center mb-4">
             <button
               onClick={() => setShowQR(!showQR)}
-              className="w-full mt-6 bg-blue-600 text-white px-8 py-4 rounded-lg hover:bg-blue-700 transition-colors font-medium text-lg"
+              className="bg-blue-600 text-white px-4 py-2 sm:px-6 sm:py-3 rounded-lg hover:bg-blue-700 transition-colors font-medium text-sm sm:text-base"
             >
-              {showQR ? 'Hide QR Code' : 'Show My QR Code'}
+              {showQR ? 'Hide QR Code' : 'Show QR Code'}
             </button>
+            
+            {showQR && qrCodeDataUrl && (
+              <>
+                <button 
+                  onClick={handleDownloadQR}
+                  className="bg-green-600 text-white px-4 py-2 sm:px-6 sm:py-3 rounded-lg hover:bg-green-700 transition-colors flex items-center justify-center font-medium text-sm sm:text-base"
+                >
+                  <Download className="h-3 w-3 sm:h-4 sm:w-4 mr-2" />
+                  Download
+                </button>
+                <button 
+                  onClick={handleCopyQRCode}
+                  className="bg-gray-600 text-white px-4 py-2 sm:px-6 sm:py-3 rounded-lg hover:bg-gray-700 transition-colors flex items-center justify-center font-medium text-sm sm:text-base"
+                >
+                  {copied ? <Check className="h-3 w-3 sm:h-4 sm:w-4 mr-2" /> : <Copy className="h-3 w-3 sm:h-4 sm:w-4 mr-2" />}
+                  {copied ? 'Copied!' : 'Copy Data'}
+                </button>
+              </>
+            )}
           </div>
         </div>
       </div>
 
-      {/* Device Compatibility */}
-      <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-        <h3 className="text-lg font-semibold text-gray-900 mb-6">Device Compatibility</h3>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          <div className="text-center p-6 bg-blue-50 rounded-xl">
-            <Smartphone className="h-12 w-12 text-blue-600 mx-auto mb-4" />
-            <h4 className="font-semibold text-gray-900 mb-2">Mobile Devices</h4>
-            <div className="text-sm text-gray-600 space-y-1">
-              <p>✓ iOS Camera App</p>
-              <p>✓ Android Camera</p>
-              <p>✓ QR Scanner Apps</p>
-            </div>
-          </div>
-          
-          <div className="text-center p-6 bg-green-50 rounded-xl">
-            <Tablet className="h-12 w-12 text-green-600 mx-auto mb-4" />
-            <h4 className="font-semibold text-gray-900 mb-2">Tablets</h4>
-            <div className="text-sm text-gray-600 space-y-1">
-              <p>✓ iPad Camera</p>
-              <p>✓ Android Tablets</p>
-              <p>✓ Touch Optimized</p>
-            </div>
-          </div>
-          
-          <div className="text-center p-6 bg-purple-50 rounded-xl">
-            <Monitor className="h-12 w-12 text-purple-600 mx-auto mb-4" />
-            <h4 className="font-semibold text-gray-900 mb-2">Desktop</h4>
-            <div className="text-sm text-gray-600 space-y-1">
-              <p>✓ Webcam Support</p>
-              <p>✓ All Browsers</p>
-              <p>✓ High Resolution</p>
-            </div>
-          </div>
+      {/* Security Information */}
+      <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+        <h3 className="text-lg font-semibold text-yellow-800 mb-2 flex items-center">
+          <Shield className="h-5 w-5 mr-2" />
+          QR Code Security & Usage
+        </h3>
+        <div className="text-sm text-yellow-700 space-y-1">
+          <p>• <strong>Permanent ID:</strong> Your QR code ID is {getPermanentQRCode()} and will never change</p>
+          <p>• <strong>Unique Identifier:</strong> This QR code is permanently linked to your account</p>
+          <p>• <strong>Cross-Platform Use:</strong> Use this QR code for all barangay services and transactions</p>
+          <p>• <strong>Verification:</strong> Officials can scan this to verify your identity and status</p>
+          <p>• <strong>Security:</strong> Contains encrypted data that only authorized personnel can access</p>
+          <p>• <strong>Print Safe:</strong> You can safely print this QR code on your barangay ID</p>
         </div>
       </div>
 
-      {/* Security & Usage Information */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-          <div className="flex items-center mb-4">
-            <Shield className="h-6 w-6 text-yellow-600 mr-3" />
-            <h3 className="text-lg font-semibold text-gray-900">Security Features</h3>
+      {/* QR Code Features */}
+      <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+        <h3 className="text-lg font-semibold text-blue-800 mb-2">QR Code Features</h3>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm text-blue-700">
+          <div className="space-y-1">
+            <p>✓ Permanent identification number</p>
+            <p>✓ Real-time verification status</p>
+            <p>✓ Secure encrypted data</p>
+            <p>✓ Cross-platform compatibility</p>
           </div>
-          <div className="space-y-3 text-sm text-gray-700">
-            <div className="flex items-start space-x-3">
-              <CheckCircle className="h-4 w-4 text-green-500 mt-0.5 flex-shrink-0" />
-              <p><strong>Permanent ID:</strong> Your QR code ID {getPermanentQRCode()} never changes</p>
-            </div>
-            <div className="flex items-start space-x-3">
-              <CheckCircle className="h-4 w-4 text-green-500 mt-0.5 flex-shrink-0" />
-              <p><strong>Encrypted Data:</strong> Contains secure, encrypted personal information</p>
-            </div>
-            <div className="flex items-start space-x-3">
-              <CheckCircle className="h-4 w-4 text-green-500 mt-0.5 flex-shrink-0" />
-              <p><strong>Authorized Access:</strong> Only barangay officials can decode your information</p>
-            </div>
-            <div className="flex items-start space-x-3">
-              <CheckCircle className="h-4 w-4 text-green-500 mt-0.5 flex-shrink-0" />
-              <p><strong>Tamper-Proof:</strong> Cannot be modified or duplicated</p>
-            </div>
-          </div>
-        </div>
-        
-        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-          <div className="flex items-center mb-4">
-            <Camera className="h-6 w-6 text-blue-600 mr-3" />
-            <h3 className="text-lg font-semibold text-gray-900">How to Use</h3>
-          </div>
-          <div className="space-y-3 text-sm text-gray-700">
-            <div className="flex items-start space-x-3">
-              <CheckCircle className="h-4 w-4 text-blue-500 mt-0.5 flex-shrink-0" />
-              <p>Present to barangay officials for identity verification</p>
-            </div>
-            <div className="flex items-start space-x-3">
-              <CheckCircle className="h-4 w-4 text-blue-500 mt-0.5 flex-shrink-0" />
-              <p>Use for all barangay services and transactions</p>
-            </div>
-            <div className="flex items-start space-x-3">
-              <CheckCircle className="h-4 w-4 text-blue-500 mt-0.5 flex-shrink-0" />
-              <p>Print and attach to your physical barangay ID</p>
-            </div>
-            <div className="flex items-start space-x-3">
-              <CheckCircle className="h-4 w-4 text-blue-500 mt-0.5 flex-shrink-0" />
-              <p>Works with any standard QR code scanner</p>
-            </div>
+          <div className="space-y-1">
+            <p>✓ Works with any QR scanner</p>
+            <p>✓ Printable for physical ID cards</p>
+            <p>✓ Links to complete resident profile</p>
+            <p>✓ Tamper-proof identification</p>
           </div>
         </div>
       </div>

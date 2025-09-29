@@ -12,8 +12,7 @@ import {
   useMedicalRecords,
   useInventoryItems,
   useProjects,
-  useBusinessPermits,
-  useMessages
+  useBusinessPermits
 } from '../hooks/useRealTimeData';
 
 interface Resident {
@@ -133,9 +132,6 @@ interface DataContextType {
   updateProject: (id: string, updates: Partial<Project>) => void;
   addBusinessPermit: (permit: Omit<BusinessPermit, 'id'>) => void;
   updateBusinessPermit: (id: string, updates: Partial<BusinessPermit>) => void;
-  messages: Message[];
-  addMessage: (message: Omit<Message, 'id'>) => void;
-  updateMessage: (id: string, updates: Partial<Message>) => void;
 }
 
 interface Appointment {
@@ -243,24 +239,6 @@ interface BusinessPermit {
   createdAt: string;
   updatedAt: string;
 }
-
-interface Message {
-  id: string;
-  sender_name: string;
-  sender_email: string;
-  sender_phone?: string;
-  subject: string;
-  message: string;
-  category: string;
-  priority: string;
-  status: string;
-  source: string;
-  replied_at?: string;
-  replied_by?: string;
-  reply?: string;
-  created_at: string;
-  updated_at: string;
-}
 interface Document {
   id: string;
   residentId: string;
@@ -347,6 +325,7 @@ interface User {
   id: string;
   name: string;
   email: string;
+  role: 'super-admin' | 'barangay-official' | 'resident' | 'medical-portal' | 'accounting-portal' | 'disaster-portal';
   role: 'super-admin' | 'barangay-official' | 'resident' | 'medical-portal' | 'accounting-portal' | 'disaster-portal' | 'peace-order-portal';
   status: 'active' | 'inactive' | 'suspended';
   phone_number?: string;
@@ -374,7 +353,6 @@ export function DataProvider({ children }: { children: ReactNode }) {
   const { data: inventoryItems, refresh: refreshInventoryItems } = useInventoryItems();
   const { data: projects, refresh: refreshProjects } = useProjects();
   const { data: businessPermits, refresh: refreshBusinessPermits } = useBusinessPermits();
-  const { data: messages, refresh: refreshMessages } = useMessages();
 
   // Debug logging to check data loading
   React.useEffect(() => {
@@ -581,11 +559,8 @@ export function DataProvider({ children }: { children: ReactNode }) {
 
   const addDocument = async (documentData: Omit<Document, 'id'>) => {
     try {
-      console.log('DataContext - Adding document:', documentData);
       await dataService.createDocument(documentData);
-      console.log('DataContext - Document created, refreshing documents...');
       refreshDocuments();
-      console.log('DataContext - Documents refreshed');
     } catch (error) {
       console.error('Failed to add document:', error);
       throw error;
@@ -864,36 +839,6 @@ export function DataProvider({ children }: { children: ReactNode }) {
       throw error;
     }
   };
-
-  const addMessage = async (messageData: Omit<Message, 'id'>) => {
-    try {
-      await dataService.createMessage({
-        sender_name: messageData.sender_name,
-        sender_email: messageData.sender_email,
-        sender_phone: messageData.sender_phone,
-        subject: messageData.subject,
-        message: messageData.message,
-        category: messageData.category || 'general',
-        priority: messageData.priority || 'medium',
-        status: messageData.status || 'unread',
-        source: messageData.source || 'website'
-      });
-      refreshMessages();
-    } catch (error) {
-      console.error('Failed to add message:', error);
-      throw error;
-    }
-  };
-
-  const updateMessage = async (id: string, updates: Partial<Message>) => {
-    try {
-      await dataService.updateMessage(id, updates);
-      refreshMessages();
-    } catch (error) {
-      console.error('Failed to update message:', error);
-      throw error;
-    }
-  };
   return (
     <DataContext.Provider value={{
       residents,
@@ -932,10 +877,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
       addProject,
       updateProject,
       addBusinessPermit,
-      updateBusinessPermit,
-      messages,
-      addMessage,
-      updateMessage,
+      updateBusinessPermit
     }}>
       {children}
     </DataContext.Provider>

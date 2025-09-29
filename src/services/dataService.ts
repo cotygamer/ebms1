@@ -101,7 +101,27 @@ export class DataService {
     
     const { data, error } = await supabase
       .from('residents')
-      .insert([residentData])
+      .insert([{
+        user_id: residentData.user_id,
+        name: residentData.name,
+        email: residentData.email,
+        phone_number: residentData.phone_number,
+        address: residentData.address,
+        verification_status: residentData.verification_status || 'non-verified',
+        birth_date: residentData.birth_date,
+        gender: residentData.gender,
+        civil_status: residentData.civil_status,
+        emergency_contact: residentData.emergency_contact,
+        nationality: residentData.nationality || 'Filipino',
+        religion: residentData.religion,
+        occupation: residentData.occupation,
+        monthly_income: residentData.monthly_income,
+        date_registered: residentData.date_registered || new Date().toISOString().split('T')[0],
+        government_ids: residentData.government_ids || {},
+        profile_data: residentData.profile_data || {},
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString()
+      }])
       .select()
       .single()
     
@@ -109,10 +129,10 @@ export class DataService {
       console.error('Supabase error creating resident:', error);
       
       // Provide more specific error messages
-      if (error.code === '23505') {
-        throw new Error('An account with this email already exists.');
-      } else if (error.code === '42501' || error.message?.includes('row-level security')) {
+      if (error.code === '42501' || error.message?.includes('row-level security')) {
         throw new Error('Registration permission error. Please ensure you are logged in properly and try again.');
+      } else if (error.code === '23505') {
+        throw new Error('An account with this email already exists.');
       } else {
         throw new Error(`Registration failed: ${error.message}`);
       }
@@ -360,6 +380,41 @@ export class DataService {
 
   // Projects Management
   static async getProjects() {
+    try {
+      const { data, error } = await supabase
+        .from('projects')
+        .select(`
+          *,
+          project_achievements (
+            id,
+            achievement,
+            date_achieved,
+            description
+          )
+        `)
+        .order('created_at', { ascending: false })
+      
+      if (error) {
+        // Handle missing table gracefully
+        if (error.code === 'PGRST205' || error.message?.includes('Could not find the table') || error.message?.includes('relation') && error.message?.includes('does not exist')) {
+          console.warn('Projects table not found, returning empty array')
+          return []
+        }
+        throw error
+      }
+      return data || []
+    } catch (error) {
+      // Handle network errors and other issues
+      if (error?.name === 'TypeError' && error?.message?.includes('Failed to fetch')) {
+        console.warn('Network error fetching projects, returning empty array')
+        return []
+      }
+      console.error('Error fetching projects:', error)
+      return []
+    }
+  }
+
+  static async getProjects_old() {
     const { data, error } = await supabase
       .from('projects')
       .select(`
@@ -536,31 +591,20 @@ export class DataService {
   }
 
   static async createDocument(documentData: any) {
-    console.log('DataService - Creating document:', documentData);
     const { data, error } = await supabase
       .from('documents')
       .insert([{
         ...documentData,
-        requested_date: new Date().toISOString().split('T')[0],
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString()
+        requested_date: new Date().toISOString()
       }])
       .select()
       .single()
     
-    if (error) {
-      console.error('DataService - Error creating document:', error);
-      throw error
-    }
+    if (error) throw error
     
     // Log the action
-    try {
-      await this.logAction('document.create', 'document', data.id, null, data)
-    } catch (logError) {
-      console.warn('Failed to log document creation:', logError)
-    }
+    await this.logAction('document.create', 'document', data.id, null, data)
     
-    console.log('DataService - Document created successfully:', data);
     return data
   }
 
@@ -758,96 +802,75 @@ export class DataService {
     return data
   }
 
-  // Messages Management
-  static async getMessages() {
+  // Resident-specific data fetching methods
+  static async getDocumentsByResident(residentId: string) {
+    const { data, error } = await supabase
+      .from('documents')
+      .select(`
+        *,
+        residents (
+          name,
+          email,
+          phone_number
+        )
+      `)
+      .eq('resident_id', residentId)
+      .order('created_at', { ascending: false })
+    
+    if (error) throw error
+    return data || []
+  }
+
+  static async getAppointmentsByResident(residentEmail: string) {
+    const { data, error } = await supabase
+      .from('appointments')
+      .select(`
+        *,
+        residents (
+          name,
+          email,
+          phone_number
+        )
+      `)
+      .eq('resident_email', residentEmail)
+      .order('appointment_date', { ascending: true })
+    
+    if (error) throw error
+    return data || []
+  }
+
+  static async getIncidentsByReporter(reporterEmail: string) {
     try {
       const { data, error } = await supabase
-        .from('messages')
+        .from('incidents')
         .select('*')
+        .eq('reporter_email', reporterEmail)
         .order('created_at', { ascending: false })
       
       if (error) {
-        // If table doesn't exist, return empty array
+        // Handle case where incidents table might not exist
         if (error.code === 'PGRST205' || error.message?.includes('Could not find the table')) {
-          console.warn('Messages table not found, returning empty array')
+          console.warn('Incidents table not found, returning empty array')
           return []
         }
         throw error
       }
       return data || []
     } catch (error) {
-      console.error('Error fetching messages:', error)
+      console.error('Error fetching incidents by reporter:', error)
       return []
     }
   }
 
-  static async createMessage(messageData: any) {
-    try {
-      const { data, error } = await supabase
-        .from('messages')
-        .insert([{
-          ...messageData,
-          created_at: new Date().toISOString(),
-          updated_at: new Date().toISOString()
-        }])
-        .select()
-        .single()
-      
-      if (error) {
-        if (error.code === 'PGRST205' || error.message?.includes('Could not find the table')) {
-          throw new Error('Messaging system is temporarily unavailable. Please contact the barangay office directly.')
-        }
-        throw error
-      }
-      
-      // Log the action
-      try {
-        await this.logAction('message.create', 'message', data.id, null, data)
-      } catch (logError) {
-        console.warn('Failed to log message creation:', logError)
-      }
-      
-      return data
-    } catch (error) {
-      console.error('Error creating message:', error)
-      throw error
-    }
-  }
-
-  static async updateMessage(id: string, updates: any) {
-    try {
-      const { data: oldData } = await supabase
-        .from('messages')
-        .select('*')
-        .eq('id', id)
-        .single()
-
-      const { data, error } = await supabase
-        .from('messages')
-        .update({ ...updates, updated_at: new Date().toISOString() })
-        .eq('id', id)
-        .select()
-        .single()
-      
-      if (error) {
-        if (error.code === 'PGRST205' || error.message?.includes('Could not find the table')) {
-          throw new Error('Messaging system is temporarily unavailable.')
-        }
-        throw error
-      }
-      
-      // Log the action
-      try {
-        await this.logAction('message.update', 'message', id, oldData, data)
-      } catch (logError) {
-        console.warn('Failed to log message update:', logError)
-      }
-      
-      return data
-    } catch (error) {
-      console.error('Error updating message:', error)
-      throw error
-    }
+  static async getFamilyMembersByResident(residentId: string) {
+    const { data, error } = await supabase
+      .from('family_members')
+      .select('*')
+      .eq('resident_id', residentId)
+      .order('created_at', { ascending: false })
+    
+    if (error) throw error
+    return data || []
   }
 
   // Real-time Subscriptions
